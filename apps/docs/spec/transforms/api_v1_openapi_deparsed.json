@@ -87,6 +87,12 @@
                     "postgres_version": {
                       "type": "string"
                     },
+                    "postgres_engine": {
+                      "type": "string"
+                    },
+                    "release_channel": {
+                      "type": "string"
+                    },
                     "status": {
                       "enum": [
                         "ACTIVE_HEALTHY",
@@ -102,7 +108,8 @@
                         "PAUSING",
                         "RESTORING",
                         "RESTORE_FAILED",
-                        "PAUSE_FAILED"
+                        "PAUSE_FAILED",
+                        "RESIZING"
                       ],
                       "type": "string"
                     },
@@ -123,6 +130,8 @@
                     "db_port",
                     "ref",
                     "postgres_version",
+                    "postgres_engine",
+                    "release_channel",
                     "status",
                     "db_host"
                   ]
@@ -176,6 +185,17 @@
                   },
                   "persistent": {
                     "type": "boolean"
+                  },
+                  "status": {
+                    "enum": [
+                      "CREATING_PROJECT",
+                      "RUNNING_MIGRATIONS",
+                      "MIGRATIONS_PASSED",
+                      "MIGRATIONS_FAILED",
+                      "FUNCTIONS_DEPLOYED",
+                      "FUNCTIONS_FAILED"
+                    ],
+                    "type": "string"
                   }
                 }
               }
@@ -412,11 +432,21 @@
                           "version": {
                             "type": "string",
                             "description": "Database version"
+                          },
+                          "postgres_engine": {
+                            "type": "string",
+                            "description": "Database engine"
+                          },
+                          "release_channel": {
+                            "type": "string",
+                            "description": "Release channel"
                           }
                         },
                         "required": [
                           "host",
-                          "version"
+                          "version",
+                          "postgres_engine",
+                          "release_channel"
                         ]
                       },
                       "status": {
@@ -434,7 +464,8 @@
                           "PAUSING",
                           "RESTORING",
                           "RESTORE_FAILED",
-                          "PAUSE_FAILED"
+                          "PAUSE_FAILED",
+                          "RESIZING"
                         ],
                         "type": "string"
                       }
@@ -499,6 +530,7 @@
                     "type": "string",
                     "enum": [
                       "us-east-1",
+                      "us-east-2",
                       "us-west-1",
                       "us-west-2",
                       "ap-east-1",
@@ -509,7 +541,9 @@
                       "eu-west-1",
                       "eu-west-2",
                       "eu-west-3",
+                      "eu-north-1",
                       "eu-central-1",
+                      "eu-central-2",
                       "ca-central-1",
                       "ap-south-1",
                       "sa-east-1"
@@ -541,6 +575,23 @@
                     "type": "string",
                     "description": "Template URL used to create the project from the CLI.",
                     "example": "https://github.com/supabase/supabase/tree/master/examples/slack-clone/nextjs-slack-clone"
+                  },
+                  "release_channel": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "alpha",
+                      "beta",
+                      "ga",
+                      "withdrawn"
+                    ]
+                  },
+                  "postgres_engine": {
+                    "type": "string",
+                    "description": "Postgres engine version. If not provided, the latest version will be used.",
+                    "enum": [
+                      "15"
+                    ]
                   }
                 },
                 "required": [
@@ -593,11 +644,21 @@
                         "version": {
                           "type": "string",
                           "description": "Database version"
+                        },
+                        "postgres_engine": {
+                          "type": "string",
+                          "description": "Database engine"
+                        },
+                        "release_channel": {
+                          "type": "string",
+                          "description": "Release channel"
                         }
                       },
                       "required": [
                         "host",
-                        "version"
+                        "version",
+                        "postgres_engine",
+                        "release_channel"
                       ]
                     },
                     "status": {
@@ -615,7 +676,8 @@
                         "PAUSING",
                         "RESTORING",
                         "RESTORE_FAILED",
-                        "PAUSE_FAILED"
+                        "PAUSE_FAILED",
+                        "RESIZING"
                       ],
                       "type": "string"
                     }
@@ -1255,6 +1317,50 @@
                       },
                       "api_key": {
                         "type": "string"
+                      },
+                      "id": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "type": {
+                        "nullable": true,
+                        "type": "object"
+                      },
+                      "prefix": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "hash": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "secret_jwt_template": {
+                        "nullable": true,
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "role": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "role"
+                            ]
+                          }
+                        ]
+                      },
+                      "inserted_at": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "nullable": true
                       }
                     },
                     "required": [
@@ -1262,6 +1368,377 @@
                       "api_key"
                     ]
                   }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Secrets"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "createApiKey",
+        "summary": "[Alpha] Creates a new API key for the project",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "description": "Project ref",
+            "schema": {
+              "minLength": 20,
+              "maxLength": 20,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "publishable",
+                      "secret"
+                    ],
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "secret_jwt_template": {
+                    "nullable": true,
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "role"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "api_key": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "type": {
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hash": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "secret_jwt_template": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "role": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "role"
+                          ]
+                        }
+                      ]
+                    },
+                    "inserted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "api_key"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Secrets"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/v1/projects/{ref}/api-keys/{id}": {
+      "patch": {
+        "operationId": "updateApiKey",
+        "summary": "[Alpha] Updates an API key for the project",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "description": "Project ref",
+            "schema": {
+              "minLength": 20,
+              "maxLength": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "secret_jwt_template": {
+                    "nullable": true,
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "role": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "role"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "api_key": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "type": {
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hash": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "secret_jwt_template": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "role": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "role"
+                          ]
+                        }
+                      ]
+                    },
+                    "inserted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "api_key"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Secrets"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteApiKey",
+        "summary": "[Alpha] Deletes an API key for the project",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "description": "Project ref",
+            "schema": {
+              "minLength": 20,
+              "maxLength": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "api_key": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "type": {
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "description": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "hash": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "secret_jwt_template": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "role": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "role"
+                          ]
+                        }
+                      ]
+                    },
+                    "inserted_at": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "api_key"
+                  ]
                 }
               }
             }
@@ -1410,11 +1887,46 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "desired_instance_size": {
+                    "type": "string",
+                    "enum": [
+                      "micro",
+                      "small",
+                      "medium",
+                      "large",
+                      "xlarge",
+                      "2xlarge",
+                      "4xlarge",
+                      "8xlarge",
+                      "12xlarge",
+                      "16xlarge"
+                    ]
+                  },
+                  "release_channel": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "alpha",
+                      "beta",
+                      "ga",
+                      "withdrawn"
+                    ]
+                  },
+                  "postgres_engine": {
+                    "type": "string",
+                    "description": "Postgres engine version. If not provided, the latest version will be used.",
+                    "enum": [
+                      "15"
+                    ]
+                  },
                   "branch_name": {
                     "type": "string"
                   },
                   "git_branch": {
                     "type": "string"
+                  },
+                  "persistent": {
+                    "type": "boolean"
                   },
                   "region": {
                     "type": "string"
@@ -2966,6 +3478,125 @@
       }
     },
     "/v1/projects/{ref}": {
+      "get": {
+        "operationId": "v1-get-project",
+        "summary": "Gets a specific project that belongs to the authenticated user",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "description": "Project ref",
+            "schema": {
+              "minLength": 20,
+              "maxLength": 20,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Id of your project"
+                    },
+                    "organization_id": {
+                      "type": "string",
+                      "description": "Slug of your organization"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Name of your project"
+                    },
+                    "region": {
+                      "type": "string",
+                      "description": "Region of your project",
+                      "example": "us-east-1"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "Creation timestamp",
+                      "example": "2023-03-29T16:32:59Z"
+                    },
+                    "database": {
+                      "type": "object",
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "Database host"
+                        },
+                        "version": {
+                          "type": "string",
+                          "description": "Database version"
+                        },
+                        "postgres_engine": {
+                          "type": "string",
+                          "description": "Database engine"
+                        },
+                        "release_channel": {
+                          "type": "string",
+                          "description": "Release channel"
+                        }
+                      },
+                      "required": [
+                        "host",
+                        "version",
+                        "postgres_engine",
+                        "release_channel"
+                      ]
+                    },
+                    "status": {
+                      "enum": [
+                        "ACTIVE_HEALTHY",
+                        "ACTIVE_UNHEALTHY",
+                        "COMING_UP",
+                        "GOING_DOWN",
+                        "INACTIVE",
+                        "INIT_FAILED",
+                        "REMOVED",
+                        "RESTARTING",
+                        "UNKNOWN",
+                        "UPGRADING",
+                        "PAUSING",
+                        "RESTORING",
+                        "RESTORE_FAILED",
+                        "PAUSE_FAILED",
+                        "RESIZING"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "organization_id",
+                    "name",
+                    "region",
+                    "created_at",
+                    "status"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to retrieve project"
+          }
+        },
+        "tags": [
+          "Projects"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
       "delete": {
         "operationId": "v1-delete-a-project",
         "summary": "Deletes the given project",
@@ -3688,11 +4319,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "release_channel": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "alpha",
+                      "beta",
+                      "ga",
+                      "withdrawn"
+                    ]
+                  },
                   "target_version": {
-                    "type": "number"
+                    "type": "string"
                   }
                 },
                 "required": [
+                  "release_channel",
                   "target_version"
                 ]
               }
@@ -3737,7 +4379,7 @@
     },
     "/v1/projects/{ref}/upgrade/eligibility": {
       "get": {
-        "operationId": "v1-get-postgrest-upgrade-eligibility",
+        "operationId": "v1-get-postgres-upgrade-eligibility",
         "summary": "[Beta] Returns the project's eligibility for upgrades",
         "parameters": [
           {
@@ -3760,6 +4402,16 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "current_app_version_release_channel": {
+                      "type": "string",
+                      "enum": [
+                        "internal",
+                        "alpha",
+                        "beta",
+                        "ga",
+                        "withdrawn"
+                      ]
+                    },
                     "eligible": {
                       "type": "boolean"
                     },
@@ -3775,7 +4427,21 @@
                         "type": "object",
                         "properties": {
                           "postgres_version": {
-                            "type": "number"
+                            "type": "string",
+                            "description": "Postgres engine version. If not provided, the latest version will be used.",
+                            "enum": [
+                              "15"
+                            ]
+                          },
+                          "release_channel": {
+                            "type": "string",
+                            "enum": [
+                              "internal",
+                              "alpha",
+                              "beta",
+                              "ga",
+                              "withdrawn"
+                            ]
                           },
                           "app_version": {
                             "type": "string"
@@ -3783,6 +4449,7 @@
                         },
                         "required": [
                           "postgres_version",
+                          "release_channel",
                           "app_version"
                         ]
                       }
@@ -3810,6 +4477,7 @@
                     }
                   },
                   "required": [
+                    "current_app_version_release_channel",
                     "eligible",
                     "current_app_version",
                     "latest_app_version",
@@ -3842,7 +4510,7 @@
     },
     "/v1/projects/{ref}/upgrade/status": {
       "get": {
-        "operationId": "v1-get-postgrest-upgrade-status",
+        "operationId": "v1-get-postgres-upgrade-status",
         "summary": "[Beta] Gets the latest status of the project's upgrade",
         "parameters": [
           {
@@ -3853,6 +4521,14 @@
             "schema": {
               "minLength": 20,
               "maxLength": 20,
+              "type": "string"
+            }
+          },
+          {
+            "name": "tracking_id",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           }
@@ -4074,6 +4750,7 @@
                     "type": "string",
                     "enum": [
                       "us-east-1",
+                      "us-east-2",
                       "us-west-1",
                       "us-west-2",
                       "ap-east-1",
@@ -4084,7 +4761,9 @@
                       "eu-west-1",
                       "eu-west-2",
                       "eu-west-3",
+                      "eu-north-1",
                       "eu-central-1",
+                      "eu-central-2",
                       "ca-central-1",
                       "ap-south-1",
                       "sa-east-1"
@@ -4350,10 +5029,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "statement_timeout": {
+                    "effective_cache_size": {
                       "type": "string"
                     },
-                    "effective_cache_size": {
+                    "logical_decoding_work_mem": {
                       "type": "string"
                     },
                     "maintenance_work_mem": {
@@ -4384,11 +5063,23 @@
                       "minimum": 0,
                       "maximum": 1024
                     },
+                    "max_replication_slots": {
+                      "type": "integer"
+                    },
+                    "max_slot_wal_keep_size": {
+                      "type": "string"
+                    },
                     "max_standby_archive_delay": {
                       "type": "string"
                     },
                     "max_standby_streaming_delay": {
                       "type": "string"
+                    },
+                    "max_wal_size": {
+                      "type": "string"
+                    },
+                    "max_wal_senders": {
+                      "type": "integer"
                     },
                     "max_worker_processes": {
                       "type": "integer",
@@ -4396,6 +5087,15 @@
                       "maximum": 262143
                     },
                     "shared_buffers": {
+                      "type": "string"
+                    },
+                    "statement_timeout": {
+                      "type": "string"
+                    },
+                    "wal_keep_size": {
+                      "type": "string"
+                    },
+                    "wal_sender_timeout": {
                       "type": "string"
                     },
                     "work_mem": {
@@ -4450,10 +5150,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "statement_timeout": {
+                  "effective_cache_size": {
                     "type": "string"
                   },
-                  "effective_cache_size": {
+                  "logical_decoding_work_mem": {
                     "type": "string"
                   },
                   "maintenance_work_mem": {
@@ -4484,11 +5184,23 @@
                     "minimum": 0,
                     "maximum": 1024
                   },
+                  "max_replication_slots": {
+                    "type": "integer"
+                  },
+                  "max_slot_wal_keep_size": {
+                    "type": "string"
+                  },
                   "max_standby_archive_delay": {
                     "type": "string"
                   },
                   "max_standby_streaming_delay": {
                     "type": "string"
+                  },
+                  "max_wal_size": {
+                    "type": "string"
+                  },
+                  "max_wal_senders": {
+                    "type": "integer"
                   },
                   "max_worker_processes": {
                     "type": "integer",
@@ -4498,8 +5210,20 @@
                   "shared_buffers": {
                     "type": "string"
                   },
+                  "statement_timeout": {
+                    "type": "string"
+                  },
+                  "wal_keep_size": {
+                    "type": "string"
+                  },
+                  "wal_sender_timeout": {
+                    "type": "string"
+                  },
                   "work_mem": {
                     "type": "string"
+                  },
+                  "restart_database": {
+                    "type": "boolean"
                   },
                   "session_replication_role": {
                     "enum": [
@@ -4522,10 +5246,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "statement_timeout": {
+                    "effective_cache_size": {
                       "type": "string"
                     },
-                    "effective_cache_size": {
+                    "logical_decoding_work_mem": {
                       "type": "string"
                     },
                     "maintenance_work_mem": {
@@ -4556,11 +5280,23 @@
                       "minimum": 0,
                       "maximum": 1024
                     },
+                    "max_replication_slots": {
+                      "type": "integer"
+                    },
+                    "max_slot_wal_keep_size": {
+                      "type": "string"
+                    },
                     "max_standby_archive_delay": {
                       "type": "string"
                     },
                     "max_standby_streaming_delay": {
                       "type": "string"
+                    },
+                    "max_wal_size": {
+                      "type": "string"
+                    },
+                    "max_wal_senders": {
+                      "type": "integer"
                     },
                     "max_worker_processes": {
                       "type": "integer",
@@ -4568,6 +5304,15 @@
                       "maximum": 262143
                     },
                     "shared_buffers": {
+                      "type": "string"
+                    },
+                    "statement_timeout": {
+                      "type": "string"
+                    },
+                    "wal_keep_size": {
+                      "type": "string"
+                    },
+                    "wal_sender_timeout": {
                       "type": "string"
                     },
                     "work_mem": {
@@ -4585,6 +5330,9 @@
                 }
               }
             }
+          },
+          "403": {
+            "description": ""
           },
           "500": {
             "description": "Failed to update project's Postgres config"
@@ -5317,6 +6065,14 @@
                       "type": "boolean",
                       "nullable": true
                     },
+                    "mfa_web_authn_enroll_enabled": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "mfa_web_authn_verify_enabled": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
                     "mfa_phone_otp_length": {
                       "type": "number"
                     },
@@ -5374,6 +6130,10 @@
                     },
                     "saml_external_url": {
                       "type": "string",
+                      "nullable": true
+                    },
+                    "saml_allow_encrypted_assertions": {
+                      "type": "boolean",
                       "nullable": true
                     },
                     "security_captcha_enabled": {
@@ -5652,6 +6412,8 @@
                     "mfa_totp_verify_enabled",
                     "mfa_phone_enroll_enabled",
                     "mfa_phone_verify_enabled",
+                    "mfa_web_authn_enroll_enabled",
+                    "mfa_web_authn_verify_enabled",
                     "mfa_phone_otp_length",
                     "mfa_phone_template",
                     "mfa_phone_max_frequency",
@@ -5667,6 +6429,7 @@
                     "refresh_token_rotation_enabled",
                     "saml_enabled",
                     "saml_external_url",
+                    "saml_allow_encrypted_assertions",
                     "security_captcha_enabled",
                     "security_captcha_provider",
                     "security_captcha_secret",
@@ -6282,6 +7045,12 @@
                   "mfa_totp_verify_enabled": {
                     "type": "boolean"
                   },
+                  "mfa_web_authn_enroll_enabled": {
+                    "type": "boolean"
+                  },
+                  "mfa_web_authn_verify_enabled": {
+                    "type": "boolean"
+                  },
                   "mfa_phone_enroll_enabled": {
                     "type": "boolean"
                   },
@@ -6757,6 +7526,14 @@
                       "type": "boolean",
                       "nullable": true
                     },
+                    "mfa_web_authn_enroll_enabled": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "mfa_web_authn_verify_enabled": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
                     "mfa_phone_otp_length": {
                       "type": "number"
                     },
@@ -6814,6 +7591,10 @@
                     },
                     "saml_external_url": {
                       "type": "string",
+                      "nullable": true
+                    },
+                    "saml_allow_encrypted_assertions": {
+                      "type": "boolean",
                       "nullable": true
                     },
                     "security_captcha_enabled": {
@@ -7092,6 +7873,8 @@
                     "mfa_totp_verify_enabled",
                     "mfa_phone_enroll_enabled",
                     "mfa_phone_verify_enabled",
+                    "mfa_web_authn_enroll_enabled",
+                    "mfa_web_authn_verify_enabled",
                     "mfa_phone_otp_length",
                     "mfa_phone_template",
                     "mfa_phone_max_frequency",
@@ -7107,6 +7890,7 @@
                     "refresh_token_rotation_enabled",
                     "saml_enabled",
                     "saml_external_url",
+                    "saml_allow_encrypted_assertions",
                     "security_captcha_enabled",
                     "security_captcha_provider",
                     "security_captcha_secret",
@@ -9559,6 +10343,19 @@
                         ]
                       }
                     },
+                    "allowed_release_channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "internal",
+                          "alpha",
+                          "beta",
+                          "ga",
+                          "withdrawn"
+                        ]
+                      }
+                    },
                     "id": {
                       "type": "string"
                     },
@@ -9568,6 +10365,7 @@
                   },
                   "required": [
                     "opt_in_tags",
+                    "allowed_release_channels",
                     "id",
                     "name"
                   ]
@@ -9608,6 +10406,12 @@
           "postgres_version": {
             "type": "string"
           },
+          "postgres_engine": {
+            "type": "string"
+          },
+          "release_channel": {
+            "type": "string"
+          },
           "status": {
             "enum": [
               "ACTIVE_HEALTHY",
@@ -9623,7 +10427,8 @@
               "PAUSING",
               "RESTORING",
               "RESTORE_FAILED",
-              "PAUSE_FAILED"
+              "PAUSE_FAILED",
+              "RESIZING"
             ],
             "type": "string"
           },
@@ -9644,6 +10449,8 @@
           "db_port",
           "ref",
           "postgres_version",
+          "postgres_engine",
+          "release_channel",
           "status",
           "db_host"
         ]
@@ -9662,6 +10469,17 @@
           },
           "persistent": {
             "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "CREATING_PROJECT",
+              "RUNNING_MIGRATIONS",
+              "MIGRATIONS_PASSED",
+              "MIGRATIONS_FAILED",
+              "FUNCTIONS_DEPLOYED",
+              "FUNCTIONS_FAILED"
+            ],
+            "type": "string"
           }
         }
       },
@@ -9761,11 +10579,21 @@
           "version": {
             "type": "string",
             "description": "Database version"
+          },
+          "postgres_engine": {
+            "type": "string",
+            "description": "Database engine"
+          },
+          "release_channel": {
+            "type": "string",
+            "description": "Release channel"
           }
         },
         "required": [
           "host",
-          "version"
+          "version",
+          "postgres_engine",
+          "release_channel"
         ]
       },
       "V1ProjectResponse": {
@@ -9803,11 +10631,21 @@
               "version": {
                 "type": "string",
                 "description": "Database version"
+              },
+              "postgres_engine": {
+                "type": "string",
+                "description": "Database engine"
+              },
+              "release_channel": {
+                "type": "string",
+                "description": "Release channel"
               }
             },
             "required": [
               "host",
-              "version"
+              "version",
+              "postgres_engine",
+              "release_channel"
             ]
           },
           "status": {
@@ -9825,7 +10663,8 @@
               "PAUSING",
               "RESTORING",
               "RESTORE_FAILED",
-              "PAUSE_FAILED"
+              "PAUSE_FAILED",
+              "RESIZING"
             ],
             "type": "string"
           }
@@ -9852,6 +10691,23 @@
           "8xlarge",
           "12xlarge",
           "16xlarge"
+        ]
+      },
+      "ReleaseChannel": {
+        "type": "string",
+        "enum": [
+          "internal",
+          "alpha",
+          "beta",
+          "ga",
+          "withdrawn"
+        ]
+      },
+      "PostgresEngine": {
+        "type": "string",
+        "description": "Postgres engine version. If not provided, the latest version will be used.",
+        "enum": [
+          "15"
         ]
       },
       "V1CreateProjectBody": {
@@ -9883,6 +10739,7 @@
             "type": "string",
             "enum": [
               "us-east-1",
+              "us-east-2",
               "us-west-1",
               "us-west-2",
               "ap-east-1",
@@ -9893,7 +10750,9 @@
               "eu-west-1",
               "eu-west-2",
               "eu-west-3",
+              "eu-north-1",
               "eu-central-1",
+              "eu-central-2",
               "ca-central-1",
               "ap-south-1",
               "sa-east-1"
@@ -9925,6 +10784,23 @@
             "type": "string",
             "description": "Template URL used to create the project from the CLI.",
             "example": "https://github.com/supabase/supabase/tree/master/examples/slack-clone/nextjs-slack-clone"
+          },
+          "release_channel": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "alpha",
+              "beta",
+              "ga",
+              "withdrawn"
+            ]
+          },
+          "postgres_engine": {
+            "type": "string",
+            "description": "Postgres engine version. If not provided, the latest version will be used.",
+            "enum": [
+              "15"
+            ]
           }
         },
         "required": [
@@ -10374,6 +11250,17 @@
           "content"
         ]
       },
+      "ApiKeySecretJWTTemplate": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ]
+      },
       "ApiKeyResponse": {
         "type": "object",
         "properties": {
@@ -10382,6 +11269,50 @@
           },
           "api_key": {
             "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "nullable": true,
+            "type": "object"
+          },
+          "prefix": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "hash": {
+            "type": "string",
+            "nullable": true
+          },
+          "secret_jwt_template": {
+            "nullable": true,
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            ]
+          },
+          "inserted_at": {
+            "type": "string",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": [
@@ -10389,14 +11320,109 @@
           "api_key"
         ]
       },
+      "CreateApiKeyBody": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "publishable",
+              "secret"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "secret_jwt_template": {
+            "nullable": true,
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "UpdateApiKeyBody": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "secret_jwt_template": {
+            "nullable": true,
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "role"
+                ]
+              }
+            ]
+          }
+        }
+      },
       "CreateBranchBody": {
         "type": "object",
         "properties": {
+          "desired_instance_size": {
+            "type": "string",
+            "enum": [
+              "micro",
+              "small",
+              "medium",
+              "large",
+              "xlarge",
+              "2xlarge",
+              "4xlarge",
+              "8xlarge",
+              "12xlarge",
+              "16xlarge"
+            ]
+          },
+          "release_channel": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "alpha",
+              "beta",
+              "ga",
+              "withdrawn"
+            ]
+          },
+          "postgres_engine": {
+            "type": "string",
+            "description": "Postgres engine version. If not provided, the latest version will be used.",
+            "enum": [
+              "15"
+            ]
+          },
           "branch_name": {
             "type": "string"
           },
           "git_branch": {
             "type": "string"
+          },
+          "persistent": {
+            "type": "boolean"
           },
           "region": {
             "type": "string"
@@ -11235,11 +12261,22 @@
       "UpgradeDatabaseBody": {
         "type": "object",
         "properties": {
+          "release_channel": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "alpha",
+              "beta",
+              "ga",
+              "withdrawn"
+            ]
+          },
           "target_version": {
-            "type": "number"
+            "type": "string"
           }
         },
         "required": [
+          "release_channel",
           "target_version"
         ]
       },
@@ -11258,7 +12295,21 @@
         "type": "object",
         "properties": {
           "postgres_version": {
-            "type": "number"
+            "type": "string",
+            "description": "Postgres engine version. If not provided, the latest version will be used.",
+            "enum": [
+              "15"
+            ]
+          },
+          "release_channel": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "alpha",
+              "beta",
+              "ga",
+              "withdrawn"
+            ]
           },
           "app_version": {
             "type": "string"
@@ -11266,12 +12317,23 @@
         },
         "required": [
           "postgres_version",
+          "release_channel",
           "app_version"
         ]
       },
       "ProjectUpgradeEligibilityResponse": {
         "type": "object",
         "properties": {
+          "current_app_version_release_channel": {
+            "type": "string",
+            "enum": [
+              "internal",
+              "alpha",
+              "beta",
+              "ga",
+              "withdrawn"
+            ]
+          },
           "eligible": {
             "type": "boolean"
           },
@@ -11287,7 +12349,21 @@
               "type": "object",
               "properties": {
                 "postgres_version": {
-                  "type": "number"
+                  "type": "string",
+                  "description": "Postgres engine version. If not provided, the latest version will be used.",
+                  "enum": [
+                    "15"
+                  ]
+                },
+                "release_channel": {
+                  "type": "string",
+                  "enum": [
+                    "internal",
+                    "alpha",
+                    "beta",
+                    "ga",
+                    "withdrawn"
+                  ]
                 },
                 "app_version": {
                   "type": "string"
@@ -11295,6 +12371,7 @@
               },
               "required": [
                 "postgres_version",
+                "release_channel",
                 "app_version"
               ]
             }
@@ -11322,6 +12399,7 @@
           }
         },
         "required": [
+          "current_app_version_release_channel",
           "eligible",
           "current_app_version",
           "latest_app_version",
@@ -11487,6 +12565,7 @@
             "type": "string",
             "enum": [
               "us-east-1",
+              "us-east-2",
               "us-west-1",
               "us-west-2",
               "ap-east-1",
@@ -11497,7 +12576,9 @@
               "eu-west-1",
               "eu-west-2",
               "eu-west-3",
+              "eu-north-1",
               "eu-central-1",
+              "eu-central-2",
               "ca-central-1",
               "ap-south-1",
               "sa-east-1"
@@ -11639,10 +12720,10 @@
       "PostgresConfigResponse": {
         "type": "object",
         "properties": {
-          "statement_timeout": {
+          "effective_cache_size": {
             "type": "string"
           },
-          "effective_cache_size": {
+          "logical_decoding_work_mem": {
             "type": "string"
           },
           "maintenance_work_mem": {
@@ -11673,11 +12754,23 @@
             "minimum": 0,
             "maximum": 1024
           },
+          "max_replication_slots": {
+            "type": "integer"
+          },
+          "max_slot_wal_keep_size": {
+            "type": "string"
+          },
           "max_standby_archive_delay": {
             "type": "string"
           },
           "max_standby_streaming_delay": {
             "type": "string"
+          },
+          "max_wal_size": {
+            "type": "string"
+          },
+          "max_wal_senders": {
+            "type": "integer"
           },
           "max_worker_processes": {
             "type": "integer",
@@ -11685,6 +12778,15 @@
             "maximum": 262143
           },
           "shared_buffers": {
+            "type": "string"
+          },
+          "statement_timeout": {
+            "type": "string"
+          },
+          "wal_keep_size": {
+            "type": "string"
+          },
+          "wal_sender_timeout": {
             "type": "string"
           },
           "work_mem": {
@@ -11703,10 +12805,10 @@
       "UpdatePostgresConfigBody": {
         "type": "object",
         "properties": {
-          "statement_timeout": {
+          "effective_cache_size": {
             "type": "string"
           },
-          "effective_cache_size": {
+          "logical_decoding_work_mem": {
             "type": "string"
           },
           "maintenance_work_mem": {
@@ -11737,11 +12839,23 @@
             "minimum": 0,
             "maximum": 1024
           },
+          "max_replication_slots": {
+            "type": "integer"
+          },
+          "max_slot_wal_keep_size": {
+            "type": "string"
+          },
           "max_standby_archive_delay": {
             "type": "string"
           },
           "max_standby_streaming_delay": {
             "type": "string"
+          },
+          "max_wal_size": {
+            "type": "string"
+          },
+          "max_wal_senders": {
+            "type": "integer"
           },
           "max_worker_processes": {
             "type": "integer",
@@ -11751,8 +12865,20 @@
           "shared_buffers": {
             "type": "string"
           },
+          "statement_timeout": {
+            "type": "string"
+          },
+          "wal_keep_size": {
+            "type": "string"
+          },
+          "wal_sender_timeout": {
+            "type": "string"
+          },
           "work_mem": {
             "type": "string"
+          },
+          "restart_database": {
+            "type": "boolean"
           },
           "session_replication_role": {
             "enum": [
@@ -12336,6 +13462,14 @@
             "type": "boolean",
             "nullable": true
           },
+          "mfa_web_authn_enroll_enabled": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "mfa_web_authn_verify_enabled": {
+            "type": "boolean",
+            "nullable": true
+          },
           "mfa_phone_otp_length": {
             "type": "number"
           },
@@ -12393,6 +13527,10 @@
           },
           "saml_external_url": {
             "type": "string",
+            "nullable": true
+          },
+          "saml_allow_encrypted_assertions": {
+            "type": "boolean",
             "nullable": true
           },
           "security_captcha_enabled": {
@@ -12671,6 +13809,8 @@
           "mfa_totp_verify_enabled",
           "mfa_phone_enroll_enabled",
           "mfa_phone_verify_enabled",
+          "mfa_web_authn_enroll_enabled",
+          "mfa_web_authn_verify_enabled",
           "mfa_phone_otp_length",
           "mfa_phone_template",
           "mfa_phone_max_frequency",
@@ -12686,6 +13826,7 @@
           "refresh_token_rotation_enabled",
           "saml_enabled",
           "saml_external_url",
+          "saml_allow_encrypted_assertions",
           "security_captcha_enabled",
           "security_captcha_provider",
           "security_captcha_secret",
@@ -13260,6 +14401,12 @@
             "type": "boolean"
           },
           "mfa_totp_verify_enabled": {
+            "type": "boolean"
+          },
+          "mfa_web_authn_enroll_enabled": {
+            "type": "boolean"
+          },
+          "mfa_web_authn_verify_enabled": {
             "type": "boolean"
           },
           "mfa_phone_enroll_enabled": {
@@ -14625,6 +15772,19 @@
               ]
             }
           },
+          "allowed_release_channels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "internal",
+                "alpha",
+                "beta",
+                "ga",
+                "withdrawn"
+              ]
+            }
+          },
           "id": {
             "type": "string"
           },
@@ -14634,6 +15794,7 @@
         },
         "required": [
           "opt_in_tags",
+          "allowed_release_channels",
           "id",
           "name"
         ]
