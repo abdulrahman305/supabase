@@ -3,8 +3,8 @@ import { PropsWithChildren } from 'react'
 
 import { withAuth } from 'hooks/misc/withAuth'
 import { BASE_PATH } from 'lib/constants'
+import { ChevronRight } from 'lucide-react'
 import type { Organization, Project } from 'types'
-import { IconChevronRight } from 'ui'
 import { FeedbackDropdown } from './ProjectLayout/LayoutHeader/FeedbackDropdown'
 import HelpPopover from './ProjectLayout/LayoutHeader/HelpPopover'
 
@@ -50,17 +50,13 @@ const Header = ({ organization, project }: WizardLayoutProps) => {
                   style={{ height: 24 }}
                 />
               </Link>
-              <IconChevronRight size="small" className="text-foreground-light" />
+              <ChevronRight size="18" className="text-foreground-light" strokeWidth={1} />
               <p className="text-sm">
                 {organization ? `Organization: ${organization.name}` : 'Create an organization'}
               </p>
-              <IconChevronRight size="small" className="text-foreground-light" />
+              <ChevronRight size="18" className="text-foreground-light" strokeWidth={1} />
               <p className={`text-sm ${stepNumber < 1 ? 'text-foreground-light' : ''}`}>
                 {project ? project.name : 'Create a new project'}
-              </p>
-              <IconChevronRight size="small" className="text-foreground-light" />
-              <p className={`text-sm ${stepNumber < 2 ? 'text-foreground-light' : ''}`}>
-                {project ? project.name : 'Extend your database'}
               </p>
             </div>
           </div>

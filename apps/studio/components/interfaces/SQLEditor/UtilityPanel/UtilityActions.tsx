@@ -1,8 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query'
 import {
   AlignLeft,
   Check,
-  ChevronDown,
   Command,
   CornerDownLeft,
   Heart,
@@ -10,24 +8,20 @@ import {
   Loader2,
   MoreVertical,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 
+import { useParams } from 'common'
 import { RoleImpersonationPopover } from 'components/interfaces/RoleImpersonationSelector'
-import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import DatabaseSelector from 'components/ui/DatabaseSelector'
-import { Content, ContentData } from 'data/content/content-query'
-import { contentKeys } from 'data/content/keys'
 import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
 import { IS_PLATFORM, LOCAL_STORAGE_KEYS } from 'lib/constants'
 import { detectOS } from 'lib/helpers'
-import { useSqlEditorStateSnapshot } from 'state/sql-editor'
+import { useSqlEditorV2StateSnapshot } from 'state/sql-editor-v2'
 import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   TooltipContent_Shadcn_,
@@ -36,16 +30,6 @@ import {
   cn,
 } from 'ui'
 import SavingIndicator from './SavingIndicator'
-import { useSqlEditorV2StateSnapshot } from 'state/sql-editor-v2'
-import { useFlag } from 'hooks/ui/useFlag'
-import { Snippet } from 'data/content/sql-folders-query'
-
-const ROWS_PER_PAGE_OPTIONS = [
-  { value: -1, label: 'No limit' },
-  { value: 100, label: '100 rows' },
-  { value: 500, label: '500 rows' },
-  { value: 1000, label: '1,000 rows' },
-]
 
 export type UtilityActionsProps = {
   id: string
@@ -65,26 +49,21 @@ const UtilityActions = ({
   executeQuery,
 }: UtilityActionsProps) => {
   const os = detectOS()
-  const client = useQueryClient()
-  const { project } = useProjectContext()
-
-  const snap = useSqlEditorStateSnapshot()
+  const { ref } = useParams()
   const snapV2 = useSqlEditorV2StateSnapshot()
-  const enableFolders = useFlag('sqlFolderOrganization')
 
   const [isAiOpen] = useLocalStorageQuery(LOCAL_STORAGE_KEYS.SQL_EDITOR_AI_OPEN, true)
   const [intellisenseEnabled, setIntellisenseEnabled] = useLocalStorageQuery(
     LOCAL_STORAGE_KEYS.SQL_EDITOR_INTELLISENSE,
     true
   )
+  const [lastSelectedDb, setLastSelectedDb] = useLocalStorageQuery(
+    LOCAL_STORAGE_KEYS.SQL_EDITOR_LAST_SELECTED_DB(ref as string),
+    ''
+  )
 
-  const snippet = enableFolders ? snapV2.snippets[id] : snap.snippets[id]
-  const isFavorite =
-    snippet !== undefined
-      ? enableFolders
-        ? (snippet.snippet as Snippet).favorite
-        : snippet.snippet.content.favorite
-      : false
+  const snippet = snapV2.snippets[id]
+  const isFavorite = snippet !== undefined ? snippet.snippet.favorite : false
 
   const toggleIntellisense = () => {
     setIntellisenseEnabled(!intellisenseEnabled)
@@ -93,60 +72,13 @@ const UtilityActions = ({
     )
   }
 
-  const addFavorite = async () => {
-    if (enableFolders) {
-      snapV2.addFavorite(id)
-    } else {
-      snap.addFavorite(id)
-    }
+  const addFavorite = () => snapV2.addFavorite(id)
 
-    client.setQueryData<ContentData>(
-      contentKeys.list(project?.ref),
-      (oldData: ContentData | undefined) => {
-        if (!oldData) return
+  const removeFavorite = () => snapV2.removeFavorite(id)
 
-        return {
-          ...oldData,
-          content: oldData.content.map((content: Content) => {
-            if (content.type === 'sql' && content.id === id) {
-              return {
-                ...content,
-                content: { ...content.content, favorite: true },
-              }
-            }
-            return content
-          }),
-        }
-      }
-    )
-  }
-
-  const removeFavorite = async () => {
-    if (enableFolders) {
-      snapV2.removeFavorite(id)
-    } else {
-      snap.removeFavorite(id)
-    }
-
-    client.setQueryData<ContentData>(
-      contentKeys.list(project?.ref),
-      (oldData: ContentData | undefined) => {
-        if (!oldData) return
-
-        return {
-          ...oldData,
-          content: oldData.content.map((content: Content) => {
-            if (content.type === 'sql' && content.id === id) {
-              return {
-                ...content,
-                content: { ...content.content, favorite: false },
-              }
-            }
-            return content
-          }),
-        }
-      }
-    )
+  const onSelectDatabase = (databaseId: string) => {
+    snapV2.resetResult(id)
+    setLastSelectedDb(databaseId)
   }
 
   return (
@@ -158,7 +90,7 @@ const UtilityActions = ({
           <Button
             type="default"
             className={cn('px-1', isAiOpen ? 'block 2xl:hidden' : 'hidden')}
-            icon={<MoreVertical size={14} className="text-foreground-light" />}
+            icon={<MoreVertical className="text-foreground-light" />}
           />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48">
@@ -199,7 +131,7 @@ const UtilityActions = ({
             <Button
               type="text"
               className="px-1"
-              icon={<Keyboard size={14} className="text-foreground-light" />}
+              icon={<Keyboard className="text-foreground-light" />}
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-48">
@@ -250,41 +182,12 @@ const UtilityActions = ({
         </Tooltip_Shadcn_>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button type="default" iconRight={<ChevronDown size={14} />}>
-            {
-              ROWS_PER_PAGE_OPTIONS.find(
-                (opt) => opt.value === (enableFolders ? snapV2.limit : snap.limit)
-              )?.label
-            }
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-42">
-          <DropdownMenuRadioGroup
-            value={enableFolders ? snapV2.limit.toString() : snap.limit.toString()}
-            onValueChange={(val) => {
-              if (enableFolders) snapV2.setLimit(Number(val))
-              else snap.setLimit(Number(val))
-            }}
-          >
-            {ROWS_PER_PAGE_OPTIONS.map((option) => (
-              <DropdownMenuRadioItem key={option.label} value={option.value.toString()}>
-                {option.label}
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
       <div className="flex items-center justify-between gap-x-2">
         <div className="flex items-center">
           <DatabaseSelector
+            selectedDatabaseId={lastSelectedDb.length === 0 ? undefined : lastSelectedDb}
             variant="connected-on-right"
-            onSelectId={() => {
-              if (enableFolders) snapV2.resetResult(id)
-              else snap.resetResult(id)
-            }}
+            onSelectId={onSelectDatabase}
           />
           <RoleImpersonationPopover serviceRoleLabel="postgres" variant="connected-on-both" />
           <Button
@@ -306,7 +209,7 @@ const UtilityActions = ({
                 </div>
               )
             }
-            className="rounded-l-none"
+            className="rounded-l-none min-w-[82px]"
           >
             {hasSelection ? 'Run selected' : 'Run'}
           </Button>

@@ -1,18 +1,19 @@
-import type { OrgSubscription } from 'data/subscriptions/types'
-import SectionContent from './SectionContent'
-import ShimmeringLoader from 'components/ui/ShimmeringLoader'
-import AlertError from 'components/ui/AlertError'
 import { useMemo } from 'react'
-import { useOrgUsageQuery } from 'data/usage/org-usage-query'
-import BillingMetric from '../BillingSettings/BillingBreakdown/BillingMetric'
-import { BILLING_BREAKDOWN_METRICS } from '../BillingSettings/BillingBreakdown/BillingBreakdown.constants'
-import ComputeMetric from '../BillingSettings/BillingBreakdown/ComputeMetric'
-import clsx from 'clsx'
+
+import AlertError from 'components/ui/AlertError'
+import ShimmeringLoader from 'components/ui/ShimmeringLoader'
 import {
   ComputeUsageMetric,
   computeUsageMetricLabel,
   PricingMetric,
 } from 'data/analytics/org-daily-stats-query'
+import type { OrgSubscription } from 'data/subscriptions/types'
+import { useOrgUsageQuery } from 'data/usage/org-usage-query'
+import { cn } from 'ui'
+import { BILLING_BREAKDOWN_METRICS } from '../BillingSettings/BillingBreakdown/BillingBreakdown.constants'
+import BillingMetric from '../BillingSettings/BillingBreakdown/BillingMetric'
+import ComputeMetric from '../BillingSettings/BillingBreakdown/ComputeMetric'
+import SectionContent from './SectionContent'
 
 export interface ComputeProps {
   orgSlug: string
@@ -73,7 +74,7 @@ const TotalUsage = ({
     if (!usage) return []
 
     const breakdownMetrics = BILLING_BREAKDOWN_METRICS.filter((metric) =>
-      usage.usages.some((usage) => !usage.available_in_plan || usage.metric === metric.key)
+      usage.usages.some((usage) => usage.metric === metric.key)
     ).filter((metric) => {
       if (!METRICS_TO_HIDE_WITH_NO_USAGE.includes(metric.key as PricingMetric)) return true
 
@@ -114,8 +115,8 @@ const TotalUsage = ({
         section={{
           name: 'Usage Summary',
           description: isUsageBillingEnabled
-            ? `Your plan includes a limited amount of usage. If the usage on your organization exceeds these quotas, your subscription will be charged for the overages. It may take up to ${subscription?.usage_based_billing_project_addons ? '1 hour' : '24 hours'} for usage stats to update.`
-            : `Your plan includes a limited amount of usage. If the usage on your organization exceeds these quotas, you may experience restrictions, as you are currently not billed for overages. It may take up to ${subscription?.usage_based_billing_project_addons ? '1 hour' : '24 hours'} for usage stats to update.`,
+            ? `Your plan includes a limited amount of usage. If exceeded, you will be charged for the overages. It may take up to 1 hour to refresh.`
+            : `Your plan includes a limited amount of usage. If exceeded, you may experience restrictions, as you are currently not billed for overages. It may take up to 1 hour to refresh.`,
           links: [
             {
               name: 'How billing works',
@@ -145,13 +146,13 @@ const TotalUsage = ({
                 {!hasExceededAnyLimits ? (
                   <span>
                     You have not exceeded your{' '}
-                    <span className="font-medium">{subscription?.plan.name}</span> plan quota in
+                    <span className="font-medium">{subscription?.plan.name}</span> Plan quota in
                     this billing cycle.
                   </span>
                 ) : hasExceededAnyLimits && subscription?.plan?.id === 'free' ? (
                   <span>
                     You have exceeded your{' '}
-                    <span className="font-medium">{subscription?.plan.name}</span> plan quota in
+                    <span className="font-medium">{subscription?.plan.name}</span> Plan quota in
                     this billing cycle. Upgrade your plan to continue using Supabase without
                     restrictions.
                   </span>
@@ -160,20 +161,20 @@ const TotalUsage = ({
                   subscription?.plan?.id === 'pro' ? (
                   <span>
                     You have exceeded your{' '}
-                    <span className="font-medium">{subscription?.plan.name}</span> plan quota in
+                    <span className="font-medium">{subscription?.plan.name}</span> Plan quota in
                     this billing cycle. Disable your spend cap to continue using Supabase without
                     restrictions.
                   </span>
                 ) : hasExceededAnyLimits && subscription?.usage_billing_enabled === true ? (
                   <span>
                     You have exceeded your{' '}
-                    <span className="font-medium">{subscription?.plan.name}</span> plan quota in
+                    <span className="font-medium">{subscription?.plan.name}</span> Plan quota in
                     this billing cycle and will be charged for over-usage.
                   </span>
                 ) : (
                   <span>
                     You have not exceeded your{' '}
-                    <span className="font-medium">{subscription?.plan.name}</span> plan quota in
+                    <span className="font-medium">{subscription?.plan.name}</span> Plan quota in
                     this billing cycle.
                   </span>
                 )}
@@ -183,7 +184,7 @@ const TotalUsage = ({
               {sortedBillingMetrics.map((metric, i) => {
                 return (
                   <div
-                    className={clsx(
+                    className={cn(
                       'col-span-12 md:col-span-6 space-y-4 py-4 border-overlay',
                       i % 2 === 0 ? 'md:border-r md:pr-4' : 'md:pl-4',
                       'border-b'
@@ -204,7 +205,7 @@ const TotalUsage = ({
 
               {computeMetrics.map((metric, i) => (
                 <div
-                  className={clsx(
+                  className={cn(
                     'col-span-12 md:col-span-6 space-y-4 py-4 border-overlay',
                     (i + sortedBillingMetrics.length) % 2 === 0 ? 'md:border-r md:pr-4' : 'md:pl-4',
                     'border-b'

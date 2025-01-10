@@ -23,6 +23,7 @@ import {
   Popover_Shadcn_,
   ScrollArea,
 } from 'ui'
+import PartnerIcon from 'components/ui/PartnerIcon'
 
 interface OrganizationDropdownProps {
   isNewNav?: boolean
@@ -49,14 +50,12 @@ const OrganizationDropdown = ({ isNewNav = false }: OrganizationDropdownProps) =
     <div className="flex items-center">
       <Popover_Shadcn_ open={open} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger_Shadcn_ asChild>
-          <div className="flex items-center space-x-2 cursor-pointer">
-            <Button type="text" className="pr-2" iconRight={<ChevronsUpDown />}>
-              <div className="flex items-center space-x-2">
-                <p className={isNewNav ? 'text-sm' : 'text-xs'}>{orgName}</p>
-                {isSuccess && <Badge variant="default">{subscription?.plan.name}</Badge>}
-              </div>
-            </Button>
-          </div>
+          <Button type="text" className="pr-2" iconRight={<ChevronsUpDown />}>
+            <div className="flex items-center space-x-2">
+              <p className={isNewNav ? 'text-sm' : 'text-xs'}>{orgName}</p>
+              {isSuccess && <Badge variant="default">{subscription?.plan.name}</Badge>}
+            </div>
+          </Button>
         </PopoverTrigger_Shadcn_>
         <PopoverContent_Shadcn_ className="p-0" side="bottom" align="start">
           <Command_Shadcn_>
@@ -83,7 +82,10 @@ const OrganizationDropdown = ({ isNewNav = false }: OrganizationDropdownProps) =
                         onClick={() => setOpen(false)}
                       >
                         <Link href={href} className="w-full flex items-center justify-between">
-                          {org.name}
+                          <div className="flex items-center gap-2">
+                            <span>{org.name}</span>
+                            <PartnerIcon organization={org} />
+                          </div>
                           {org.slug === slug && <Check size={16} />}
                         </Link>
                       </CommandItem_Shadcn_>

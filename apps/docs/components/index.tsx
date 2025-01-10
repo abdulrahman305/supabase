@@ -4,16 +4,18 @@
 
 // Basic UI things
 import Link from 'next/link'
-import { Accordion, Admonition, Alert, Button, CodeBlock, Image, markdownComponents } from 'ui'
+import { Accordion, Alert, Button, CodeBlock, Image, markdownComponents } from 'ui'
+import { Admonition } from 'ui-patterns/admonition'
 import { GlassPanel } from 'ui-patterns/GlassPanel'
 import { IconPanel } from 'ui-patterns/IconPanel'
 import { TabPanel, Tabs } from '~/features/ui/Tabs'
 
 // Common components
 import { CH } from '@code-hike/mdx/components'
+import { ArrowDown, Check } from 'lucide-react'
+import { Heading } from 'ui'
 import StepHikeCompact from '~/components/StepHikeCompact'
 import ButtonCard from './ButtonCard'
-import { Heading } from 'ui'
 
 // Reference guide specific
 // [Charis] I think we can factor these out so they aren't in the bundle for absolutely everything
@@ -46,9 +48,9 @@ import ProjectSetup from './MDX/project_setup.mdx'
 import QuickstartIntro from './MDX/quickstart_intro.mdx'
 import SocialProviderSettingsSupabase from './MDX/social_provider_settings_supabase.mdx'
 import SocialProviderSetup from './MDX/social_provider_setup.mdx'
+import PostgresInstallation from './MDX/postgres_installation.mdx'
 
 // Icons
-import { IconArrowDown, IconCheck } from 'ui'
 import {
   IconMenuApi,
   IconMenuAuth,
@@ -73,7 +75,7 @@ import {
 } from './Navigation/NavigationMenu/MenuIcons'
 
 // Heavy/rare (lazy-loaded)
-import SqlToRest from '@ui-patterns/SqlToRest'
+import SqlToRest from 'ui-patterns/SqlToRest'
 import { AppleSecretGenerator } from './AppleSecretGenerator'
 import { AuthSmsProviderConfig } from './AuthSmsProviderConfig'
 import { Extensions } from './Extensions'
@@ -120,9 +122,9 @@ const components = {
     </Heading>
   ),
   HuggingFaceDeployment,
-  IconCheck,
+  IconCheck: Check,
   IconMenuApi,
-  IconArrowDown,
+  IconArrowDown: ArrowDown,
   IconMenuAuth,
   IconMenuCli,
   IconMenuCsharp,
@@ -161,6 +163,7 @@ const components = {
   SharedData,
   SocialProviderSettingsSupabase,
   SocialProviderSetup,
+  PostgresInstallation,
   SqlToRest,
   StepHikeCompact,
   table: Table,

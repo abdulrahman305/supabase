@@ -58,15 +58,28 @@ export const pricing: Pricing = {
       {
         title: 'Database size',
         tooltips: {
-          main: 'Billing is based on the average daily database size in GB throughout the billing period.',
+          main: 'Billing is based on the provisioned disk size. Paid plan projects get provisioned with 8GB of disk by default and autoscale to 1.5x the size once you get close to the limit. The first 8GB of disk per project comes with no additional fees.\nFree plan customers are limited to 500MB database space usage per organization.',
         },
         plans: {
-          free: '500 MB included',
-          pro: ['8 GB included', 'then $0.125 per GB'],
-          team: ['8 GB included', 'then $0.125 per GB'],
+          free: '500 MB database space included',
+          pro: ['8 GB disk size per project included', 'then $0.125 per GB'],
+          team: ['8 GB disk size per project included', 'then $0.125 per GB'],
           enterprise: 'Custom',
         },
         usage_based: true,
+      },
+      {
+        title: 'Advanced disk config',
+        tooltips: {
+          main: 'Supabase databases are backed by high performance SSD disks. The disk can be scaled up to 60 TB, 80,000 IOPS and 4,000 Mbps throughput.',
+        },
+        plans: {
+          free: false,
+          pro: true,
+          team: true,
+          enterprise: true,
+        },
+        usage_based: false,
       },
       {
         title: 'Automatic backups',
@@ -339,7 +352,7 @@ export const pricing: Pricing = {
       {
         title: 'Storage',
         tooltips: {
-          main: "The sum of all objects' size in your storage buckets.\nBilling is based on the average daily size in GB throughout your billing period.",
+          main: "The sum of all objects' size in your storage buckets.\nBilling is prorated down to the hour and will be displayed as GB-Hrs on your invoice.",
         },
         plans: {
           free: '1 GB included',
@@ -428,9 +441,9 @@ export const pricing: Pricing = {
       {
         title: 'Script size',
         plans: {
-          free: '10 MB',
-          pro: '10 MB',
-          team: '10 MB',
+          free: '20 MB',
+          pro: '20 MB',
+          team: '20 MB',
           enterprise: 'Custom',
         },
         usage_based: false,
