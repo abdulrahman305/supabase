@@ -11,8 +11,11 @@ import { ForeignRowSelectorProps } from 'components/interfaces/TableGridEditor/S
 import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import AlertError from 'components/ui/AlertError'
 import { useForeignKeyConstraintsQuery } from 'data/database/foreign-key-constraints-query'
+import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { useUrlState } from 'hooks/ui/useUrlState'
 import { copyToClipboard } from 'lib/helpers'
+import { useTableEditorTableStateSnapshot } from 'state/table-editor-table'
 import { Button, cn } from 'ui'
 import { useDispatch, useTrackedState } from '../../store/Store'
 import type { Filter, GridProps, SupaRow } from '../../types'
@@ -74,6 +77,7 @@ export const Grid = memo(
       ref: React.Ref<DataGridHandle> | undefined
     ) => {
       const dispatch = useDispatch()
+      const snap = useTableEditorTableStateSnapshot()
       const state = useTrackedState()
 
       function onColumnResize(index: number, width: number) {
@@ -92,11 +96,8 @@ export const Grid = memo(
         }
       }
 
-      function onSelectedRowsChange(selectedRows: ReadonlySet<number>) {
-        dispatch({
-          type: 'SELECTED_ROWS_CHANGE',
-          payload: { selectedRows },
-        })
+      function onSelectedRowsChange(selectedRows: Set<number>) {
+        snap.setSelectedRows(selectedRows)
       }
 
       const selectedCellRef = useRef<{ rowIdx: number; row: any; column: any } | null>(null)
@@ -125,14 +126,13 @@ export const Grid = memo(
 
       function onSelectedCellChange(args: { rowIdx: number; row: any; column: any }) {
         selectedCellRef.current = args
-        dispatch({
-          type: 'SELECTED_CELL_CHANGE',
-          payload: { position: { idx: args.column.idx, rowIdx: args.rowIdx } },
-        })
+        snap.setSelectedCellPosition({ idx: args.column.idx, rowIdx: args.rowIdx })
       }
 
       const table = state.table
 
+      const { mutate: sendEvent } = useSendEventMutation()
+      const org = useSelectedOrganization()
       const { project } = useProjectContext()
       const { data } = useForeignKeyConstraintsQuery({
         projectRef: project?.ref,
@@ -214,8 +214,21 @@ export const Grid = memo(
                               </p>
                               <div className="flex items-center space-x-2 mt-4">
                                 {onAddRow !== undefined && onImportData !== undefined && (
-                                  <Button type="default" onClick={onImportData}>
-                                    Import data via CSV
+                                  <Button
+                                    type="default"
+                                    onClick={() => {
+                                      onImportData()
+                                      sendEvent({
+                                        action: 'import_data_button_clicked',
+                                        properties: { tableType: 'Existing Table' },
+                                        groups: {
+                                          project: project?.ref ?? 'Unknown',
+                                          organization: org?.slug ?? 'Unknown',
+                                        },
+                                      })
+                                    }}
+                                  >
+                                    Import data from CSV
                                   </Button>
                                 )}
                               </div>
@@ -243,7 +256,7 @@ export const Grid = memo(
               ),
             }}
             rowKeyGetter={rowKeyGetter}
-            selectedRows={state.selectedRows}
+            selectedRows={snap.selectedRows}
             onColumnResize={onColumnResize}
             onRowsChange={onRowsChange}
             onSelectedCellChange={onSelectedCellChange}

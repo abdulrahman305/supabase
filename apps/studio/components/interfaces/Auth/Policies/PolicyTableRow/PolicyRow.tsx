@@ -18,9 +18,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Tooltip_Shadcn_,
-  TooltipContent_Shadcn_,
-  TooltipTrigger_Shadcn_,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from 'ui'
 import { generatePolicyCreateSQL } from './PolicyTableRow.utils'
 
@@ -67,6 +67,13 @@ const PolicyRow = ({
           </p>
 
           <div className="flex flex-col gap-y-1">
+            <Button
+              type="text"
+              className="text-foreground p-0 hover:bg-transparent"
+              onClick={() => onSelectEditPolicy(policy)}
+            >
+              {policy.name}
+            </Button>
             <p className="text-sm text-foreground">{policy.name}</p>
             <div className="flex items-center gap-x-1">
               <div className="text-foreground-lighter text-sm">
@@ -79,16 +86,16 @@ const PolicyRow = ({
                 role
               </div>
               {policy.roles.length > 3 && (
-                <Tooltip_Shadcn_>
-                  <TooltipTrigger_Shadcn_ asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <code key="policy-etc" className="text-foreground-light text-xs">
                       + {policy.roles.length - 3} more roles
                     </code>
-                  </TooltipTrigger_Shadcn_>
-                  <TooltipContent_Shadcn_ side="bottom" align="center">
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="center">
                     {policy.roles.slice(3).join(', ')}
-                  </TooltipContent_Shadcn_>
-                </Tooltip_Shadcn_>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           </div>
