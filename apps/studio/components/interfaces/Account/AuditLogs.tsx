@@ -15,6 +15,7 @@ import { useProfileAuditLogsQuery } from 'data/profile/profile-audit-logs-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
 import { Alert, Button } from 'ui'
 import { TimestampInfo } from 'ui-patterns'
+import { formatSelectedDateRange } from '../Organization/AuditLogs/AuditLogs.utils'
 
 const AuditLogs = () => {
   const currentTime = dayjs().utc().set('millisecond', 0)
@@ -37,6 +38,25 @@ const AuditLogs = () => {
       iso_timestamp_end: dateRange.to,
     })
 
+  const retentionPeriod = data?.retention_period ?? 0
+  const logs = data?.result ?? []
+  const sortedLogs = logs
+    ?.sort((a, b) =>
+      dateSortDesc
+        ? Number(new Date(b.occurred_at)) - Number(new Date(a.occurred_at))
+        : Number(new Date(a.occurred_at)) - Number(new Date(b.occurred_at))
+    )
+    ?.filter((log) => {
+      if (filters.projects.length > 0) {
+        return filters.projects.includes(log.target.metadata.project_ref || '')
+      } else {
+        return log
+      }
+    })
+
+  const minDate = dayjs().subtract(retentionPeriod, 'days')
+  const maxDate = dayjs()
+
   // This feature depends on the subscription tier of the user. Free user can view logs up to 1 day
   // in the past. The API limits the logs to maximum of 1 day and 5 minutes so when the page is
   // viewed for more than 5 minutes, the call parameters needs to be updated. This also works with
@@ -53,22 +73,6 @@ const AuditLogs = () => {
 
     return () => clearInterval(interval)
   }, [dateRange.from, dateRange.to])
-
-  const retentionPeriod = data?.retention_period ?? 0
-  const logs = data?.result ?? []
-  const sortedLogs = logs
-    ?.sort((a, b) =>
-      dateSortDesc
-        ? Number(new Date(b.occurred_at)) - Number(new Date(a.occurred_at))
-        : Number(new Date(a.occurred_at)) - Number(new Date(b.occurred_at))
-    )
-    ?.filter((log) => {
-      if (filters.projects.length > 0) {
-        return filters.projects.includes(log.target.metadata.project_ref || '')
-      } else {
-        return log
-      }
-    })
 
   return (
     <>
@@ -91,47 +95,12 @@ const AuditLogs = () => {
               triggerButtonTitle=""
               from={dateRange.from}
               to={dateRange.to}
-              minDate={dayjs().subtract(retentionPeriod, 'days').toDate()}
-              maxDate={dayjs().toDate()}
+              minDate={minDate.toDate()}
+              maxDate={maxDate.toDate()}
               onChange={(value) => {
                 if (value.from !== null && value.to !== null) {
-                  const current = dayjs()
-                  const from = dayjs(value.from)
-                    .hour(current.hour())
-                    .minute(current.minute())
-                    .second(current.second())
-                  const to = dayjs(value.to)
-                    .hour(current.hour())
-                    .minute(current.minute())
-                    .second(current.second())
-
-                  if (from.date() === to.date()) {
-                    // [Joshen] If a single date is selected, we either set the "from" to start from 00:00
-                    // or "to" to end at 23:59 depending on which date was selected
-                    if (from.date() === current.date()) {
-                      setDateRange({
-                        from: from
-                          .set('hour', 0)
-                          .set('minute', 0)
-                          .set('second', 0)
-                          .utc()
-                          .toISOString(),
-                        to: to.utc().toISOString(),
-                      })
-                    } else {
-                      setDateRange({
-                        from: from.utc().toISOString(),
-                        to: to
-                          .set('hour', 23)
-                          .set('minute', 59)
-                          .set('second', 59)
-                          .utc()
-                          .toISOString(),
-                      })
-                    }
-                  } else {
-                    setDateRange({ from: from.utc().toISOString(), to: to.utc().toISOString() })
-                  }
+                  const { from, to } = formatSelectedDateRange(value)
+                  setDateRange({ from, to })
                 }
               }}
               renderFooter={() => {

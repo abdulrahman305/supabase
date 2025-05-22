@@ -75,17 +75,18 @@ describe('Table Row Query', () => {
 
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(`
-        "select id,case
+        "with _base_query as (select * from public.test_enum_array order by test_enum_array.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
               end as name,status,
                 case 
                   when octet_length(history::text) > 10240 
-                  then (select array_cat(history[1:50]::text[], array['...']))::text[]
+                  then (select array_cat(history[1:50]::text[], array['...']::text[]))::text[]
                   else history::text[]
                 end
-               from public.test_enum_array order by test_enum_array.id asc nulls first limit 10 offset 0;"
+               from _base_query;"
       `)
 
       // Execute the generated SQL and verify the results
@@ -140,17 +141,18 @@ describe('Table Row Query', () => {
       })
 
       expect(filtersStatusSQL).toMatchInlineSnapshot(`
-        "select id,case
+        "with _base_query as (select * from public.test_enum_array where status = 'active' order by test_enum_array.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
               end as name,status,
                 case 
                   when octet_length(history::text) > 10240 
-                  then (select array_cat(history[1:50]::text[], array['...']))::text[]
+                  then (select array_cat(history[1:50]::text[], array['...']::text[]))::text[]
                   else history::text[]
                 end
-               from public.test_enum_array where status = 'active' order by test_enum_array.id asc nulls first limit 10 offset 0;"
+               from _base_query;"
       `)
       // Execute the filtered query
       const filtersStatusResult = await db.executeQuery(filtersStatusSQL)
@@ -178,17 +180,18 @@ describe('Table Row Query', () => {
       })
 
       expect(filtersHistorySQL).toMatchInlineSnapshot(`
-        "select id,case
+        "with _base_query as (select * from public.test_enum_array where history = ARRAY['active']::status_type[] order by test_enum_array.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
               end as name,status,
                 case 
                   when octet_length(history::text) > 10240 
-                  then (select array_cat(history[1:50]::text[], array['...']))::text[]
+                  then (select array_cat(history[1:50]::text[], array['...']::text[]))::text[]
                   else history::text[]
                 end
-               from public.test_enum_array where history = ARRAY['active']::status_type[] order by test_enum_array.id asc nulls first limit 10 offset 0;"
+               from _base_query;"
       `)
       const filtersHistoryResult = await db.executeQuery(filtersHistorySQL)
       expect(filtersHistoryResult).toMatchInlineSnapshot(`[]`)
@@ -223,17 +226,18 @@ describe('Table Row Query', () => {
         limit: 10,
       })
       expect(sql).toMatchInlineSnapshot(`
-        "select id,case
+        "with _base_query as (select * from public.test_array_table order by test_array_table.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
               end as name,
                 case 
                   when octet_length(tags::text) > 10240 
-                  then (select array_cat(tags[1:50]::text[], array['...']))::text[]
+                  then (select array_cat(tags[1:50]::text[], array['...']::text[]))::text[]
                   else tags::text[]
                 end
-               from public.test_array_table order by test_array_table.id asc nulls first limit 10 offset 0;"
+               from _base_query;"
       `)
 
       const queryResult = await db.executeQuery(sql)
@@ -301,7 +305,8 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_gen order by test_sql_gen.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
@@ -309,7 +314,7 @@ describe('Table Row Query', () => {
                 when octet_length(description::text) > 10240 
                 then left(description::text, 10240) || '...'
                 else description::text
-              end as description,created_at from public.test_sql_gen order by test_sql_gen.id asc nulls first limit 10 offset 0;"
+              end as description,created_at from _base_query;"
       `
       )
 
@@ -361,18 +366,19 @@ describe('Table Row Query', () => {
 
         // Verify the SQL contains the array truncation logic
         expect(sql).toMatchInlineSnapshot(`
-        "select id,case
-                when octet_length(name::text) > 2048 
-                then left(name::text, 2048) || '...'
-                else name::text
-              end as name,
-                case 
-                  when octet_length(large_array::text) > 2048 
-                  then (select array_cat(large_array[1:10]::text[], array['...']))::text[]
-                  else large_array::text[]
-                end
-               from public.test_large_array_table order by test_large_array_table.id asc nulls first limit 10 offset 0;"
-      `)
+          "with _base_query as (select * from public.test_large_array_table order by test_large_array_table.id asc nulls last limit 10 offset 0)
+            select id,case
+                  when octet_length(name::text) > 2048 
+                  then left(name::text, 2048) || '...'
+                  else name::text
+                end as name,
+                  case 
+                    when octet_length(large_array::text) > 2048 
+                    then (select array_cat(large_array[1:10]::text[], array['...']::text[]))::text[]
+                    else large_array::text[]
+                  end
+                 from _base_query;"
+        `)
 
         // Execute the SQL and verify results
         const queryResult = await db.executeQuery(sql)
@@ -515,6 +521,407 @@ describe('Table Row Query', () => {
       }
     )
 
+    withTestDatabase(
+      'should truncate large arrays of jsonb and json to maxArraySize elements if their size is > maxCharacters',
+      async (db) => {
+        // Create test table with array column
+        await db.executeQuery(`
+        CREATE TABLE test_large_array_table (
+          id SERIAL PRIMARY KEY,
+          name TEXT,
+          large_array_jsonb jsonb[],
+          large_array_json json[]
+        );
+
+        -- Insert test data with a large array (>10KB)
+        -- Create arrays with JSON objects
+        INSERT INTO test_large_array_table (name, large_array_jsonb, large_array_json) VALUES
+          (
+            'Large Array Item',
+            (SELECT array_agg(jsonb_build_object(
+              'id', i,
+              'name', 'element_' || i,
+              'data', jsonb_build_object('value', i * 10, 'active', true)
+            )) FROM generate_series(1, 1000) i),
+            (SELECT array_agg(json_build_object(
+              'id', i,
+              'name', 'element_' || i,
+              'data', json_build_object('value', i * 10, 'active', true)
+            )) FROM generate_series(1, 1000) i)
+          ),
+          (
+            'Large Array Small items',
+            (SELECT array_agg(jsonb_build_object(
+              'id', i,
+              'value', i
+            )) FROM generate_series(1, 100) i),
+            (SELECT array_agg(json_build_object(
+              'id', i,
+              'value', i
+            )) FROM generate_series(1, 100) i)
+          ),
+          (
+            'Normal Array Item',
+            ARRAY[
+              '{"id": 1, "tag": "tag1"}'::jsonb,
+              '{"id": 2, "tag": "tag2"}'::jsonb,
+              '{"id": 3, "tag": "tag3"}'::jsonb
+            ],
+            ARRAY[
+              '{"id": 1, "tag": "tag1"}'::json,
+              '{"id": 2, "tag": "tag2"}'::json,
+              '{"id": 3, "tag": "tag3"}'::json
+            ]
+          );
+      `)
+
+        // Get table metadata
+        const { sql: tablesSql, zod: tablesZod } = pgMeta.tables.list()
+        const tables = tablesZod.parse(await db.executeQuery(tablesSql))
+        const testTable = tables.find((table) => table.name === 'test_large_array_table')
+
+        expect(testTable).toBeDefined()
+
+        // Generate SQL with lower maxCharacters and maxArraySize limits
+        const sql = getTableRowsSql({
+          table: testTable!,
+          page: 1,
+          limit: 10,
+          maxCharacters: 2048,
+          maxArraySize: 10,
+        })
+
+        // Verify the SQL contains the array truncation logic
+        expect(sql).toMatchInlineSnapshot(`
+          "with _base_query as (select * from public.test_large_array_table order by test_large_array_table.id asc nulls last limit 10 offset 0)
+            select id,case
+                  when octet_length(name::text) > 2048 
+                  then left(name::text, 2048) || '...'
+                  else name::text
+                end as name,
+                  case 
+                    when octet_length(large_array_jsonb::text) > 2048 
+                    then (select array_cat(large_array_jsonb[1:10]::jsonb[], array['{"truncated": true}'::json]::jsonb[]))::jsonb[]
+                    else large_array_jsonb::jsonb[]
+                  end
+                ,
+                  case 
+                    when octet_length(large_array_json::text) > 2048 
+                    then (select array_cat(large_array_json[1:10]::json[], array['{"truncated": true}'::json]::json[]))::json[]
+                    else large_array_json::json[]
+                  end
+                 from _base_query;"
+        `)
+
+        // Execute the SQL and verify results
+        const queryResult = await db.executeQuery(sql)
+        expect(queryResult).toMatchInlineSnapshot(`
+      [
+        {
+          "id": 1,
+          "large_array_json": [
+            {
+              "data": {
+                "active": true,
+                "value": 10,
+              },
+              "id": 1,
+              "name": "element_1",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 20,
+              },
+              "id": 2,
+              "name": "element_2",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 30,
+              },
+              "id": 3,
+              "name": "element_3",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 40,
+              },
+              "id": 4,
+              "name": "element_4",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 50,
+              },
+              "id": 5,
+              "name": "element_5",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 60,
+              },
+              "id": 6,
+              "name": "element_6",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 70,
+              },
+              "id": 7,
+              "name": "element_7",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 80,
+              },
+              "id": 8,
+              "name": "element_8",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 90,
+              },
+              "id": 9,
+              "name": "element_9",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 100,
+              },
+              "id": 10,
+              "name": "element_10",
+            },
+            {
+              "truncated": true,
+            },
+          ],
+          "large_array_jsonb": [
+            {
+              "data": {
+                "active": true,
+                "value": 10,
+              },
+              "id": 1,
+              "name": "element_1",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 20,
+              },
+              "id": 2,
+              "name": "element_2",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 30,
+              },
+              "id": 3,
+              "name": "element_3",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 40,
+              },
+              "id": 4,
+              "name": "element_4",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 50,
+              },
+              "id": 5,
+              "name": "element_5",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 60,
+              },
+              "id": 6,
+              "name": "element_6",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 70,
+              },
+              "id": 7,
+              "name": "element_7",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 80,
+              },
+              "id": 8,
+              "name": "element_8",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 90,
+              },
+              "id": 9,
+              "name": "element_9",
+            },
+            {
+              "data": {
+                "active": true,
+                "value": 100,
+              },
+              "id": 10,
+              "name": "element_10",
+            },
+            {
+              "truncated": true,
+            },
+          ],
+          "name": "Large Array Item",
+        },
+        {
+          "id": 2,
+          "large_array_json": [
+            {
+              "id": 1,
+              "value": 1,
+            },
+            {
+              "id": 2,
+              "value": 2,
+            },
+            {
+              "id": 3,
+              "value": 3,
+            },
+            {
+              "id": 4,
+              "value": 4,
+            },
+            {
+              "id": 5,
+              "value": 5,
+            },
+            {
+              "id": 6,
+              "value": 6,
+            },
+            {
+              "id": 7,
+              "value": 7,
+            },
+            {
+              "id": 8,
+              "value": 8,
+            },
+            {
+              "id": 9,
+              "value": 9,
+            },
+            {
+              "id": 10,
+              "value": 10,
+            },
+            {
+              "truncated": true,
+            },
+          ],
+          "large_array_jsonb": [
+            {
+              "id": 1,
+              "value": 1,
+            },
+            {
+              "id": 2,
+              "value": 2,
+            },
+            {
+              "id": 3,
+              "value": 3,
+            },
+            {
+              "id": 4,
+              "value": 4,
+            },
+            {
+              "id": 5,
+              "value": 5,
+            },
+            {
+              "id": 6,
+              "value": 6,
+            },
+            {
+              "id": 7,
+              "value": 7,
+            },
+            {
+              "id": 8,
+              "value": 8,
+            },
+            {
+              "id": 9,
+              "value": 9,
+            },
+            {
+              "id": 10,
+              "value": 10,
+            },
+            {
+              "truncated": true,
+            },
+          ],
+          "name": "Large Array Small items",
+        },
+        {
+          "id": 3,
+          "large_array_json": [
+            {
+              "id": 1,
+              "tag": "tag1",
+            },
+            {
+              "id": 2,
+              "tag": "tag2",
+            },
+            {
+              "id": 3,
+              "tag": "tag3",
+            },
+          ],
+          "large_array_jsonb": [
+            {
+              "id": 1,
+              "tag": "tag1",
+            },
+            {
+              "id": 2,
+              "tag": "tag2",
+            },
+            {
+              "id": 3,
+              "tag": "tag3",
+            },
+          ],
+          "name": "Normal Array Item",
+        },
+      ]
+    `)
+      }
+    )
+
     withTestDatabase('should truncate fields to maxCharacters avoid', async (db) => {
       // Create test table with array column
       await db.executeQuery(`
@@ -549,17 +956,18 @@ describe('Table Row Query', () => {
 
       // Verify the SQL contains the array truncation logic
       expect(sql).toMatchInlineSnapshot(`
-        "select id,case
+        "with _base_query as (select * from public.test_large_array_table order by test_large_array_table.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 256 
                 then left(name::text, 256) || '...'
                 else name::text
               end as name,
                 case 
                   when octet_length(large_array::text) > 256 
-                  then (select array_cat(large_array[1:50]::text[], array['...']))::text[]
+                  then (select array_cat(large_array[1:50]::text[], array['...']::text[]))::text[]
                   else large_array::text[]
                 end
-               from public.test_large_array_table order by test_large_array_table.id asc nulls first limit 10 offset 0;"
+               from _base_query;"
       `)
 
       // Execute the SQL and verify results
@@ -634,7 +1042,8 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_filter where name ~~ 'Test%' and category = 'A' order by test_sql_filter.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
@@ -642,7 +1051,7 @@ describe('Table Row Query', () => {
                 when octet_length(category::text) > 10240 
                 then left(category::text, 10240) || '...'
                 else category::text
-              end as category from public.test_sql_filter where name ~~ 'Test%' and category = 'A' order by test_sql_filter.id asc nulls first limit 10 offset 0;"
+              end as category from _base_query;"
       `
       )
 
@@ -694,11 +1103,12 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_sort order by test_sql_sort.name asc nulls last, test_sql_sort.value desc nulls first limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
-              end as name,value from public.test_sql_sort order by test_sql_sort.name asc nulls last, test_sql_sort.value desc nulls first limit 10 offset 0;"
+              end as name,value from _base_query;"
       `
       )
 
@@ -757,7 +1167,8 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public."test sql spaces" order by "test sql spaces".id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length("user name"::text) > 10240 
                 then left("user name"::text, 10240) || '...'
                 else "user name"::text
@@ -769,7 +1180,7 @@ describe('Table Row Query', () => {
                 when octet_length("quoted""column"::text) > 10240 
                 then left("quoted""column"::text, 10240) || '...'
                 else "quoted""column"::text
-              end as "quoted""column" from public."test sql spaces" order by "test sql spaces".id asc nulls first limit 10 offset 0;"
+              end as "quoted""column" from _base_query;"
       `
       )
 
@@ -817,7 +1228,8 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_large_text order by test_large_text.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(small_text::text) > 10240 
                 then left(small_text::text, 10240) || '...'
                 else small_text::text
@@ -829,7 +1241,7 @@ describe('Table Row Query', () => {
                 when octet_length(json_data::text) > 10240 
                 then left(json_data::text, 10240) || '...'
                 else json_data::text
-              end as json_data from public.test_large_text order by test_large_text.id asc nulls first limit 10 offset 0;"
+              end as json_data from _base_query;"
       `
       )
 
@@ -877,11 +1289,12 @@ describe('Table Row Query', () => {
 
       expect(sql1).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_pagination order by test_pagination.id asc nulls last limit 5 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
-              end as name from public.test_pagination order by test_pagination.id asc nulls first limit 5 offset 0;"
+              end as name from _base_query;"
       `
       )
 
@@ -904,11 +1317,12 @@ describe('Table Row Query', () => {
       // Verify SQL generation for page 2
       expect(sql2).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_pagination order by test_pagination.id asc nulls last limit 5 offset 5)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
-              end as name from public.test_pagination order by test_pagination.id asc nulls first limit 5 offset 5;"
+              end as name from _base_query;"
       `
       )
 
@@ -960,11 +1374,12 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_view order by test_sql_view.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
-              end as name,active from public.test_sql_view order by test_sql_view.id asc nulls first limit 10 offset 0;"
+              end as name,active from _base_query;"
       `
       )
 
@@ -1012,11 +1427,12 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_mv order by test_sql_mv.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
-              end as name,value from public.test_sql_mv order by test_sql_mv.id asc nulls first limit 10 offset 0;"
+              end as name,value from _base_query;"
       `
       )
 
@@ -1078,7 +1494,8 @@ describe('Table Row Query', () => {
       // Verify SQL generation with snapshot
       expect(sql).toMatchInlineSnapshot(
         `
-        "select id,case
+        "with _base_query as (select * from public.test_sql_foreign order by test_sql_foreign.id asc nulls last limit 10 offset 0)
+          select id,case
                 when octet_length(name::text) > 10240 
                 then left(name::text, 10240) || '...'
                 else name::text
@@ -1086,7 +1503,7 @@ describe('Table Row Query', () => {
                 when octet_length(description::text) > 10240 
                 then left(description::text, 10240) || '...'
                 else description::text
-              end as description from public.test_sql_foreign order by test_sql_foreign.id asc nulls first limit 10 offset 0;"
+              end as description from _base_query;"
       `
       )
 

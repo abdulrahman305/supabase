@@ -23,11 +23,13 @@ import { RegionsList } from '~/components/RegionsList'
 import { SharedData } from '~/components/SharedData'
 import StepHikeCompact from '~/components/StepHikeCompact'
 import { CodeSampleDummy, CodeSampleWrapper } from '~/features/directives/CodeSample.client'
+import { NamedCodeBlock } from '~/features/directives/CodeTabs.components'
 import { Accordion, AccordionItem } from '~/features/ui/Accordion'
 import { CodeBlock } from '~/features/ui/CodeBlock/CodeBlock'
 import InfoTooltip from '~/features/ui/InfoTooltip'
 import { TabPanel, Tabs } from '~/features/ui/Tabs'
 import { ShowUntil } from '~/features/ui/ShowUntil'
+import { Price } from '~/components/Price'
 
 const components = {
   Accordion,
@@ -51,6 +53,7 @@ const components = {
   Image: (props: any) => <Image fill alt="" className="object-contain" {...props} />,
   JwtGenerator,
   Link,
+  NamedCodeBlock,
   NavData,
   ProjectConfigVariables,
   RealtimeLimitsEstimator,
@@ -78,6 +81,7 @@ const components = {
     </Heading>
   ),
   pre: CodeBlock,
+  Price,
 }
 
 export { components }
