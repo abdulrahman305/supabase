@@ -62,7 +62,7 @@ interface ModalType
   Separator: React.ComponentType
 }
 
-/** @deprecated Use `import { Dialog } from "ui"` instead */
+/** @deprecated use <Dialog/> instead */
 const Modal = forwardRef<
   React.ElementRef<typeof DialogContent>,
   React.ComponentPropsWithoutRef<typeof DialogContent> & ModalProps

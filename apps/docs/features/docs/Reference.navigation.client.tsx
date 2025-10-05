@@ -2,7 +2,7 @@
 
 import * as Collapsible from '@radix-ui/react-collapsible'
 
-import { debounce } from 'lodash-es'
+import { debounce } from 'lodash'
 import { ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -61,7 +61,7 @@ export function ReferenceNavigationScrollHandler({
   ...rest
 }: PropsWithChildren & HTMLAttributes<HTMLDivElement>) {
   const parentRef = useRef<HTMLElement>()
-  const ref = useRef<HTMLDivElement>(null)
+  const ref = useRef<HTMLDivElement>()
   const initialScrollHappened = useContext(ReferenceContentInitiallyScrolledContext)
 
   useEffect(() => {
@@ -70,9 +70,7 @@ export function ReferenceNavigationScrollHandler({
     let scrollingParent: HTMLElement = ref.current
 
     while (scrollingParent && !(scrollingParent.scrollHeight > scrollingParent.clientHeight)) {
-      const parent = scrollingParent.parentElement
-      if (!parent) break
-      scrollingParent = parent
+      scrollingParent = scrollingParent.parentElement
     }
 
     parentRef.current = scrollingParent
@@ -182,7 +180,7 @@ export function RefLink({
   skipChildren?: boolean
   className?: string
 }) {
-  const ref = useRef<HTMLAnchorElement>(null)
+  const ref = useRef<HTMLAnchorElement>()
 
   const pathname = usePathname()
   const href = deriveHref(basePath, section)
@@ -191,7 +189,7 @@ export function RefLink({
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.ariaCurrent = isActive ? 'page' : null
+      ref.current.ariaCurrent = isActive ? 'page' : undefined
       ref.current.className = getLinkStyles(isActive, className)
     }
   }, [isActive, className])
@@ -203,8 +201,7 @@ export function RefLink({
 
   if (!('title' in section)) return null
 
-  const isCompoundSection =
-    !skipChildren && 'items' in section && section.items && section.items.length > 0
+  const isCompoundSection = !skipChildren && 'items' in section && section.items.length > 0
 
   return (
     <>
@@ -214,7 +211,7 @@ export function RefLink({
         <Link
           ref={ref}
           // We don't use these links because we never do real navigation, so
-          // prefetching just wastes egress
+          // prefetching just wastes bandwidth
           prefetch={false}
           href={href}
           className={getLinkStyles(isActive, className)}
@@ -235,7 +232,7 @@ function useCompoundRefLinkActive(basePath: string, section: AbbrevApiReferenceS
   const isParentActive = pathname === parentHref
 
   const childHrefs = useMemo(
-    () => new Set((section.items || []).map((item) => deriveHref(basePath, item))),
+    () => new Set(section.items.map((item) => deriveHref(basePath, item))),
     [basePath, section]
   )
   const isChildActive = childHrefs.has(pathname)
@@ -291,7 +288,7 @@ function CompoundRefLink({
       >
         <ul className="space-y-2">
           <RefLink basePath={basePath} section={section} skipChildren />
-          {(section.items || []).map((item, idx) => {
+          {section.items.map((item, idx) => {
             return (
               <li key={`${section.id}-${idx}`}>
                 <RefLink basePath={basePath} section={item} />

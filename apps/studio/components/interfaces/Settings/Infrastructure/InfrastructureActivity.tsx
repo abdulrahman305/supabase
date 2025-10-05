@@ -29,14 +29,13 @@ import { useInfraMonitoringQuery } from 'data/analytics/infra-monitoring-query'
 import { useOrgSubscriptionQuery } from 'data/subscriptions/org-subscription-query'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
 import { useResourceWarningsQuery } from 'data/usage/resource-warnings-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL, INSTANCE_MICRO_SPECS, INSTANCE_NANO_SPECS, InstanceSpecs } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
+import { INSTANCE_MICRO_SPECS, INSTANCE_NANO_SPECS, InstanceSpecs } from 'lib/constants'
 import { TIME_PERIODS_BILLING, TIME_PERIODS_REPORTS } from 'lib/constants/metrics'
 import { useDatabaseSelectorStateSnapshot } from 'state/database-selector'
 import { Admonition } from 'ui-patterns/admonition'
 import { INFRA_ACTIVITY_METRICS } from './Infrastructure.constants'
-import { useShowNewReplicaPanel } from './InfrastructureConfiguration/use-show-new-replica'
 
 const NON_DEDICATED_IO_RESOURCES = [
   'ci_micro',
@@ -47,10 +46,10 @@ const NON_DEDICATED_IO_RESOURCES = [
   'ci_2xlarge',
 ]
 
-export const InfrastructureActivity = () => {
+const InfrastructureActivity = () => {
   const { ref: projectRef } = useParams()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const project = useSelectedProject()
+  const organization = useSelectedOrganization()
   const state = useDatabaseSelectorStateSnapshot()
   const [dateRange, setDateRange] = useState<any>()
 
@@ -64,8 +63,6 @@ export const InfrastructureActivity = () => {
 
   const { data: addons } = useProjectAddonsQuery({ projectRef })
   const selectedAddons = addons?.selected_addons ?? []
-
-  const { setShowNewReplicaPanel } = useShowNewReplicaPanel()
 
   const { computeInstance } = getAddons(selectedAddons)
   const hasDedicatedIOResources =
@@ -202,7 +199,7 @@ export const InfrastructureActivity = () => {
 
   return (
     <>
-      <ScaffoldContainer id="infrastructure-activity">
+      <ScaffoldContainer>
         <div className="mx-auto flex flex-col gap-10 pt-6">
           <div>
             <p className="text-xl">Infrastructure Activity</p>
@@ -214,11 +211,7 @@ export const InfrastructureActivity = () => {
       </ScaffoldContainer>
       <ScaffoldContainer className="sticky top-0 py-6 border-b bg-studio z-10">
         <div className="flex items-center gap-x-4">
-          <DatabaseSelector
-            onCreateReplicaClick={() => {
-              setShowNewReplicaPanel(true)
-            }}
-          />
+          <DatabaseSelector />
           {!isLoadingSubscription && (
             <>
               <DateRangePicker
@@ -404,7 +397,7 @@ export const InfrastructureActivity = () => {
                       >
                         <DocsButton
                           abbrev={false}
-                          href={`${DOCS_URL}/guides/platform/compute-add-ons#disk-throughput-and-iops`}
+                          href="https://supabase.com/docs/guides/platform/compute-add-ons#disk-throughput-and-iops"
                         />
                       </Admonition>
                     </>
@@ -416,7 +409,7 @@ export const InfrastructureActivity = () => {
                     </div>
                   ) : chartData.length ? (
                     <UsageBarChart
-                      name={`${attribute.chartPrefix || ''} ${attribute.name}`}
+                      name={`${attribute.chartPrefix || ''}${attribute.name}`}
                       unit={attribute.unit}
                       attributes={attribute.attributes}
                       data={chartData}
@@ -447,3 +440,5 @@ export const InfrastructureActivity = () => {
     </>
   )
 }
+
+export default InfrastructureActivity

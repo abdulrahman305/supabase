@@ -34,10 +34,10 @@ export async function CodeBlock({
   skipTypeGeneration?: boolean
 }>) {
   let code = (contents || extractCode(children)).trim()
-  const lang = tryToBundledLanguage(langSetting || '') || extractLang(children)
+  const lang = tryToBundledLanguage(langSetting) || extractLang(children)
 
   let twoslashed = null as null | Map<number, Map<number, Array<NodeHover>>>
-  if (!skipTypeGeneration && lang && TWOSLASHABLE_LANGS.includes(lang)) {
+  if (!skipTypeGeneration && TWOSLASHABLE_LANGS.includes(lang)) {
     try {
       const { code: editedCode, nodes } = twoslasher(code)
       const hoverNodes: Array<NodeHover> = nodes.filter((node) => node.type === 'hover')
@@ -53,7 +53,7 @@ export async function CodeBlock({
   }
 
   const { tokens } = highlighter.codeToTokens(code, {
-    lang: lang || undefined,
+    lang,
     theme: 'Supabase Theme',
   })
 
@@ -121,10 +121,7 @@ function CodeLine({
             annotations={twoslash.get(token.offset)!}
           />
         ) : (
-          <span
-            key={token.offset}
-            style={{ color: token.color, ...getFontStyle(token.fontStyle || 0) }}
-          >
+          <span key={token.offset} style={{ color: token.color, ...getFontStyle(token.fontStyle) }}>
             {token.content}
           </span>
         )

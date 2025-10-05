@@ -53,14 +53,8 @@ const handleGetAll = async (req: NextApiRequest, res: NextApiResponse<GetRespons
       inserted_at: '',
       project_id: 0,
       updated_at: '',
-      owner: {
-        id: 1,
-        username: 'default',
-      },
-      updated_by: {
-        id: 1,
-        username: 'default',
-      },
+      owner: {},
+      updated_by: {},
     },
   ]
   return res.status(200).json({ data: snippets })

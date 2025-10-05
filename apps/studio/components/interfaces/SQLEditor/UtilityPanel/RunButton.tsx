@@ -1,6 +1,5 @@
-import { Command, CornerDownLeft, Loader2 } from 'lucide-react'
-
 import { detectOS } from 'lib/helpers'
+import { Command, CornerDownLeft, Loader2 } from 'lucide-react'
 import { Button } from 'ui'
 
 interface SqlRunButtonProps {
@@ -30,7 +29,6 @@ export const SqlRunButton = ({
       disabled={isDisabled}
       type="primary"
       size="tiny"
-      data-testid="sql-run-button"
       iconRight={
         isExecuting ? (
           <Loader2 className="animate-spin" size={10} strokeWidth={1.5} />

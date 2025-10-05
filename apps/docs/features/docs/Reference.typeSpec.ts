@@ -46,7 +46,6 @@ export interface MethodTypes {
 interface Comment {
   shortText?: string
   text?: string
-  tags?: Array<{ tag: string; text: string }>
 }
 
 export interface FunctionParameterType {
@@ -156,16 +155,6 @@ export interface CustomTypePropertyType {
   type: TypeDetails | undefined
 }
 
-// The meaning of kind flags from `typedoc`:
-// https://github.com/TypeStrong/typedoc/blob/2953b0148253589448176881a7acb46090f941bd/src/lib/output/themes/default/assets/typedoc/Application.ts#L36
-const KIND_MODULE = 2
-const KIND_CLASS = 128
-const KIND_INTERFACE = 256
-const KIND_CONSTRUCTOR = 512
-const KIND_PROPERTY = 1024
-const KIND_METHOD = 2048
-const KIND_TYPE_LITERAL = 65536
-
 /**
  *
  * New versions of `typedoc` added the variant property, so this is a quick and
@@ -183,8 +172,6 @@ function isNewTypedoc(node: any) {
 interface TypedocComment {
   summary: CommentKind[]
   blockTags: CommentBlockTag[]
-  /** Includes tags like `@experimental` **/
-  modifierTags: string[]
 }
 
 type CommentKind = CommentKindText | CommentKindCode
@@ -207,7 +194,7 @@ interface CommentBlockTag {
   content: CommentKind[]
 }
 
-function normalizeComment(original: TypedocComment | Comment | undefined): Comment | undefined {
+function normalizeComment(original: TypedocComment | Comment): Comment {
   if (!original) return
 
   if ('shortText' in original || 'text' in original) {
@@ -215,18 +202,21 @@ function normalizeComment(original: TypedocComment | Comment | undefined): Comme
     return original
   }
 
-  const comment: Comment = {}
+  let comment: Comment = {}
 
   if ('summary' in original) {
     comment.shortText = original.summary.map((part) => part.text).join('')
   }
 
-  if ('modifierTags' in original) {
-    comment.tags = original.modifierTags.map((tag) => ({ tag: tag.replace(/^@/, ''), text: '' }))
-  }
-
   return comment
 }
+
+// The meaning of kind flags from `typedoc`:
+// https://github.com/TypeStrong/typedoc/blob/2953b0148253589448176881a7acb46090f941bd/src/lib/output/themes/default/assets/typedoc/Application.ts#L36
+const KIND_CLASS = 128
+const KIND_CONSTRUCTOR = 512
+const KIND_METHOD = 2048
+const KIND_TYPE_LITERAL = 65536
 
 export function parseTypeSpec() {
   const modules = (typeSpec.children ?? []).map(parseMod)
@@ -297,28 +287,19 @@ function parseModInternal(
       node.children?.forEach((child: any) => parseModInternal(child, map, updatedPath, res))
       return
     case 'declaration':
-      if (node.kind === KIND_CLASS || node.kind === KIND_MODULE) {
+      if (node.kind === KIND_CLASS) {
         updatedPath = [...currentPath, node.name]
         node.children?.forEach((child: any) => parseModInternal(child, map, updatedPath, res))
       } else if (node.kind === KIND_CONSTRUCTOR) {
         parseConstructor(node, map, currentPath, res)
       } else if (node.kind === KIND_METHOD) {
         return parseMethod(node, map, currentPath, res)
-      } else if (node.kind === KIND_PROPERTY) {
-        if (node.type?.type === 'reference') {
-          const referent = map.get(node.type.target)
-          if (referent?.variant === 'declaration' && referent?.kind === KIND_INTERFACE) {
-            const children = referent?.children ?? []
-            updatedPath = [...currentPath, node.name]
-            children.forEach((child: any) => parseModInternal(child, map, updatedPath, res))
-          }
-        }
       }
       return
     case 'property':
     case 'reference':
     default:
-      return
+      return undefined
   }
 }
 
@@ -398,7 +379,7 @@ function parseSignature(
   map: Map<number, any>
 ): {
   params: Array<FunctionParameterType>
-  ret: ReturnType | undefined
+  ret: ReturnType
   comment?: Comment
 } {
   const params: Array<FunctionParameterType> = (signature.parameters ?? []).map((param: any) => {
@@ -420,7 +401,7 @@ function parseSignature(
     return res
   })
 
-  let ret: ReturnType | undefined
+  let ret: ReturnType
   if ('type' in signature) {
     const retType = parseType(signature.type, map)
     if (retType) {
@@ -449,26 +430,24 @@ function parseSignature(
 //
 // with additional properties depending on the type.
 
-function parseType(type: any, map: Map<number, any>, typeArguments?: any, debug = false) {
+function parseType(type: any, map: Map<number, any>) {
   switch (type.type) {
     case 'literal':
       return type
     case 'intrinsic':
       return type
     case 'reference':
-      return parseReferenceType(type, map, typeArguments, debug)
+      return parseReferenceType(type, map)
     case 'array':
-      return parseArrayType(type, map, typeArguments, debug)
+      return parseArrayType(type, map)
     case 'union':
-      return parseUnionType(type, map, typeArguments, debug)
+      return parseUnionType(type, map)
     case 'reflection':
-      return parseReflectionType(type, map, typeArguments, debug)
+      return parseReflectionType(type, map)
     case 'indexedAccess':
-      return parseIndexedAccessType(type, map, typeArguments, debug)
+      return parseIndexedAccessType(type, map)
     case 'typeOperator':
-      return parseTypeOperatorType(type, map, typeArguments, debug)
-    case 'conditional':
-      return parseConditionalType(type, map, typeArguments, debug)
+      return parseTypeOperatorType(type, map)
     default:
       break
   }
@@ -493,13 +472,8 @@ function parseType(type: any, map: Map<number, any>, typeArguments?: any, debug 
  * parsing to the referenced node, but use the name and comment from the
  * original type.
  */
-function delegateParsing(
-  original: any,
-  referenced: any,
-  map: Map<number, any>,
-  typeArguments?: any
-) {
-  const dereferencedType = parseType(referenced, map, typeArguments)
+function delegateParsing(original: any, referenced: any, map: Map<number, any>) {
+  const dereferencedType = parseType(referenced, map)
 
   if (dereferencedType) {
     dereferencedType.name = nameOrAnonymous([original, dereferencedType])
@@ -515,54 +489,13 @@ function delegateParsing(
   return dereferencedType
 }
 
-function parseConditionalType(
-  type: any,
-  map: Map<number, any>,
-  typeArguments?: any,
-  _debug = false
-) {
-  if (type.extendsType?.type === 'intrinsic' && type.extendsType?.name === 'object') {
-    let properties = []
-
-    if (
-      type.trueType?.type === 'mapped' &&
-      type.trueType?.parameterType?.target?.refersToTypeParameter &&
-      typeArguments?.[0]
-    ) {
-      const propertyNames = parseType(typeArguments?.[0], map).properties?.map((p) => p.name)
-      properties = (propertyNames ?? [])
-        .map((p: string) => {
-          if (!type.trueType?.templateType) return undefined
-
-          const mappedType = parseType(type.trueType.templateType, map)
-          if (mappedType) {
-            return {
-              name: p,
-              type: mappedType,
-            }
-          }
-        })
-        .filter(Boolean)
-    }
-
-    return {
-      type: 'object',
-      properties,
-    }
-  }
-}
-
-function parseReferenceType(type: any, map: Map<number, any>, typeArguments?: any, debug = false) {
+function parseReferenceType(type: any, map: Map<number, any>) {
   if (type.dereferenced?.type) {
     return delegateParsing(type, type.dereferenced.type, map)
   }
 
   if (type.dereferenced?.kindString) {
     return delegateParsing(type, type.dereferenced, map)
-  }
-
-  if (type.refersToTypeParameter === true && typeArguments?.[0]) {
-    return delegateParsing(type, typeArguments?.[0], map)
   }
 
   if (
@@ -595,18 +528,11 @@ function parseReferenceType(type: any, map: Map<number, any>, typeArguments?: an
   if (referenced) {
     const maybeType =
       typeof referenced.type === 'object' && 'type' in referenced.type
-        ? /* need to go down a level */ delegateParsing(
-            type,
-            referenced.type,
-            map,
-            type.typeArguments
-          )
-        : delegateParsing(type, referenced, map, type.typeArguments)
+        ? /* need to go down a level */ delegateParsing(type, referenced.type, map)
+        : delegateParsing(type, referenced, map)
 
     if (maybeType) {
       return maybeType
-    } else if (isNewTypedoc(referenced) && referenced.kind === KIND_INTERFACE) {
-      return parseInterface(referenced, map)
     } else if (isNewTypedoc(referenced) && referenced.kind === KIND_CLASS) {
       // Class is too complicated to display here, just return its name
       return {
@@ -643,12 +569,7 @@ function parseReferenceType(type: any, map: Map<number, any>, typeArguments?: an
   return undefined
 }
 
-function parseArrayType(
-  type: any,
-  map: Map<number, any>,
-  _typeArguments?: any,
-  debug = false
-): ArrayType {
+function parseArrayType(type: any, map: Map<number, any>): ArrayType {
   const elemType = parseType(type.elementType, map)
 
   return {
@@ -658,14 +579,9 @@ function parseArrayType(
   }
 }
 
-function parseUnionType(
-  type: any,
-  map: Map<number, any>,
-  typeArguments?: any,
-  _debug = false
-): CustomUnionType {
+function parseUnionType(type: any, map: Map<number, any>): CustomUnionType {
   // Need the Boolean filter because there are nulls in some of the nodes
-  const subTypes = type.types.filter(Boolean).map((type) => parseType(type, map, typeArguments))
+  const subTypes = type.types.filter(Boolean).map((type) => parseType(type, map))
 
   return {
     type: 'union',
@@ -727,22 +643,17 @@ function parsePickType(type: any, map: Map<number, any>) {
   return undefined
 }
 
-function parseReflectionType(
-  type: any,
-  map: Map<number, any>,
-  typeArguments?: any,
-  _debug = false
-): TypeDetails | undefined {
+function parseReflectionType(type: any, map: Map<number, any>) {
   if (!type.declaration) return undefined
 
-  let res: TypeDetails | undefined
+  let res: TypeDetails
   switch ((type.declaration.kindString ?? type.declaration.variant).toLowerCase()) {
     case 'type literal':
-      res = parseTypeLiteral(type, map, typeArguments)
+      res = parseTypeLiteral(type, map)
       break
     case 'declaration':
       if (type.declaration.kind === KIND_TYPE_LITERAL) {
-        res = parseTypeLiteral(type, map, typeArguments)
+        res = parseTypeLiteral(type, map)
       }
     default:
       break
@@ -751,17 +662,11 @@ function parseReflectionType(
   return res
 }
 
-function parseTypeLiteral(
-  type: any,
-  map: Map<number, any>,
-  typeArguments?: any
-): TypeDetails | undefined {
+function parseTypeLiteral(type: any, map: Map<number, any>): TypeDetails {
   const name = nameOrAnonymous(type)
 
   if ('children' in type.declaration) {
-    const properties = type.declaration.children
-      .map((child: any) => parseTypeInternals(child, map, typeArguments))
-      .filter(Boolean)
+    const properties = type.declaration.children.map((child: any) => parseTypeInternals(child, map))
     return {
       name,
       type: 'object',
@@ -796,24 +701,14 @@ function parseTypeLiteral(
   return undefined
 }
 
-function parseIndexedAccessType(
-  type: any,
-  map: Map<number, any>,
-  _typeArguments?: any,
-  _debug = false
-) {
+function parseIndexedAccessType(type: any, map: Map<number, any>) {
   return {
     type: 'nameOnly',
     name: `${type.objectType?.name ?? ''}['${type.indexType.value ?? type.indexType.name ?? ''}']`,
   }
 }
 
-function parseTypeOperatorType(
-  type: any,
-  map: Map<number, any>,
-  _typeArguments?: any,
-  _debug = false
-) {
+function parseTypeOperatorType(type: any, map: Map<number, any>) {
   switch (type.operator) {
     case 'readonly':
       return parseType(type.target, map)
@@ -823,9 +718,7 @@ function parseTypeOperatorType(
 }
 
 function parseInterface(type: any, map: Map<number, any>): CustomObjectType {
-  const properties = (type.children ?? [])
-    .map((child) => parseTypeInternals(child, map))
-    .filter(Boolean)
+  const properties = (type.children ?? []).map((child) => parseTypeInternals(child, map))
 
   return {
     type: 'object',
@@ -837,11 +730,11 @@ function parseInterface(type: any, map: Map<number, any>): CustomObjectType {
 // This layer is for the sub-types that define a custom type, for example, the
 // properties of an interface.
 
-function parseTypeInternals(elem: any, map: Map<number, any>, typeArguments?: any) {
+function parseTypeInternals(elem: any, map: Map<number, any>) {
   switch ((elem.kindString || elem.variant).toLowerCase()) {
     case 'property':
     case 'declaration':
-      return parseInternalProperty(elem, map, typeArguments)
+      return parseInternalProperty(elem, map)
     case 'method':
       if (elem.signatures?.[0]) {
         const { params, ret, comment } = parseSignature(elem.signatures?.[0], map)
@@ -864,13 +757,9 @@ function parseTypeInternals(elem: any, map: Map<number, any>, typeArguments?: an
   }
 }
 
-function parseInternalProperty(elem: any, map: Map<number, any>, typeArguments?: any) {
+function parseInternalProperty(elem: any, map: Map<number, any>) {
   const name = nameOrAnonymous(elem)
-  if (!elem.type) {
-    return undefined
-  }
-
-  const type = parseType(elem.type, map, typeArguments)
+  const type = parseType(elem.type, map)
 
   const res = {
     name,

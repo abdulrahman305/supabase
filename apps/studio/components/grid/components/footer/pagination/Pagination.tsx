@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react'
 
 import { useParams } from 'common'
 import { useTableFilter } from 'components/grid/hooks/useTableFilter'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { useTableEditorQuery } from 'data/table-editor/table-editor-query'
 import { isTable } from 'data/table-editor/table-editor-types'
 import { THRESHOLD_COUNT, useTableRowsCountQuery } from 'data/table-rows/table-rows-count-query'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
 import { RoleImpersonationState } from 'lib/role-impersonation'
 import { useRoleImpersonationStateSnapshot } from 'state/role-impersonation-state'
 import { useTableEditorStateSnapshot } from 'state/table-editor'
@@ -27,7 +27,7 @@ const Pagination = () => {
   const { id: _id } = useParams()
   const id = _id ? Number(_id) : undefined
 
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const tableEditorSnap = useTableEditorStateSnapshot()
   const snap = useTableEditorTableStateSnapshot()
 
@@ -69,10 +69,9 @@ const Pagination = () => {
     }
   )
 
-  const count = data?.count ?? 0
-  const countString = data?.is_estimate ? formatEstimatedCount(count) : count.toLocaleString()
-  const maxPages = Math.ceil(count / tableEditorSnap.rowsPerPage)
-  const totalPages = count > 0 ? maxPages : 1
+  const count = data?.is_estimate ? formatEstimatedCount(data.count) : data?.count.toLocaleString()
+  const maxPages = Math.ceil((data?.count ?? 0) / tableEditorSnap.rowsPerPage)
+  const totalPages = (data?.count ?? 0) > 0 ? maxPages : 1
 
   const onPreviousPage = () => {
     if (page > 1) {
@@ -150,7 +149,6 @@ const Pagination = () => {
         <>
           <div className="flex items-center gap-x-2">
             <Button
-              aria-label="Previous page"
               icon={<ArrowLeft />}
               type="outline"
               className="px-1.5"
@@ -168,7 +166,7 @@ const Pagination = () => {
               onKeyDown={(e) => {
                 const parsedValue = Number(value)
                 if (
-                  (e.code === 'Enter' || e.code === 'NumpadEnter') &&
+                  e.code === 'Enter' &&
                   !Number.isNaN(parsedValue) &&
                   parsedValue >= 1 &&
                   parsedValue <= maxPages
@@ -181,7 +179,6 @@ const Pagination = () => {
             <p className="text-xs text-foreground-light">of {totalPages.toLocaleString()}</p>
 
             <Button
-              aria-label="Next page"
               icon={<ArrowRight />}
               type="outline"
               className="px-1.5"
@@ -203,7 +200,7 @@ const Pagination = () => {
 
           <div className="flex items-center gap-x-2">
             <p className="text-xs text-foreground-light">
-              {`${countString} ${count === 0 || count > 1 ? `records` : 'record'}`}{' '}
+              {`${count} ${data.count === 0 || data.count > 1 ? `records` : 'record'}`}{' '}
               {data.is_estimate ? '(estimated)' : ''}
             </p>
 
@@ -218,7 +215,7 @@ const Pagination = () => {
                     icon={<HelpCircle />}
                     onClick={() => {
                       // Show warning if either NOT a table entity, or table rows estimate is beyond threshold
-                      if (rowsCountEstimate === null || count > THRESHOLD_COUNT) {
+                      if (rowsCountEstimate === null || data.count > THRESHOLD_COUNT) {
                         setIsConfirmFetchExactCountModalOpen(true)
                       } else snap.setEnforceExactCount(true)
                     }}

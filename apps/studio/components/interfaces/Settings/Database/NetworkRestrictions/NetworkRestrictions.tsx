@@ -3,6 +3,7 @@ import { AlertCircle, ChevronDown, Globe, Lock } from 'lucide-react'
 import { useState } from 'react'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { DocsButton } from 'components/ui/DocsButton'
 import { FormHeader } from 'components/ui/Forms/FormHeader'
@@ -10,9 +11,7 @@ import { FormPanel } from 'components/ui/Forms/FormPanel'
 import Panel from 'components/ui/Panel'
 import ShimmeringLoader from 'components/ui/ShimmeringLoader'
 import { useNetworkRestrictionsQuery } from 'data/network-restrictions/network-restrictions-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import {
   Badge,
   Button,
@@ -67,24 +66,20 @@ const DisallowAllAccessButton = ({ disabled, onClick }: AccessButtonProps) => (
   </ButtonTooltip>
 )
 
-export const NetworkRestrictions = () => {
+const NetworkRestrictions = () => {
   const { ref } = useParams()
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const [isAddingAddress, setIsAddingAddress] = useState<undefined | 'IPv4' | 'IPv6'>()
   const [isAllowingAll, setIsAllowingAll] = useState(false)
   const [isDisallowingAll, setIsDisallowingAll] = useState(false)
   const [selectedRestrictionToRemove, setSelectedRestrictionToRemove] = useState<string>()
 
   const { data, isLoading } = useNetworkRestrictionsQuery({ projectRef: ref })
-  const { can: canUpdateNetworkRestrictions } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'projects',
-    {
-      resource: {
-        project_id: project?.id,
-      },
-    }
-  )
+  const canUpdateNetworkRestrictions = useCheckPermissions(PermissionAction.UPDATE, 'projects', {
+    resource: {
+      project_id: project?.id,
+    },
+  })
 
   const hasAccessToRestrictions = data?.entitlement === 'allowed'
   const ipv4Restrictions = data?.config?.dbAllowedCidrs ?? []
@@ -110,7 +105,7 @@ export const NetworkRestrictions = () => {
             description="Allow specific IP ranges to have access to your database."
           />
           <div className="flex items-center gap-x-2">
-            <DocsButton href={`${DOCS_URL}/guides/platform/network-restrictions`} />
+            <DocsButton href="https://supabase.com/docs/guides/platform/network-restrictions" />
             {!canUpdateNetworkRestrictions ? (
               <ButtonTooltip
                 disabled
@@ -300,3 +295,5 @@ export const NetworkRestrictions = () => {
     </>
   )
 }
+
+export default NetworkRestrictions

@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * @deprecated Use `import { Breadcrumb_shadcn_ } from "ui"` instead
+ * @deprecated Use ./Breadcrumb_shadcn_ instead
  */
 const Breadcrumb = ({ className, style, children, spacing = 'small' }: Props) => {
   let classes = [BreadcrumbStyle['sbui-breadcrumb--container']]

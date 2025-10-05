@@ -11,21 +11,19 @@
  *  the last Git commit date.
  */
 
-import _configureDotEnv from './utils/dotenv.js'
+import 'dotenv/config'
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import matter from 'gray-matter'
 import { createHash } from 'node:crypto'
 import { readdirSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import path, { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { parseArgs } from 'node:util'
 import { SimpleGit, simpleGit } from 'simple-git'
-import { parse } from 'smol-toml'
-import { Section } from './helpers.mdx.js'
+import toml from 'toml'
 
-const _ = _configureDotEnv
+import { Section } from './helpers.mdx'
 
 interface Options {
   reset: boolean
@@ -49,10 +47,8 @@ type SectionWithChecksum = Omit<Section, 'heading'> &
 
 const REQUIRED_ENV_VARS = {
   SUPABASE_URL: 'NEXT_PUBLIC_SUPABASE_URL',
-  SERVICE_ROLE_KEY: 'SUPABASE_SECRET_KEY',
+  SERVICE_ROLE_KEY: 'SUPABASE_SERVICE_ROLE_KEY',
 } as const
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 async function main() {
   console.log('Updating content timestamps....')
@@ -111,8 +107,8 @@ function parseOptions(): Options {
 
 function createSupabaseClient() {
   return createClient(
-    process.env[REQUIRED_ENV_VARS.SUPABASE_URL]!,
-    process.env[REQUIRED_ENV_VARS.SERVICE_ROLE_KEY]!
+    process.env[REQUIRED_ENV_VARS.SUPABASE_URL],
+    process.env[REQUIRED_ENV_VARS.SERVICE_ROLE_KEY]
   )
 }
 
@@ -125,9 +121,7 @@ async function updateContentDates({ reset, ctx }: { reset: boolean; ctx: Ctx }) 
   const updateTasks: Array<Promise<void>> = []
   for (const file of mdxFiles) {
     const tasks = await updateTimestamps(file, { reset, timestamp, ctx })
-    if (tasks) {
-      updateTasks.push(...tasks)
-    }
+    updateTasks.push(...tasks)
   }
   await Promise.all(updateTasks)
 }
@@ -170,7 +164,7 @@ function processMdx(rawContent: string): Array<SectionWithChecksum> {
   } catch (err) {
     content = matter(rawContent, {
       language: 'toml',
-      engines: { toml: parse },
+      engines: { toml: toml.parse.bind(toml) },
     }).content
   }
 
@@ -185,7 +179,7 @@ function processMdx(rawContent: string): Array<SectionWithChecksum> {
 
     let heading = rawHeading
     if (seenHeadings.has(rawHeading)) {
-      const idx = (seenHeadings.get(rawHeading) ?? 0) + 1
+      const idx = seenHeadings.get(rawHeading) + 1
       seenHeadings.set(rawHeading, idx)
       heading = `${rawHeading} (__UNIQUE_MARKER__${idx})`
     } else {

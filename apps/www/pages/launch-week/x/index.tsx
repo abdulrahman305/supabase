@@ -91,7 +91,7 @@ export default function LaunchWeekIndex({ meetups }: Props) {
         openGraph={{
           title: TITLE,
           description: DESCRIPTION,
-          url: `${LW_URL}/x`,
+          url: LW_URL,
           images: [
             {
               url: OG_IMAGE,

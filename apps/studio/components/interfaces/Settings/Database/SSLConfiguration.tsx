@@ -1,11 +1,11 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { template } from 'lodash'
 import { Download, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { DocsButton } from 'components/ui/DocsButton'
 import { FormHeader } from 'components/ui/Forms/FormHeader'
@@ -14,15 +14,11 @@ import { FormSection, FormSectionContent, FormSectionLabel } from 'components/ui
 import { useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
 import { useSSLEnforcementQuery } from 'data/ssl-enforcement/ssl-enforcement-query'
 import { useSSLEnforcementUpdateMutation } from 'data/ssl-enforcement/ssl-enforcement-update-mutation'
-import { useCustomContent } from 'hooks/custom-content/useCustomContent'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { Alert, Button, Switch, Tooltip, TooltipContent, TooltipTrigger } from 'ui'
 
 const SSLConfiguration = () => {
   const { ref } = useParams()
-  const { data: project } = useSelectedProjectQuery()
   const [isEnforced, setIsEnforced] = useState(false)
 
   const { data: settings } = useProjectSettingsV2Query({ projectRef: ref })
@@ -45,15 +41,12 @@ const SSLConfiguration = () => {
     }
   )
 
-  const { can: canUpdateSSLEnforcement } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'projects',
-    {
-      resource: {
-        project_id: project?.id,
-      },
-    }
-  )
+  const { project } = useProjectContext()
+  const canUpdateSSLEnforcement = useCheckPermissions(PermissionAction.UPDATE, 'projects', {
+    resource: {
+      project_id: project?.id,
+    },
+  })
   const initialIsEnforced = isSuccess
     ? sslEnforcementConfiguration.appliedSuccessfully &&
       sslEnforcementConfiguration.currentConfig.database
@@ -67,12 +60,6 @@ const SSLConfiguration = () => {
   const env = process.env.NEXT_PUBLIC_ENVIRONMENT === 'prod' ? 'prod' : 'staging'
   const hasSSLCertificate =
     settings?.inserted_at !== undefined && new Date(settings.inserted_at) >= new Date('2021-04-30')
-
-  const { sslCertificateUrl: sslCertificateUrlTemplate } = useCustomContent(['ssl:certificate_url'])
-  const sslCertificateUrl = useMemo(
-    () => template(sslCertificateUrlTemplate ?? '')({ env }),
-    [sslCertificateUrlTemplate, env]
-  )
 
   useEffect(() => {
     if (!isLoading && sslEnforcementConfiguration) {
@@ -90,7 +77,7 @@ const SSLConfiguration = () => {
     <div id="ssl-configuration">
       <div className="flex items-center justify-between mb-6">
         <FormHeader className="mb-0" title="SSL Configuration" description="" />
-        <DocsButton href={`${DOCS_URL}/guides/platform/ssl-enforcement`} />
+        <DocsButton href="https://supabase.com/docs/guides/platform/ssl-enforcement" />
       </div>
       <FormPanel>
         <FormSection
@@ -156,7 +143,7 @@ const SSLConfiguration = () => {
                         ? 'You need additional permissions to update SSL enforcement for your project'
                         : !hasAccessToSSLEnforcement
                           ? 'Your project does not have access to SSL enforcement'
-                          : undefined}
+                          : ''}
                     </TooltipContent>
                   )}
                 </Tooltip>
@@ -192,7 +179,11 @@ const SSLConfiguration = () => {
               </ButtonTooltip>
             ) : (
               <Button type="default" icon={<Download />}>
-                <a href={sslCertificateUrl}>Download certificate</a>
+                <a
+                  href={`https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/${env}/ssl/${env}-ca-2021.crt`}
+                >
+                  Download certificate
+                </a>
               </Button>
             )}
           </div>

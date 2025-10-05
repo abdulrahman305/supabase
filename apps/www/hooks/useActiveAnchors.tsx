@@ -1,5 +1,3 @@
-'use client'
-
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
 import { isBrowser, stripEmojis } from '~/lib/helpers'

@@ -4,18 +4,18 @@ import { get, isEqual } from 'lodash'
 import uniqBy from 'lodash/uniqBy'
 import { useEffect } from 'react'
 
-import { IS_PLATFORM } from 'common'
 import BackwardIterator from 'components/ui/CodeEditor/Providers/BackwardIterator'
 import type { PlanId } from 'data/subscriptions/types'
 import logConstants from 'shared-data/logConstants'
 import { LogsTableName, SQL_FILTER_TEMPLATES } from './Logs.constants'
 import type { Filters, LogData, LogsEndpointParams } from './Logs.types'
+import { IS_PLATFORM } from 'common'
 
 /**
  * Convert a micro timestamp from number/string to iso timestamp
  */
 export const unixMicroToIsoTimestamp = (unix: string | number): string => {
-  return dayjs.utc(Number(unix) / 1000).toISOString()
+  return dayjs.unix(Number(unix) / 1000 / 1000).toISOString()
 }
 
 export const isUnixMicro = (unix: string | number): boolean => {
@@ -145,7 +145,7 @@ export const genDefaultQuery = (table: LogsTableName, filters: Filters, limit: n
       if (IS_PLATFORM === false) {
         return `
 -- local dev edge_logs query
-select id, edge_logs.timestamp, event_message, request.method, request.path, request.search, response.status_code
+select id, edge_logs.timestamp, event_message, request.method, request.path, response.status_code
 from edge_logs
 ${joins}
 ${where}
@@ -153,7 +153,7 @@ ${orderBy}
 limit ${limit};
 `
       }
-      return `select id, identifier, timestamp, event_message, request.method, request.path, request.search, response.status_code
+      return `select id, identifier, timestamp, event_message, request.method, request.path, response.status_code
   from ${table}
   ${joins}
   ${where}
@@ -474,98 +474,60 @@ export const fillTimeseries = (
   defaultValue: number,
   min?: string,
   max?: string,
-  minPointsToFill: number = 20,
-  interval?: string
+  minPointsToFill: number = 20
 ) => {
-  if (timeseriesData.length === 0 && !(min && max)) {
-    return []
-  }
   // If we have more points than minPointsToFill, just normalize timestamps and return
   if (timeseriesData.length > minPointsToFill) {
     return timeseriesData.map((datum) => {
-      const timestamp = datum[timestampKey]
-      const iso = isUnixMicro(timestamp)
-        ? unixMicroToIsoTimestamp(timestamp)
-        : dayjs.utc(timestamp).toISOString()
+      const iso = dayjs.utc(datum[timestampKey]).toISOString()
       datum[timestampKey] = iso
       return datum
     })
   }
 
-  if (timeseriesData.length <= 1 && !(min && max)) return timeseriesData
+  if (timeseriesData.length <= 1 && !(min || max)) return timeseriesData
   const dates: unknown[] = timeseriesData.map((datum) => dayjs.utc(datum[timestampKey]))
 
   const maxDate = max ? dayjs.utc(max) : dayjs.utc(Math.max.apply(null, dates as number[]))
   const minDate = min ? dayjs.utc(min) : dayjs.utc(Math.min.apply(null, dates as number[]))
 
-  // When no data exists but min/max are provided, we need to determine truncation from the time range
+  // const truncationSample = timeseriesData.length > 0 ? timeseriesData[0][timestampKey] : min || max
   const truncationSamples = timeseriesData.length > 0 ? dates : [minDate, maxDate]
-  let truncation: 'second' | 'minute' | 'hour' | 'day'
-  let step = 1
-
-  if (interval) {
-    const match = interval.match(/^(\d+)(m|h|d|s)$/)
-    if (match) {
-      step = parseInt(match[1], 10)
-      const unitChar = match[2] as 'm' | 'h' | 'd' | 's'
-      const unitMap = { s: 'second', m: 'minute', h: 'hour', d: 'day' } as const
-      truncation = unitMap[unitChar]
-    } else {
-      // Fallback for invalid format
-      truncation = getTimestampTruncation(truncationSamples as Dayjs[])
-    }
-  } else {
-    truncation = getTimestampTruncation(truncationSamples as Dayjs[])
-  }
-
-  // If no data exists and no interval specified, default to minute precision
-  if (timeseriesData.length === 0 && !interval) {
-    truncation = 'minute'
-  }
+  const truncation = getTimestampTruncation(truncationSamples as Dayjs[])
 
   const newData = timeseriesData.map((datum) => {
-    const timestamp = datum[timestampKey]
-    const iso = isUnixMicro(timestamp)
-      ? unixMicroToIsoTimestamp(timestamp)
-      : dayjs.utc(timestamp).toISOString()
-
-    if (Array.isArray(valueKey) && valueKey.length === 0) {
-      return { [timestampKey]: iso }
-    }
-
+    const iso = dayjs.utc(datum[timestampKey]).toISOString()
     datum[timestampKey] = iso
     return datum
   })
 
-  let currentDate = minDate
-  while (currentDate.isBefore(maxDate) || currentDate.isSame(maxDate)) {
-    const found = dates.find((d) => {
-      const d_date = d as Dayjs
-      return (
-        d_date.year() === currentDate.year() &&
-        d_date.month() === currentDate.month() &&
-        d_date.date() === currentDate.date() &&
-        d_date.hour() === currentDate.hour() &&
-        d_date.minute() === currentDate.minute() &&
-        d_date.second() === currentDate.second()
-      )
-    })
-    if (!found) {
-      const keys = typeof valueKey === 'string' ? [valueKey] : valueKey
+  const diff = maxDate.diff(minDate, truncation as dayjs.UnitType)
+  // Intentional throwing of error here to be caught by Sentry, as this would indicate a bug since charts shouldn't be rendering more than 10k data points
+  if (diff > 10000) {
+    throw new Error(
+      'The selected date range will render more than 10,000 data points within the charts, which will degrade browser performance. Please select a smaller date range.'
+    )
+  }
 
-      const toMerge = keys.reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: defaultValue,
-        }),
-        {}
-      )
+  for (let i = 0; i <= diff; i++) {
+    const dateToMaybeAdd = minDate.add(i, truncation as dayjs.ManipulateType)
+
+    const keys = typeof valueKey === 'string' ? [valueKey] : valueKey
+
+    const toMerge = keys.reduce(
+      (acc, key) => ({
+        ...acc,
+        [key]: defaultValue,
+      }),
+      {}
+    )
+
+    if (!dates.find((d) => isEqual(d, dateToMaybeAdd))) {
       newData.push({
-        [timestampKey]: currentDate.toISOString(),
+        [timestampKey]: dateToMaybeAdd.toISOString(),
         ...toMerge,
       })
     }
-    currentDate = currentDate.add(step, truncation)
   }
 
   return newData
@@ -667,62 +629,4 @@ function getWarningCondition(table: LogsTableName): string {
     default:
       return 'false'
   }
-}
-
-export function jwtAPIKey(metadata: any) {
-  const apikeyHeader = metadata?.[0]?.request?.[0]?.sb?.[0]?.jwt?.[0]?.apikey?.[0]
-  if (!apikeyHeader) {
-    return undefined
-  }
-
-  if (apikeyHeader.invalid) {
-    return '<invalid>'
-  }
-
-  const payload = apikeyHeader?.payload?.[0]
-  if (!payload) {
-    return '<unrecognized>'
-  }
-
-  if (
-    payload.algorithm === 'HS256' &&
-    payload.issuer === 'supabase' &&
-    ['anon', 'service_role'].includes(payload.role) &&
-    !payload.subject
-  ) {
-    return payload.role
-  }
-
-  return '<unrecognized>'
-}
-
-export function apiKey(metadata: any) {
-  const apikeyHeader = metadata?.[0]?.request?.[0]?.sb?.[0]?.apikey?.[0]?.apikey?.[0]
-  if (!apikeyHeader) {
-    return undefined
-  }
-
-  if (apikeyHeader.error) {
-    return `${apikeyHeader.prefix}... <invalid: ${apikeyHeader.error}>`
-  }
-
-  return `${apikeyHeader.prefix}...`
-}
-
-export function role(metadata: any) {
-  const authorizationHeader = metadata?.[0]?.request?.[0]?.sb?.[0]?.jwt?.[0]?.authorization?.[0]
-  if (!authorizationHeader) {
-    return undefined
-  }
-
-  if (authorizationHeader.invalid) {
-    return undefined
-  }
-
-  const payload = authorizationHeader?.payload?.[0]
-  if (!payload || !payload.role) {
-    return undefined
-  }
-
-  return payload.role
 }

@@ -129,7 +129,6 @@ const { data, error } = await supabase.from('books').select().eq('title', 'Harry
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -140,8 +139,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -152,8 +149,6 @@ let response = try await supabase.from("books")
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -165,8 +160,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -174,7 +167,6 @@ data = supabase.from_('books').select().eq('title', 'Harry').execute()
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 The equality symbol above (`=`) is very "strict" on what it matches. In a full text search context, we might want to find all "Harry Potter" books and so we can rewrite the
@@ -203,7 +195,6 @@ const { data, error } = await supabase.from('books').select().textSearch('title'
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -214,8 +205,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -225,8 +214,6 @@ let response = try await supabase.from("books")
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -238,7 +225,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Basic full text queries
@@ -274,7 +260,6 @@ const { data, error } = await supabase.from('books').select().textSearch('descri
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -285,8 +270,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -297,8 +280,6 @@ let response = await client.from("books")
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -310,8 +291,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -319,7 +298,6 @@ data = supabase.from_('books').select().text_search('description', "'big'").exec
 ```
 
 </TabPanel>
-</$Show>
 
 <TabPanel id="data" label="Data">
 
@@ -377,7 +355,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```sql
@@ -394,8 +371,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```sql
@@ -413,8 +388,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```sql
@@ -432,8 +405,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```sql
@@ -447,7 +418,6 @@ data = supabase.from_('books').select().text_search('title_description', "little
 ```
 
 </TabPanel>
-</$Show>
 <TabPanel id="data" label="Data">
 
 {/* supa-mdx-lint-disable Rule003Spelling */}
@@ -496,7 +466,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -507,8 +476,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -520,8 +487,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -533,8 +498,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -542,7 +505,6 @@ data = supabase.from_('books').select().text_search('description', "'little' & '
 ```
 
 </TabPanel>
-</$Show>
 <TabPanel id="data" label="Data">
 
 {/* supa-mdx-lint-disable Rule003Spelling */}
@@ -590,7 +552,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -601,8 +562,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -614,8 +573,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -627,8 +584,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -636,7 +591,6 @@ response = client.from_('books').select().text_search('description', "'little' |
 ```
 
 </TabPanel>
-</$Show>
 <TabPanel id="data" label="Data">
 
 {/* supa-mdx-lint-disable Rule003Spelling */}
@@ -698,7 +652,6 @@ const { data, error } = await supabase.rpc('search_books_by_title_prefix', { pre
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -706,8 +659,6 @@ final data = await supabase.rpc('search_books_by_title_prefix', params: { 'prefi
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -719,8 +670,6 @@ let response = try await supabase.rpc(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -729,8 +678,6 @@ val result = supabase.postgrest.rpc("search_books_by_title_prefix", rpcParams)
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -738,7 +685,6 @@ data = client.rpc('search_books_by_title_prefix', { 'prefix': 'Lit' }).execute()
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 This function takes a prefix parameter and returns all books where the title contains a word starting with that prefix. The `:*` operator is used to denote a prefix match in the `to_tsquery()` function.
@@ -831,7 +777,6 @@ const { data, error } = await supabase.from('books').select().textSearch('fts', 
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -842,8 +787,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -855,8 +798,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -868,8 +809,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -877,7 +816,6 @@ data = client.from_('books').select().text_search('fts', "'little' & 'big'").exe
 ```
 
 </TabPanel>
-</$Show>
 <TabPanel id="data" label="Data">
 
 {/* supa-mdx-lint-disable Rule003Spelling */}
@@ -930,7 +868,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -941,8 +878,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -954,8 +889,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -967,8 +900,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -976,7 +907,6 @@ data = client.from_('books').select().text_search('description', "'big' <-> 'dre
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 We can also use the `<->` to find words within a certain distance of each other. For example to find `year` and `school` within 2 words of each other:
@@ -1010,7 +940,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -1021,8 +950,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -1034,8 +961,6 @@ let response = try await supabase
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -1047,8 +972,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -1056,7 +979,6 @@ data = client.from_('books').select().text_search('description', "'year' <2> 'sc
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ### Negation: `!` [#negation]
@@ -1093,7 +1015,6 @@ const { data, error } = await supabase
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -1104,8 +1025,6 @@ final result = await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -1117,8 +1036,6 @@ let response = try await client
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -1130,8 +1047,6 @@ val data = supabase.from("books").select {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -1139,7 +1054,6 @@ data = client.from_('books').select().text_search('description', "'big' & !'litt
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Resources

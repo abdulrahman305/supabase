@@ -1,5 +1,4 @@
 import { DocsButton } from 'components/ui/DocsButton'
-import { DOCS_URL } from 'lib/constants'
 import { Button, Modal, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from 'ui'
 
 interface SpendCapModalProps {
@@ -16,7 +15,7 @@ const SpendCapModal = ({ visible, onHide }: SpendCapModalProps) => {
       header={
         <div className="flex justify-between items-center">
           <span>Spend Cap</span>
-          <DocsButton href={`${DOCS_URL}/guides/platform/cost-control#spend-cap`} />
+          <DocsButton href="https://supabase.com/docs/guides/platform/cost-control#spend-cap" />
         </div>
       }
       showCloseButton={false}

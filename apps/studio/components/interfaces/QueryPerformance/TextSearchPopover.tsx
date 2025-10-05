@@ -54,8 +54,7 @@ export const TextSearchPopover = ({
             className="text-xs font-mono tracking-tight"
             placeholder={placeholder ?? 'Search for a query'}
             onKeyDown={(event) => {
-              if (event.metaKey && (event.code === 'Enter' || event.code === 'NumpadEnter'))
-                applySearch()
+              if (event.metaKey && event.code === 'Enter') applySearch()
             }}
           />
         </div>

@@ -2,7 +2,6 @@ import { Check, ExternalLink, Mail, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
-import { useProjectDetailQuery } from 'data/projects/project-detail-query'
 import { useProfile } from 'lib/profile'
 import { Button, Input, Separator } from 'ui'
 import { CATEGORY_OPTIONS } from './Support.constants'
@@ -10,16 +9,18 @@ import { CATEGORY_OPTIONS } from './Support.constants'
 interface SuccessProps {
   sentCategory?: string
   selectedProject?: string
+  projects?: any[]
 }
 
-export const Success = ({ sentCategory = '', selectedProject = 'no-project' }: SuccessProps) => {
+const Success = ({
+  sentCategory = '',
+  selectedProject = 'no-project',
+  projects = [],
+}: SuccessProps) => {
   const { profile } = useProfile()
   const respondToEmail = profile?.primary_email ?? 'your email'
 
-  const { data: project } = useProjectDetailQuery(
-    { ref: selectedProject },
-    { enabled: selectedProject !== 'no-project' }
-  )
+  const project = projects.find((p) => p.ref === selectedProject)
   const projectName = project ? project.name : 'No specific project'
 
   const categoriesToShowAdditionalResources = ['Problem', 'Unresponsive', 'Performance']
@@ -78,7 +79,7 @@ export const Success = ({ sentCategory = '', selectedProject = 'no-project' }: S
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Search on GitHub discussions
+                    Search on Github discussions
                   </Link>
                 </Button>,
               ]}
@@ -97,3 +98,5 @@ export const Success = ({ sentCategory = '', selectedProject = 'no-project' }: S
     </div>
   )
 }
+
+export default Success

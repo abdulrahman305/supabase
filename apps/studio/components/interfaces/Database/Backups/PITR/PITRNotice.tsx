@@ -6,7 +6,7 @@ import { useParams } from 'common'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { FormPanel } from 'components/ui/Forms/FormPanel'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { getPITRRetentionDuration } from './PITR.utils'
 
 const PITRNotice = ({}) => {
@@ -14,7 +14,7 @@ const PITRNotice = ({}) => {
   const { data: addonsResponse } = useProjectAddonsQuery({ projectRef })
   const retentionPeriod = getPITRRetentionDuration(addonsResponse?.selected_addons ?? [])
 
-  const { can: canUpdateSubscription } = useAsyncCheckPermissions(
+  const canUpdateSubscription = useCheckPermissions(
     PermissionAction.BILLING_WRITE,
     'stripe.subscriptions'
   )

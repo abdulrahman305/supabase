@@ -36,8 +36,7 @@ export type FeatureKey =
   | 'database.pitr'
   | 'database.pausing'
   | 'database.branching'
-  | 'database.egress'
-  | 'database.cachedEgress'
+  | 'database.bandwidth'
   | 'auth.totalUsers'
   | 'auth.maus'
   | 'auth.userDataOwnership'
@@ -176,30 +175,19 @@ export const pricing: Pricing = {
         title: 'Branching',
         plans: {
           free: false,
-          pro: '$0.01344 per branch, per hour',
-          team: '$0.01344 per branch, per hour',
+          pro: '$0.32 per branch, per day',
+          team: '$0.32 per branch, per day',
           enterprise: 'Custom',
         },
         usage_based: true,
       },
       {
-        key: 'database.egress',
-        title: 'Egress',
+        key: 'database.bandwidth',
+        title: 'Bandwidth',
         plans: {
           free: '5 GB included',
           pro: ['250 GB included', 'then $0.09 per GB'],
           team: ['250 GB included', 'then $0.09 per GB'],
-          enterprise: 'Custom',
-        },
-        usage_based: true,
-      },
-      {
-        key: 'database.cachedEgress',
-        title: 'Cached Egress',
-        plans: {
-          free: '5 GB included',
-          pro: ['250 GB included', 'then $0.03 per GB'],
-          team: ['250 GB included', 'then $0.03 per GB'],
           enterprise: 'Custom',
         },
         usage_based: true,
@@ -433,8 +421,8 @@ export const pricing: Pricing = {
         title: 'Max file upload size',
         plans: {
           free: '50 MB',
-          pro: '500 GB',
-          team: '500 GB',
+          pro: '50 GB',
+          team: '50 GB',
           enterprise: 'Custom',
         },
         usage_based: false,
@@ -601,7 +589,11 @@ export const pricing: Pricing = {
         plans: {
           free: false,
           pro: false,
-          team: ['$60 per drain per month', '+ $0.20 per million events', '+ $0.09 per GB egress'],
+          team: [
+            '$60 per drain per month',
+            '+ $0.20 per million events',
+            '+ $0.09 per GB bandwidth',
+          ],
           enterprise: 'Custom',
         },
         usage_based: true,

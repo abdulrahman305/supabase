@@ -1,12 +1,12 @@
-'use client'
-
 import { LOCAL_STORAGE_KEYS, useBreakpoint } from 'common'
-import { startCase } from 'lib/helpers'
+import { AnimatePresence, motion } from 'framer-motion'
+import { startCase } from 'lodash'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/compat/router'
+import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
-import type { BlogView } from 'app/blog/BlogClient'
-import type PostTypes from 'types/post'
+import { useKey } from 'react-use'
+import type { BlogView } from '~/pages/blog'
+import type PostTypes from '~/types/post'
 
 import { AlignJustify, ChevronDown, Grid, Search, X as CloseIcon } from 'lucide-react'
 import {
@@ -74,9 +74,9 @@ function BlogFilters({ allPosts, setPosts, view, setView }: Props) {
   }, [q])
 
   const handleReplaceRouter = () => {
-    if (!searchTerm && category !== 'all' && router) {
+    if (!searchTerm && category !== 'all') {
       router.query.category = category
-      router?.replace(router, undefined, { shallow: true, scroll: false })
+      router.replace(router, undefined, { shallow: true, scroll: false })
     }
   }
 
@@ -98,34 +98,26 @@ function BlogFilters({ allPosts, setPosts, view, setView }: Props) {
     )
   }
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleSearchByText('')
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [handleSearchByText])
+  useKey('Escape', () => handleSearchByText(''))
 
   useEffect(() => {
     setShowSearchInput(!isMobile)
   }, [isMobile])
 
   useEffect(() => {
-    if (router?.isReady && q) {
+    if (router.isReady && q) {
       setSearchTerm(q)
     }
-    if (router?.isReady && activeCategory && activeCategory !== 'all') {
+    if (router.isReady && activeCategory && activeCategory !== 'all') {
       setCategory(activeCategory)
     }
-  }, [activeCategory, router?.isReady, q])
+  }, [activeCategory, router.isReady, q])
 
-  function handleSearchByText(text: string) {
+  const handleSearchByText = (text: string) => {
     setSearchTerm(text)
-    searchParams?.has('q') && router?.replace('/blog', undefined, { shallow: true, scroll: false })
-    router?.replace(`/blog?q=${text}`, undefined, { shallow: true, scroll: false })
-    if (text.length < 1) router?.replace('/blog', undefined, { shallow: true, scroll: false })
+    searchParams?.has('q') && router.replace('/blog', undefined, { shallow: true, scroll: false })
+    router.replace(`/blog?q=${text}`, undefined, { shallow: true, scroll: false })
+    if (text.length < 1) router.replace('/blog', undefined, { shallow: true, scroll: false })
 
     const matches = allPosts.filter((post: any) => {
       const found =
@@ -143,8 +135,8 @@ function BlogFilters({ allPosts, setPosts, view, setView }: Props) {
     searchTerm && setSearchTerm('')
     setCategory(category)
     category === 'all'
-      ? router?.replace('/blog', undefined, { shallow: true, scroll: false })
-      : router?.replace(`/blog?category=${category}`, undefined, {
+      ? router.replace('/blog', undefined, { shallow: true, scroll: false })
+      : router.replace(`/blog?category=${category}`, undefined, {
           shallow: true,
           scroll: false,
         })
@@ -166,102 +158,115 @@ function BlogFilters({ allPosts, setPosts, view, setView }: Props) {
 
   return (
     <div className="flex flex-row items-center justify-between gap-2">
-      {!showSearchInput && (
-        <div className="flex lg:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="outline"
-                iconRight={<ChevronDown />}
-                className="w-full min-w-[200px] flex justify-between items-center py-2"
-              >
-                {!activeCategory ? 'All Posts' : startCase(activeCategory?.replaceAll('-', ' '))}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom" align="start">
-              {allCategories.map((category: string, i: number) => (
-                <DropdownMenuItem
-                  key={`item-${category}-${
-                    // biome-ignore lint/suspicious/noArrayIndexKey: to disambiguate emtpy values
-                    i
-                  }`}
-                  onClick={() => handleSetCategory(category)}
-                  className={cn(
-                    (category === 'all' && !activeCategory) || category === activeCategory
-                      ? 'text-brand-600'
-                      : ''
-                  )}
-                >
-                  {category === 'all' ? 'All Posts' : startCase(category.replaceAll('-', ' '))}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-      <div className="hidden lg:flex flex-wrap items-center flex-grow gap-2">
-        {allCategories.map((category: string) => (
-          <Button
-            key={category}
-            type={
-              category === 'all' && !searchTerm && !activeCategory
-                ? 'default'
-                : category === activeCategory
-                  ? 'default'
-                  : 'outline'
-            }
-            onClick={() => handleSetCategory(category)}
-            size={is2XL ? 'tiny' : 'small'}
-            className="rounded-full"
+      <AnimatePresence mode="wait">
+        {!showSearchInput && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.05 } }}
+            className="flex lg:hidden"
           >
-            {category === 'all' ? 'All' : startCase(category.replaceAll('-', ' '))}
-          </Button>
-        ))}
-      </div>
-
-      {!showSearchInput && (
-        <div className="flex-1 flex justify-end">
-          {' '}
-          <Button
-            className="px-2 h-full"
-            size="medium"
-            type="default"
-            onClick={() => setShowSearchInput(true)}
-          >
-            <Search size="14" />
-          </Button>
-        </div>
-      )}
-
-      {showSearchInput && (
-        <div className="w-full h-auto flex justify-end gap-2 items-stretch lg:max-w-[240px] xl:max-w-[280px]">
-          <Input
-            icon={<Search size="14" />}
-            size="small"
-            layout="vertical"
-            autoComplete="off"
-            type="search"
-            placeholder="Search blog"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            className="w-full"
-            actions={
-              isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
-                  type="link"
-                  onClick={() => {
-                    setSearchTerm('')
-                    setShowSearchInput(false)
-                  }}
-                  className="text-foreground-light hover:text-foreground hover:bg-selection"
+                  type="outline"
+                  iconRight={<ChevronDown />}
+                  className="w-full min-w-[200px] flex justify-between items-center py-2"
                 >
-                  <CloseIcon size="14" />
+                  {!activeCategory ? 'All Posts' : startCase(activeCategory?.replaceAll('-', ' '))}
                 </Button>
-              )
-            }
-          />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="bottom" align="start">
+                {allCategories.map((category: string) => (
+                  <DropdownMenuItem
+                    key={`item-${category}`}
+                    onClick={() => handleSetCategory(category)}
+                    className={cn(
+                      (category === 'all' && !activeCategory) || category === activeCategory
+                        ? 'text-brand-600'
+                        : ''
+                    )}
+                  >
+                    {category === 'all' ? 'All Posts' : startCase(category.replaceAll('-', ' '))}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </motion.div>
+        )}
+        <div className="hidden lg:flex flex-wrap items-center flex-grow gap-2">
+          {allCategories.map((category: string) => (
+            <Button
+              key={category}
+              type={
+                category === 'all' && !searchTerm && !activeCategory
+                  ? 'default'
+                  : category === activeCategory
+                    ? 'default'
+                    : 'outline'
+              }
+              onClick={() => handleSetCategory(category)}
+              size={is2XL ? 'tiny' : 'small'}
+              className="rounded-full"
+            >
+              {category === 'all' ? 'All' : startCase(category.replaceAll('-', ' '))}
+            </Button>
+          ))}
         </div>
-      )}
+
+        {!showSearchInput && (
+          <motion.div
+            className="flex-1 flex justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.05 } }}
+          >
+            <Button
+              className="px-2"
+              size="large"
+              type="default"
+              onClick={() => setShowSearchInput(true)}
+            >
+              <Search size="14" />
+            </Button>
+          </motion.div>
+        )}
+
+        {showSearchInput && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.05 } }}
+            className="w-full h-auto flex justify-end gap-2 items-stretch lg:max-w-[240px] xl:max-w-[280px]"
+          >
+            <Input
+              icon={<Search size="14" />}
+              size="small"
+              layout="vertical"
+              autoComplete="off"
+              type="search"
+              placeholder="Search blog"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="w-full"
+              actions={
+                isMobile && (
+                  <Button
+                    type="link"
+                    onClick={() => {
+                      setSearchTerm('')
+                      setShowSearchInput(false)
+                    }}
+                    className="text-foreground-light hover:text-foreground hover:bg-selection"
+                  >
+                    <CloseIcon size="14" />
+                  </Button>
+                )
+              }
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Button
         type="default"
         title={isList ? 'Grid View' : 'List View'}

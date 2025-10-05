@@ -5,17 +5,16 @@ import { cn } from 'ui'
 
 interface Props {
   className?: string
-  hasGlow?: boolean
 }
 
-const DatabaseVisual: React.FC<Props> = ({ className, hasGlow = true }) => {
+const DatabaseVisual: React.FC<Props> = ({ className }) => {
   const containerRef = useRef(null)
   const ref = useRef(null)
   const [gradientPos, setGradientPos] = useState({ x: 0, y: 0 })
   const isSafari = isBrowser && detectBrowser() === 'Safari'
 
   const handleGlow = (event: any) => {
-    if (!ref.current || !containerRef.current || !hasGlow) return null
+    if (!ref.current || !containerRef.current) return null
 
     const containerRefElement = containerRef.current as HTMLDivElement
 
@@ -60,7 +59,7 @@ const DatabaseVisual: React.FC<Props> = ({ className, hasGlow = true }) => {
       role="img"
       aria-label="Supabase Postgres database visual composition"
     >
-      <span className="absolute group w-full md:w-auto h-full md:aspect-square flex items-end md:items-center justify-center md:justify-end right-0 left-0 md:left-auto xl:-right-12 2xl:right-0 top-12 md:top-0 md:bottom-0 my-auto">
+      <span className="absolute w-full md:w-auto h-full md:aspect-square flex items-end md:items-center justify-center md:justify-end right-0 left-0 md:left-auto xl:-right-12 2xl:right-0 top-12 md:top-0 md:bottom-0 my-auto">
         <Image
           src="/images/index/products/database-dark.png"
           alt="Supabase Postgres database"
@@ -68,7 +67,6 @@ const DatabaseVisual: React.FC<Props> = ({ className, hasGlow = true }) => {
           priority
           quality={100}
           sizes="100%"
-          draggable={false}
           className="hidden dark:block absolute antialiased inset-0 object-contain object-center z-0 w-full md:w-auto h-full transition-opacity group-hover:opacity-80"
         />
         <Image
@@ -77,7 +75,6 @@ const DatabaseVisual: React.FC<Props> = ({ className, hasGlow = true }) => {
           fill
           priority
           quality={100}
-          draggable={false}
           sizes="100%"
           className="dark:hidden absolute antialiased inset-0 object-contain object-center z-0 w-full md:w-auto h-full transition-opacity group-hover:opacity-80"
         />

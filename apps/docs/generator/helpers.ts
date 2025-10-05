@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { mapValues, values } from 'lodash-es'
+import { mapValues, values } from 'lodash'
 
 export const slugify = (text: string) => {
   if (!text) return ''

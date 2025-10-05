@@ -9,20 +9,19 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { useFlag, useParams } from 'common'
+import { useParams } from 'common'
 import { PostgresVersionSelector } from 'components/interfaces/ProjectCreation/PostgresVersionSelector'
 import AlertError from 'components/ui/AlertError'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
+import { PostgresEngine, ReleaseChannel } from 'data/config/project-unpause-postgres-versions-query'
 import { useFreeProjectLimitCheckQuery } from 'data/organizations/free-project-limit-check-query'
-import { PostgresEngine, ReleaseChannel } from 'data/projects/new-project.constants'
 import { useProjectPauseStatusQuery } from 'data/projects/project-pause-status-query'
 import { useProjectRestoreMutation } from 'data/projects/project-restore-mutation'
 import { setProjectStatus } from 'data/projects/projects-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { usePHFlag } from 'hooks/ui/useFlag'
-import { DOCS_URL, PROJECT_STATUS } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useFlag, usePHFlag } from 'hooks/ui/useFlag'
+import { PROJECT_STATUS } from 'lib/constants'
 import { AWS_REGIONS, CloudProvider } from 'shared-data'
 import {
   AlertDescription_Shadcn_,
@@ -34,6 +33,7 @@ import {
   Modal,
 } from 'ui'
 import { GenericSkeletonLoader } from 'ui-patterns/ShimmeringLoader'
+import { useProjectContext } from '../ProjectContext'
 import { RestorePaidPlanProjectNotice } from '../RestorePaidPlanProjectNotice'
 import { PauseDisabledState } from './PauseDisabledState'
 
@@ -42,7 +42,7 @@ export interface ProjectPausedStateProps {
 }
 
 interface PostgresVersionDetails {
-  postgresEngine: Exclude<PostgresEngine, '13' | '14'>
+  postgresEngine: PostgresEngine
   releaseChannel: ReleaseChannel
 }
 
@@ -54,8 +54,8 @@ export const extractPostgresVersionDetails = (value: string): PostgresVersionDet
 export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
   const { ref } = useParams()
   const queryClient = useQueryClient()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const { project } = useProjectContext()
+  const selectedOrganization = useSelectedOrganization()
   const showPostgresVersionSelector = useFlag('showPostgresVersionSelector')
   const enableProBenefitWording = usePHFlag('proBenefitWording')
 
@@ -94,7 +94,7 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
     },
   })
 
-  const { can: canResumeProject } = useAsyncCheckPermissions(
+  const canResumeProject = useCheckPermissions(
     PermissionAction.INFRA_EXECUTE,
     'queue_jobs.projects.initialize_or_resume'
   )
@@ -207,7 +207,7 @@ export const ProjectPausedState = ({ product }: ProjectPausedStateProps) => {
                               <a
                                 target="_blank"
                                 rel="noreferrer"
-                                href={`${DOCS_URL}/guides/platform/migrating-and-upgrading-projects#time-limits`}
+                                href="https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects#time-limits"
                               >
                                 More information
                               </a>

@@ -1,24 +1,23 @@
 import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Elements } from '@stripe/react-stripe-js'
+import { Elements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe, PaymentIntentResult } from '@stripe/stripe-js'
 import { PermissionAction, SupportCategories } from '@supabase/shared-types/out/constants'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircle, Info } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { getStripeElementsAppearanceOptions } from 'components/interfaces/Billing/Payment/Payment.utils'
-import { PaymentConfirmation } from 'components/interfaces/Billing/Payment/PaymentConfirmation'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useOrganizationCreditTopUpMutation } from 'data/organizations/organization-credit-top-up-mutation'
 import { subscriptionKeys } from 'data/subscriptions/keys'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions, usePermissionsLoaded } from 'hooks/misc/useCheckPermissions'
 import { STRIPE_PUBLIC_KEY } from 'lib/constants'
+import { useIsHCaptchaLoaded } from 'stores/hcaptcha-loaded-store'
 import {
   Alert_Shadcn_,
   AlertDescription_Shadcn_,
@@ -36,9 +35,9 @@ import {
   Form_Shadcn_,
   FormField_Shadcn_,
   Input_Shadcn_,
+  LoadingLine,
 } from 'ui'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
-import type { PaymentMethodElementRef } from '../../Billing/Payment/PaymentMethods/NewPaymentMethodElement'
 import PaymentMethodSelection from './Subscription/PaymentMethodSelection'
 
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY)
@@ -48,8 +47,8 @@ const FORM_ID = 'credit-top-up'
 const FormSchema = z.object({
   amount: z.coerce
     .number()
-    .gte(100, 'Amount must be between $100 - $2000.')
-    .lte(2000, 'Amount must be between $100 - $2000.')
+    .gte(100, 'Amount must be between $100 - $999.')
+    .lte(999, 'Amount must be between $100 - $999.')
     .int('Amount must be a whole number.'),
   paymentMethod: z.string(),
 })
@@ -59,14 +58,12 @@ type CreditTopUpForm = z.infer<typeof FormSchema>
 export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
   const { resolvedTheme } = useTheme()
   const queryClient = useQueryClient()
-  const paymentMethodSelectionRef = useRef<{
-    createPaymentMethod: PaymentMethodElementRef['createPaymentMethod']
-  }>(null)
 
-  const { can: canTopUpCredits, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
+  const canTopUpCredits = useCheckPermissions(
     PermissionAction.BILLING_WRITE,
     'stripe.subscriptions'
   )
+  const isPermissionsLoaded = usePermissionsLoaded()
 
   const {
     mutateAsync: topUpCredits,
@@ -84,6 +81,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
 
   const [topUpModalVisible, setTopUpModalVisible] = useState(false)
   const [paymentConfirmationLoading, setPaymentConfirmationLoading] = useState(false)
+  const captchaLoaded = useIsHCaptchaLoaded()
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaRef, setCaptchaRef] = useState<HCaptcha | null>(null)
 
@@ -97,7 +95,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
   }
 
   const initHcaptcha = async () => {
-    if (topUpModalVisible && captchaRef) {
+    if (topUpModalVisible && captchaRef && captchaLoaded) {
       let token = captchaToken
 
       try {
@@ -117,7 +115,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
 
   useEffect(() => {
     initHcaptcha()
-  }, [topUpModalVisible, captchaRef])
+  }, [topUpModalVisible, captchaRef, captchaLoaded])
 
   const [paymentIntentSecret, setPaymentIntentSecret] = useState('')
   const [paymentIntentConfirmation, setPaymentIntentConfirmation] = useState<PaymentIntentResult>()
@@ -127,20 +125,12 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
 
     const token = await initHcaptcha()
 
-    const paymentMethodResult = await paymentMethodSelectionRef.current?.createPaymentMethod()
-    if (!paymentMethodResult) {
-      return
-    }
-
     await topUpCredits(
       {
         slug,
         amount,
-        payment_method_id: paymentMethodResult.paymentMethod.id,
+        payment_method_id: paymentMethod,
         hcaptchaToken: token,
-        address: paymentMethodResult.address,
-        tax_id: paymentMethodResult.taxId ?? undefined,
-        billing_name: paymentMethodResult.customerName,
       },
       {
         onSuccess: (data) => {
@@ -159,7 +149,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
   const options = useMemo(() => {
     return {
       clientSecret: paymentIntentSecret,
-      appearance: getStripeElementsAppearanceOptions(resolvedTheme),
+      appearance: { theme: resolvedTheme?.includes('dark') ? 'night' : 'flat', labels: 'floating' },
     } as any
   }, [paymentIntentSecret, resolvedTheme])
 
@@ -234,21 +224,10 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
           />
           <DialogHeader>
             <DialogTitle>Top Up Credits</DialogTitle>
-            <DialogDescription className="space-y-2">
-              <p className="prose text-sm">
-                On successful payment, an invoice will be issued and you'll be granted credits.
-                Credits will be applied to future invoices only and are not refundable. The topped
-                up credits do not expire.
-              </p>
-              <p className="prose text-sm">
-                For larger discounted credit packages, please{' '}
-                <Link
-                  href={`/support/new?slug=${slug}&subject=${encodeURIComponent('I would like to inquire about larger credit packages')}&category=${SupportCategories.SALES_ENQUIRY}`}
-                  target="_blank"
-                >
-                  reach out.
-                </Link>
-              </p>
+            <DialogDescription>
+              On successful payment, an invoice will be issued and you'll be granted credits.
+              Credits will be applied to future invoices only and are not refundable. The topped up
+              credits do not expire.
             </DialogDescription>
           </DialogHeader>
 
@@ -272,13 +251,21 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
                   name="paymentMethod"
                   render={() => (
                     <PaymentMethodSelection
-                      ref={paymentMethodSelectionRef}
                       onSelectPaymentMethod={(pm) => form.setValue('paymentMethod', pm)}
                       selectedPaymentMethod={form.getValues('paymentMethod')}
-                      readOnly={executingTopUp || paymentConfirmationLoading}
                     />
                   )}
                 />
+
+                <p className="prose text-sm">
+                  For larger discounted credit packages, please{' '}
+                  <Link
+                    href={`/support/new?slug=${slug}&subject=${encodeURIComponent('I would like to inquire about larger credit packages')}&category=${SupportCategories.SALES_ENQUIRY}`}
+                    target="_blank"
+                  >
+                    reach out.
+                  </Link>
+                </p>
 
                 {paymentIntentConfirmation && paymentIntentConfirmation.error && (
                   <Alert_Shadcn_ variant="destructive">
@@ -335,6 +322,7 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
                   paymentIntentConfirmed(paymentIntentConfirmation)
                 }
                 onLoadingChange={(loading) => setPaymentConfirmationLoading(loading)}
+                paymentMethodId={form.getValues().paymentMethod}
               />
             </Elements>
           )}
@@ -342,4 +330,35 @@ export const CreditTopUp = ({ slug }: { slug: string | undefined }) => {
       </Dialog>
     </div>
   )
+}
+
+const PaymentConfirmation = ({
+  paymentIntentSecret,
+  onPaymentIntentConfirm,
+  onLoadingChange,
+  paymentMethodId,
+}: {
+  paymentIntentSecret: string
+  paymentMethodId: string
+  onPaymentIntentConfirm: (response: PaymentIntentResult) => void
+  onLoadingChange: (loading: boolean) => void
+}) => {
+  const stripe = useStripe()
+
+  useEffect(() => {
+    if (stripe && paymentIntentSecret) {
+      onLoadingChange(true)
+      stripe!
+        .confirmCardPayment(paymentIntentSecret, { payment_method: paymentMethodId })
+        .then((res) => {
+          onPaymentIntentConfirm(res)
+          onLoadingChange(false)
+        })
+        .catch((err) => {
+          onLoadingChange(false)
+        })
+    }
+  }, [paymentIntentSecret, stripe])
+
+  return <LoadingLine loading={true} />
 }

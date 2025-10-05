@@ -4,8 +4,8 @@ import { ChevronDown } from 'lucide-react'
 import { useParams } from 'common'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useAuthConfigQuery } from 'data/auth/auth-config-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import {
   Button,
   DropdownMenu,
@@ -30,10 +30,10 @@ export const AddHookDropdown = ({
   onSelectHook,
 }: AddHookDropdownProps) => {
   const { ref: projectRef } = useParams()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const organization = useSelectedOrganization()
 
   const { data: authConfig } = useAuthConfigQuery({ projectRef })
-  const { can: canUpdateAuthHook } = useAsyncCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
+  const canUpdateAuthHook = useCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
 
   const hooks: Hook[] = HOOKS_DEFINITIONS.map((definition) => {
     return {

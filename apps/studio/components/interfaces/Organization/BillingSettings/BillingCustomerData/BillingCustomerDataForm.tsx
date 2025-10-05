@@ -2,7 +2,7 @@ import { Check, ChevronsUpDown, X } from 'lucide-react'
 import { UseFormReturn } from 'react-hook-form'
 import { z } from 'zod'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import {
   Button,
   cn,
@@ -32,18 +32,39 @@ interface BillingCustomerDataFormProps {
 }
 
 // Define the expected form values structure and validation schema
-export const BillingCustomerDataSchema = z.object({
-  billing_name: z.string().min(3, 'Name must be at least 3 letters long'),
-  line1: z.string().trim().min(3, 'Address line 1 is required'),
-  line2: z.string().optional(),
-  city: z.string().trim().min(2, 'City is required'),
-  state: z.string().trim(),
-  postal_code: z.string().trim().min(1, 'Postal code is required'),
-  country: z.string().trim().min(1, 'Country is required'),
-  tax_id_type: z.string(),
-  tax_id_value: z.string(),
-  tax_id_name: z.string(),
-})
+export const BillingCustomerDataSchema = z
+  .object({
+    billing_name: z.string().min(3, 'Name must be at least 3 letters long'),
+    line1: z.string().optional(),
+    line2: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    postal_code: z.string().optional(),
+    country: z.string().optional(),
+    tax_id_type: z.string(),
+    tax_id_value: z.string(),
+    tax_id_name: z.string(),
+  })
+  .refine(
+    (data) => {
+      // its fine to just set the name, but once any other field is set, requires full address
+      const hasAnyField = data.line1 || data.line2 || data.city || data.state || data.postal_code
+      // If any field has value, country and line1 must have values.
+      return !hasAnyField || (!!data.country && !!data.line1)
+    },
+    {
+      message: 'Country and Address line 1 are required if any other field is provided.',
+      path: ['line1'],
+    }
+  )
+  .refine((data) => !(!!data.line1 && !data.country), {
+    message: 'Please select a country',
+    path: ['country'],
+  })
+  .refine((data) => !(!!data.country && !data.line1), {
+    message: 'Please provide an address line 1',
+    path: ['line1'],
+  })
 
 export type BillingCustomerDataFormValues = z.infer<typeof BillingCustomerDataSchema>
 
@@ -69,14 +90,8 @@ export const BillingCustomerDataForm = ({
     form.setValue('tax_id_value', '', { shouldDirty: true })
   }
 
-  const { tax_id_name, country } = form.watch()
+  const { tax_id_name } = form.watch()
   const selectedTaxId = TAX_IDS.find((option) => option.name === tax_id_name)
-
-  const availableTaxIds = useMemo(() => {
-    return TAX_IDS.filter((taxId) => !country || taxId.countryIso2 === country).sort((a, b) =>
-      a.country.localeCompare(b.country)
-    )
-  }, [country])
 
   return (
     <div className={cn('flex flex-col space-y-4', className)}>
@@ -84,9 +99,9 @@ export const BillingCustomerDataForm = ({
         control={form.control}
         name="billing_name"
         render={({ field }: { field: any }) => (
-          <FormItemLayout hideMessage label="Name">
+          <FormItemLayout hideMessage>
             <FormControl>
-              <Input {...field} disabled={disabled} />
+              <Input {...field} placeholder="Name" disabled={disabled} />
             </FormControl>
             <FormMessage />
           </FormItemLayout>
@@ -97,9 +112,9 @@ export const BillingCustomerDataForm = ({
         control={form.control}
         name="line1"
         render={({ field }: { field: any }) => (
-          <FormItemLayout hideMessage label="Address line 1">
+          <FormItemLayout hideMessage>
             <FormControl>
-              <Input {...field} placeholder="123 Main Street" disabled={disabled} />
+              <Input {...field} placeholder="Address line 1" disabled={disabled} />
             </FormControl>
             <FormMessage />
           </FormItemLayout>
@@ -110,13 +125,9 @@ export const BillingCustomerDataForm = ({
         control={form.control}
         name="line2"
         render={({ field }: { field: any }) => (
-          <FormItemLayout hideMessage label="Address line 2 (optional)">
+          <FormItemLayout hideMessage>
             <FormControl>
-              <Input
-                {...field}
-                placeholder="Apartment, suite, unit, building, floor, etc."
-                disabled={disabled}
-              />
+              <Input {...field} placeholder="Address line 2 (Optional)" disabled={disabled} />
             </FormControl>
             <FormMessage />
           </FormItemLayout>
@@ -128,7 +139,7 @@ export const BillingCustomerDataForm = ({
           control={form.control}
           name="country"
           render={({ field }: { field: any }) => (
-            <FormItemLayout hideMessage label="Country">
+            <FormItemLayout hideMessage>
               <Popover open={showCountriesPopover} onOpenChange={setShowCountriesPopover}>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -196,9 +207,9 @@ export const BillingCustomerDataForm = ({
           control={form.control}
           name="postal_code"
           render={({ field }: { field: any }) => (
-            <FormItemLayout hideMessage label="Postal code">
+            <FormItemLayout hideMessage>
               <FormControl>
-                <Input {...field} placeholder="12345" disabled={disabled} />
+                <Input {...field} placeholder="Postal code" disabled={disabled} />
               </FormControl>
               <FormMessage />
             </FormItemLayout>
@@ -211,9 +222,9 @@ export const BillingCustomerDataForm = ({
           control={form.control}
           name="city"
           render={({ field }: { field: any }) => (
-            <FormItemLayout hideMessage label="City">
+            <FormItemLayout hideMessage>
               <FormControl>
-                <Input {...field} disabled={disabled} />
+                <Input {...field} placeholder="City" disabled={disabled} />
               </FormControl>
               <FormMessage />
             </FormItemLayout>
@@ -223,9 +234,9 @@ export const BillingCustomerDataForm = ({
           control={form.control}
           name="state"
           render={({ field }: { field: any }) => (
-            <FormItemLayout hideMessage label="State / Province">
+            <FormItemLayout hideMessage>
               <FormControl>
-                <Input {...field} disabled={disabled} />
+                <Input {...field} placeholder="State / Province" disabled={disabled} />
               </FormControl>
               <FormMessage />
             </FormItemLayout>
@@ -270,24 +281,26 @@ export const BillingCustomerDataForm = ({
                     <CommandList>
                       <CommandEmpty>No tax ID found.</CommandEmpty>
                       <CommandGroup>
-                        {availableTaxIds.map((option) => (
-                          <CommandItem
-                            key={option.name}
-                            value={`${option.country} - ${option.name}`}
-                            onSelect={() => {
-                              onSelectTaxIdType(option.name)
-                              setShowTaxIDsPopover(false)
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                'mr-2 h-4 w-4',
-                                selectedTaxId?.name === option.name ? 'opacity-100' : 'opacity-0'
-                              )}
-                            />
-                            {option.country} - {option.name}
-                          </CommandItem>
-                        ))}
+                        {TAX_IDS.sort((a, b) => a.country.localeCompare(b.country)).map(
+                          (option) => (
+                            <CommandItem
+                              key={option.name}
+                              value={`${option.country} - ${option.name}`}
+                              onSelect={() => {
+                                onSelectTaxIdType(option.name)
+                                setShowTaxIDsPopover(false)
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  selectedTaxId?.name === option.name ? 'opacity-100' : 'opacity-0'
+                                )}
+                              />
+                              {option.country} - {option.name}
+                            </CommandItem>
+                          )
+                        )}
                       </CommandGroup>
                     </CommandList>
                   </Command>

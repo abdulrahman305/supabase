@@ -13,7 +13,7 @@ import { useOrgIntegrationsQuery } from 'data/integrations/integrations-query-or
 import { useIntegrationVercelConnectionsCreateMutation } from 'data/integrations/integrations-vercel-connections-create-mutation'
 import { useVercelProjectsQuery } from 'data/integrations/integrations-vercel-projects-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { BASE_PATH } from 'lib/constants'
 import { EMPTY_ARR } from 'lib/void'
 import { useSidePanelsStateSnapshot } from 'state/side-panels'
@@ -27,7 +27,7 @@ const VERCEL_ICON = (
 
 const SidePanelVercelProjectLinker = () => {
   const { ref } = useParams()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
   const sidePanelStateSnapshot = useSidePanelsStateSnapshot()
   const organizationIntegrationId = sidePanelStateSnapshot.vercelConnectionsIntegrationId
 
@@ -48,16 +48,16 @@ const SidePanelVercelProjectLinker = () => {
   /**
    * Supabase projects available
    */
-  const { data } = useProjectsQuery({
+  const { data: supabaseProjectsData } = useProjectsQuery({
     enabled: organizationIntegrationId !== undefined,
   })
 
   const supabaseProjects = useMemo(
     () =>
-      (data?.projects ?? [])
+      supabaseProjectsData
         ?.filter((project) => project.organization_id === selectedOrganization?.id)
         .map((project) => ({ name: project.name, ref: project.ref })) ?? EMPTY_ARR,
-    [selectedOrganization?.id, data]
+    [selectedOrganization?.id, supabaseProjectsData]
   )
 
   const { data: vercelProjectsData } = useVercelProjectsQuery(

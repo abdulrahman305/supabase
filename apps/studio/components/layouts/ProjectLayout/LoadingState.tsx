@@ -2,10 +2,9 @@ import { useParams } from 'common'
 import ShimmeringLoader from 'components/ui/ShimmeringLoader'
 import { useProjectsQuery } from 'data/projects/projects-query'
 
-export const LoadingState = () => {
+const LoadingState = () => {
   const { ref } = useParams()
-  const { data, isLoading } = useProjectsQuery()
-  const allProjects = data?.projects ?? []
+  const { data: allProjects, isLoading } = useProjectsQuery()
 
   const projectName =
     ref !== 'default'
@@ -14,29 +13,29 @@ export const LoadingState = () => {
 
   return (
     <div className="w-full mx-auto">
-      <div className="px-8 border-b">
-        <div className="max-w-7xl mx-auto flex items-center space-x-6 h-[184px]">
-          {isLoading ? (
-            <ShimmeringLoader className="h-9 w-40" />
-          ) : (
-            <h1 className="text-3xl">{projectName}</h1>
-          )}
-        </div>
+      <div className="max-w-7xl mx-auto flex items-center space-x-6 h-[184px]">
+        {isLoading ? (
+          <ShimmeringLoader className="h-9 w-40" />
+        ) : (
+          <h1 className="text-3xl">{projectName}</h1>
+        )}
       </div>
-      <div className="px-8 py-16">
-        <div className="max-w-7xl mx-auto">
-          <ProjectUsageLoadingState />
-        </div>
+
+      <div className="w-full border-t mb-16" />
+
+      <div className="max-w-7xl mx-auto mb-16">
+        <ProjectUsageLoadingState />
       </div>
-      <div className="px-8">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <ShimmeringLoader className="w-40 h-7" />
-          <ShimmeringLoader className="w-full h-32" />
-        </div>
+
+      <div className="max-w-7xl mx-auto space-y-4">
+        <ShimmeringLoader className="w-40 h-7" />
+        <ShimmeringLoader className="w-full h-32" />
       </div>
     </div>
   )
 }
+
+export default LoadingState
 
 export const ProjectUsageLoadingState = () => {
   return (

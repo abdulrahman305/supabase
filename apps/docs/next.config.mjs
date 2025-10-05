@@ -5,7 +5,6 @@ import { withSentryConfig } from '@sentry/nextjs'
 import withYaml from 'next-plugin-yaml'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
-import { parse as parseToml } from 'smol-toml'
 import remotePatterns from './lib/remotePatterns.js'
 
 const withBundleAnalyzer = configureBundleAnalyzer({
@@ -30,21 +29,21 @@ const nextConfig = {
   // swcMinify: true,
   basePath: process.env.NEXT_PUBLIC_BASE_PATH || '/docs',
   images: {
-    dangerouslyAllowSVG: false,
+    dangerouslyAllowSVG: true,
     // @ts-ignore
     remotePatterns,
+  },
+  // TODO: @next/mdx ^13.0.2 only supports experimental mdxRs flag. next ^13.0.2 will stop warning about this being unsupported.
+  // mdxRs: true,
+  modularizeImports: {
+    lodash: {
+      transform: 'lodash/{{member}}',
+    },
   },
   webpack: (config) => {
     config.module.rules.push({
       test: /\.include$/,
       type: 'asset/source',
-    })
-    config.module.rules.push({
-      test: /\.toml$/,
-      type: 'json',
-      parser: {
-        parse: parseToml,
-      },
     })
     return config
   },
@@ -156,10 +155,9 @@ const nextConfig = {
     ]
   },
   typescript: {
-    // On previews, typechecking is run via GitHub Action only for efficiency
-    // On production, we turn it on to prevent errors from conflicting PRs getting into
-    // prod
-    ignoreBuildErrors: process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ? false : true,
+    // WARNING: production builds can successfully complete even there are type errors
+    // Typechecking is checked separately via .github/workflows/typecheck.yml
+    ignoreBuildErrors: true,
   },
   eslint: {
     // We are already running linting via GH action, this will skip linting during production build on Vercel

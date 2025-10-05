@@ -25,5 +25,4 @@ export const integrationKeys = {
   githubConnectionsList: (organizationId: number | undefined) =>
     ['organizations', organizationId, 'github-connections'] as const,
   vercelRedirect: (installationId?: string) => ['vercel-redirect', installationId] as const,
-  awsRedirect: (organizationSlug?: string) => ['aws-redirect', organizationSlug] as const,
 }

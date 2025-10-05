@@ -1,14 +1,13 @@
-import { Truck } from 'lucide-react'
-
 import { FormHeader } from 'components/ui/Forms/FormHeader'
 import Panel from 'components/ui/Panel'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import TransferProjectButton from './TransferProjectButton'
+import { Truck } from 'lucide-react'
 
 const TransferProjectPanel = () => {
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
 
-  if (project === undefined) return null
+  if (project === undefined) return <></>
 
   return (
     <section id="transfer-project">

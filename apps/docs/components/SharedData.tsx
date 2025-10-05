@@ -1,4 +1,4 @@
-import { at } from 'lodash-es'
+import { at } from 'lodash'
 import { ReactNode } from 'react'
 import { config, logConstants } from 'shared-data'
 

@@ -26,17 +26,15 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
 
     env:
-      DOCS_GITHUB_APP_ID: ${{ secrets.SEARCH_GITHUB_APP_ID }}
-      DOCS_GITHUB_APP_INSTALLATION_ID: ${{ secrets.SEARCH_GITHUB_APP_INSTALLATION_ID }}
-      DOCS_GITHUB_APP_PRIVATE_KEY: ${{ secrets.SEARCH_GITHUB_APP_PRIVATE_KEY }}
-      NEXT_PUBLIC_MISC_URL: ${{ secrets.NEXT_PUBLIC_MISC_URL}}
-      NEXT_PUBLIC_MISC_ANON_KEY: ${{ secrets.NEXT_PUBLIC_MISC_ANON_KEY }}
-      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SEARCH_SUPABASE_URL }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      SUPABASE_SECRET_KEY: ${{ secrets.SEARCH_SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SEARCH_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SEARCH_SUPABASE_SERVICE_ROLE_KEY }}
+      SEARCH_GITHUB_APP_ID: ${{ secrets.SEARCH_GITHUB_APP_ID }}
+      SEARCH_GITHUB_APP_INSTALLATION_ID: ${{ secrets.SEARCH_GITHUB_APP_INSTALLATION_ID }}
+      SEARCH_GITHUB_APP_PRIVATE_KEY: ${{ secrets.SEARCH_GITHUB_APP_PRIVATE_KEY }}
 
     steps:
       - name: Check out repo
@@ -45,8 +43,6 @@ jobs:
           sparse-checkout: |
             apps/docs
             apps/www/.env.local.example
-            examples
-            packages
             supabase
 
       - uses: pnpm/action-setup@v4
@@ -62,18 +58,16 @@ jobs:
       - name: Download dependencies
         run: pnpm i
 
+      # Need the miscellaneous use API, which is available publicly (by design) in www
+      - name: Copy environment variables
+        run: cp apps/www/.env.local.example apps/docs/.env
+
       - name: Update embeddings
         working-directory: ./apps/docs
         if: ${{ !inputs.refresh }}
-        run: |
-          pnpm run codegen:examples
-          pnpm run embeddings
-          pnpm run embeddings:nimbus
+        run: pnpm run embeddings
 
       - name: Refresh embeddings
         working-directory: ./apps/docs
         if: ${{ inputs.refresh }}
-        run: |
-          pnpm run codegen:examples
-          pnpm run embeddings:refresh
-          pnpm run embeddings:nimbus:refresh
+        run: pnpm run embeddings:refresh

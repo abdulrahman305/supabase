@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Dispatch, SetStateAction, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, useState } from 'react'
 
 import { IS_PLATFORM } from 'common'
 import {
@@ -16,8 +16,6 @@ import {
   checkForWithClause,
 } from 'components/interfaces/Settings/Logs/Logs.utils'
 import { get } from 'data/fetchers'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { DOCS_URL } from 'lib/constants'
 
 export interface LogsQueryHook {
   params: LogsEndpointParams
@@ -39,6 +37,7 @@ const useLogsQuery = (
   const defaultHelper = getDefaultHelper(EXPLORER_DATEPICKER_HELPERS)
   const [params, setParams] = useState<LogsEndpointParams>({
     sql: initialParams?.sql || '',
+    project: projectRef,
     iso_timestamp_start: initialParams.iso_timestamp_start
       ? initialParams.iso_timestamp_start
       : defaultHelper.calcFrom(),
@@ -46,18 +45,6 @@ const useLogsQuery = (
       ? initialParams.iso_timestamp_end
       : defaultHelper.calcTo(),
   })
-
-  const { logsMetadata } = useIsFeatureEnabled(['logs:metadata'])
-
-  useEffect(() => {
-    setParams((prev) => ({
-      ...prev,
-      ...initialParams,
-      sql: initialParams?.sql ?? prev.sql,
-      iso_timestamp_start: initialParams.iso_timestamp_start ?? prev.iso_timestamp_start,
-      iso_timestamp_end: initialParams.iso_timestamp_end ?? prev.iso_timestamp_end,
-    }))
-  }, [initialParams.sql, initialParams.iso_timestamp_start, initialParams.iso_timestamp_end])
 
   const _enabled = enabled && typeof projectRef !== 'undefined' && Boolean(params.sql)
 
@@ -102,13 +89,13 @@ const useLogsQuery = (
     if (usesWith) {
       error = {
         message: 'The parser does not yet support WITH and subquery statements.',
-        docs: `${DOCS_URL}/guides/platform/advanced-log-filtering#the-with-keyword-and-subqueries-are-not-supported`,
+        docs: 'https://supabase.com/docs/guides/platform/advanced-log-filtering#the-with-keyword-and-subqueries-are-not-supported',
       }
     }
     if (usesILIKE) {
       error = {
         message: 'BigQuery does not support ILIKE. Use REGEXP_CONTAINS instead.',
-        docs: `${DOCS_URL}/guides/platform/advanced-log-filtering#the-ilike-and-similar-to-keywords-are-not-supported`,
+        docs: 'https://supabase.com/docs/guides/platform/advanced-log-filtering#the-ilike-and-similar-to-keywords-are-not-supported',
       }
     }
   }
@@ -116,19 +103,10 @@ const useLogsQuery = (
     setParams((prev) => ({ ...prev, sql: newQuery }))
   }
 
-  const logData = (data?.result ?? []).map((x) => {
-    if (logsMetadata) {
-      return x
-    } else {
-      const { metadata, ...log } = x
-      return log
-    }
-  })
-
   return {
     params,
     isLoading: (_enabled && isLoading) || isRefetching,
-    logData: logData,
+    logData: data?.result ?? [],
     error,
     changeQuery,
     runQuery: () => refetch(),

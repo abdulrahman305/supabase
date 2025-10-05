@@ -12,7 +12,6 @@ import {
   UpdateColumnPayload,
 } from '../SidePanelEditor.types'
 import type { RetrievedTableColumn, RetrieveTableResult } from 'data/tables/table-retrieve-query'
-import { toast } from 'sonner'
 
 const isSQLExpression = (input: string) => {
   if (['CURRENT_DATE'].includes(input)) return true
@@ -171,11 +170,9 @@ export const validateFields = (field: ColumnField) => {
   const errors = {} as Dictionary<any>
   if (field.name.length === 0) {
     errors['name'] = `Please assign a name for your column`
-    toast.error(errors['name'])
   }
   if (field.format.length === 0) {
     errors['format'] = `Please select a type for your column`
-    toast.error(errors['format'])
   }
   return errors
 }

@@ -5,17 +5,15 @@ import SiteUrl from 'components/interfaces/Auth/SiteUrl/SiteUrl'
 import AuthLayout from 'components/layouts/AuthLayout/AuthLayout'
 import DefaultLayout from 'components/layouts/DefaultLayout'
 import { PageLayout } from 'components/layouts/PageLayout/PageLayout'
-import { ScaffoldContainer, ScaffoldSection } from 'components/layouts/Scaffold'
+import { ScaffoldContainer } from 'components/layouts/Scaffold'
 import NoPermission from 'components/ui/NoPermission'
 import { GenericSkeletonLoader } from 'components/ui/ShimmeringLoader'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions, usePermissionsLoaded } from 'hooks/misc/useCheckPermissions'
 import type { NextPageWithLayout } from 'types'
 
 const URLConfiguration: NextPageWithLayout = () => {
-  const { can: canReadAuthSettings, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'custom_config_gotrue'
-  )
+  const isPermissionsLoaded = usePermissionsLoaded()
+  const canReadAuthSettings = useCheckPermissions(PermissionAction.READ, 'custom_config_gotrue')
 
   if (isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's authentication settings" />
@@ -24,9 +22,9 @@ const URLConfiguration: NextPageWithLayout = () => {
   return (
     <ScaffoldContainer>
       {!isPermissionsLoaded ? (
-        <ScaffoldSection isFullWidth>
+        <div className="mt-12">
           <GenericSkeletonLoader />
-        </ScaffoldSection>
+        </div>
       ) : (
         <>
           <SiteUrl />

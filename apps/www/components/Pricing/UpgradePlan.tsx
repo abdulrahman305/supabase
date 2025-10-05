@@ -1,7 +1,6 @@
 import { Check, ChevronsUpDown, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
-import { PlanId } from 'shared-data/plans'
 
 import {
   Button,
@@ -33,10 +32,9 @@ interface UpgradePlanProps {
   organizations?: Organization[]
   onClick?: () => void
   size?: ButtonProps['size']
-  planId: PlanId
 }
 
-const UpgradePlan = ({ organizations = [], onClick, size = 'large', planId }: UpgradePlanProps) => {
+const UpgradePlan = ({ organizations = [], onClick, size = 'large' }: UpgradePlanProps) => {
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
 
@@ -144,7 +142,7 @@ const UpgradePlan = ({ organizations = [], onClick, size = 'large', planId }: Up
             <Link
               href={
                 value === 'new-organization'
-                  ? `/dashboard/new?plan=${planId}`
+                  ? `/dashboard/new`
                   : `/dashboard/org/${value}/billing?panel=subscriptionPlan`
               }
             >

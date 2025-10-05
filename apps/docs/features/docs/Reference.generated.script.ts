@@ -1,4 +1,4 @@
-import { isPlainObject, keyBy } from 'lodash-es'
+import { isPlainObject, keyBy } from 'lodash'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -78,12 +78,12 @@ function mapEndpointsById(
   const endpoints = spec.paths
   const endpointsById = new Map<string, IApiEndPoint>()
 
-  Object.entries(endpoints as Record<string, any>).forEach(([path, methods]) => {
-    Object.entries(methods as Record<string, any>).forEach(([method, details]) => {
+  Object.entries(endpoints).forEach(([path, methods]) => {
+    Object.entries(methods).forEach(([method, details]) => {
       endpointsById.set(getId(details), {
         id: getId(details),
         path,
-        method: method as 'get' | 'post' | 'put' | 'delete' | 'patch',
+        method,
         ...details,
       })
     })
@@ -92,16 +92,13 @@ function mapEndpointsById(
   return endpointsById
 }
 
-function genClientSdkSectionTree(
-  fns: Array<{ id: unknown }>,
-  excludeName: string
-): AbbrevApiReferenceSection[] {
+function genClientSdkSectionTree(fns: Array<{ id: unknown }>, excludeName: string) {
   const validSections = deepFilterRec(
-    commonClientLibSections as AbbrevApiReferenceSection[],
+    commonClientLibSections as Array<AbbrevApiReferenceSection>,
     'items',
     (section) =>
       section.type === 'markdown' || section.type === 'category'
-        ? !('excludes' in section && section.excludes?.includes(excludeName))
+        ? !('excludes' in section && section.excludes.includes(excludeName))
         : section.type === 'function'
           ? fns.some(({ id }) => section.id === id)
           : true
@@ -109,11 +106,11 @@ function genClientSdkSectionTree(
   return validSections
 }
 
-async function genCliSectionTree(): Promise<AbbrevApiReferenceSection[]> {
+async function genCliSectionTree() {
   const cliSpec = await getSpec('cli_v1_commands', { ext: 'yaml' })
 
   const validSections = deepFilterRec(
-    cliCommonSections as AbbrevApiReferenceSection[],
+    cliCommonSections as Array<AbbrevApiReferenceSection>,
     'items',
     (section) =>
       section.type === 'cli-command' ? cliSpec.commands.some(({ id }) => id === section.id) : true
@@ -121,9 +118,9 @@ async function genCliSectionTree(): Promise<AbbrevApiReferenceSection[]> {
   return validSections
 }
 
-function genApiSectionTree(endpointsById: Map<string, IApiEndPoint>): AbbrevApiReferenceSection[] {
+function genApiSectionTree(endpointsById: Map<string, IApiEndPoint>) {
   const validSections = deepFilterRec(
-    apiCommonSections as AbbrevApiReferenceSection[],
+    apiCommonSections as Array<AbbrevApiReferenceSection>,
     'items',
     (section) => (section.type === 'operation' ? endpointsById.has(section.id) : true)
   )
@@ -134,7 +131,7 @@ function genSelfHostedSectionTree(
   spec: Array<AbbrevApiReferenceSection>,
   endpointsById: Map<string, IApiEndPoint>
 ) {
-  const validSections = deepFilterRec(spec as any, 'items', (section: any) =>
+  const validSections = deepFilterRec(spec, 'items', (section) =>
     section.type === 'self-hosted-operation' ? endpointsById.has(section.id) : true
   )
   return validSections
@@ -146,7 +143,7 @@ export function flattenCommonClientLibSections(tree: Array<AbbrevApiReferenceSec
       const prunedElem = { ...elem }
       delete prunedElem.items
       acc.push(prunedElem)
-      acc.push(...flattenCommonClientLibSections(elem.items || []))
+      acc.push(...flattenCommonClientLibSections(elem.items))
     } else {
       acc.push(elem)
     }
@@ -292,7 +289,7 @@ async function writeSelfHostingReferenceSections() {
     selfHostingSpecs.flatMap((service) => {
       let tasks: Promise<any>[] = []
 
-      let endpointsById: Map<string, IApiEndPoint> = new Map()
+      let endpointsById: Map<string, IApiEndPoint>
       if (service.spec) {
         endpointsById = mapEndpointsById(service.spec, (details) =>
           slugify(details.summary || `dummy-id-${String(id++)}`, {
@@ -316,9 +313,7 @@ async function writeSelfHostingReferenceSections() {
         )
       )
 
-      const flattenedSelfHostedSections = flattenCommonClientLibSections(
-        selfHostedSectionTree as AbbrevApiReferenceSection[]
-      )
+      const flattenedSelfHostedSections = flattenCommonClientLibSections(selfHostedSectionTree)
       tasks.push(
         writeFile(
           join(GENERATED_DIRECTORY, `${service.id}.latest.flat.json`),

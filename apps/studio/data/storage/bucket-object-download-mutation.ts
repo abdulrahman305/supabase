@@ -2,7 +2,7 @@ import { UseMutationOptions, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { components } from 'data/api'
-import { fetchPost } from 'data/fetchers'
+import { post } from 'lib/common/fetch'
 import { API_URL, IS_PLATFORM } from 'lib/constants'
 import { ResponseError } from 'types'
 
@@ -18,9 +18,15 @@ export const downloadBucketObject = async (
 ) => {
   if (!bucketId) throw new Error('bucketId is required')
 
-  const response = await fetchPost(
+  // [Joshen] JFYI we have to use lib/common/fetch post as post from openapi-fetch doesn't support receiving octet-streams
+  // Opting to hard code /platform for non platform just for this particular mutation, so that it's clear what's happening
+  const response = await post(
     `${API_URL}${IS_PLATFORM ? '' : '/platform'}/storage/${projectRef}/buckets/${bucketId}/objects/download`,
-    { path, options, abortSignal: signal }
+    {
+      path,
+      options,
+      abortSignal: signal,
+    }
   )
 
   if (response.error) throw response.error

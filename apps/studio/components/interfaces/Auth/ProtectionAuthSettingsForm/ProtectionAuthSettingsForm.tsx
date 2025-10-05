@@ -1,7 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { Eye, EyeOff } from 'lucide-react'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -9,15 +8,15 @@ import { boolean, number, object, string } from 'yup'
 
 import { useParams } from 'common'
 import { ScaffoldSection, ScaffoldSectionTitle } from 'components/layouts/Scaffold'
-import AlertError from 'components/ui/AlertError'
 import { InlineLink } from 'components/ui/InlineLink'
 import NoPermission from 'components/ui/NoPermission'
 import { useAuthConfigQuery } from 'data/auth/auth-config-query'
 import { useAuthConfigUpdateMutation } from 'data/auth/auth-config-update-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { DOCS_URL } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import {
-  Badge,
+  AlertDescription_Shadcn_,
+  AlertTitle_Shadcn_,
+  Alert_Shadcn_,
   Button,
   Card,
   CardContent,
@@ -33,8 +32,8 @@ import {
   SelectValue_Shadcn_,
   Select_Shadcn_,
   Switch,
+  WarningIcon,
 } from 'ui'
-import { GenericSkeletonLoader } from 'ui-patterns'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { NO_REQUIRED_CHARACTERS } from '../Auth.constants'
 
@@ -68,32 +67,20 @@ const schema = object({
   PASSWORD_HIBP_ENABLED: boolean(),
 })
 
-export const ProtectionAuthSettingsForm = () => {
+const ProtectionAuthSettingsForm = () => {
   const { ref: projectRef } = useParams()
   const {
     data: authConfig,
     error: authConfigError,
-    isError,
     isLoading,
+    isError,
   } = useAuthConfigQuery({ projectRef })
-  const { mutate: updateAuthConfig, isLoading: isUpdatingConfig } = useAuthConfigUpdateMutation({
-    onError: (error) => {
-      toast.error(`Failed to update settings: ${error?.message}`)
-    },
-    onSuccess: () => {
-      toast.success('Successfully updated settings')
-    },
-  })
+  const { mutate: updateAuthConfig, isLoading: isUpdatingConfig } = useAuthConfigUpdateMutation()
+  const [isUpdatingProtection, setIsUpdatingProtection] = useState(false)
   const [hidden, setHidden] = useState(true)
 
-  const { can: canReadConfig } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'custom_config_gotrue'
-  )
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'custom_config_gotrue'
-  )
+  const canReadConfig = useCheckPermissions(PermissionAction.READ, 'custom_config_gotrue')
+  const canUpdateConfig = useCheckPermissions(PermissionAction.UPDATE, 'custom_config_gotrue')
 
   const protectionForm = useForm({
     resolver: yupResolver(schema),
@@ -115,7 +102,7 @@ export const ProtectionAuthSettingsForm = () => {
   })
 
   useEffect(() => {
-    if (authConfig && !isUpdatingConfig) {
+    if (authConfig && !isUpdatingProtection) {
       protectionForm.reset({
         DISABLE_SIGNUP: !authConfig.DISABLE_SIGNUP,
         EXTERNAL_ANONYMOUS_USERS_ENABLED: authConfig.EXTERNAL_ANONYMOUS_USERS_ENABLED || false,
@@ -133,9 +120,11 @@ export const ProtectionAuthSettingsForm = () => {
         PASSWORD_HIBP_ENABLED: authConfig.PASSWORD_HIBP_ENABLED || false,
       })
     }
-  }, [authConfig, isUpdatingConfig])
+  }, [authConfig, isUpdatingProtection])
 
   const onSubmitProtection = (values: any) => {
+    setIsUpdatingProtection(true)
+
     const payload = { ...values }
     payload.DISABLE_SIGNUP = !values.DISABLE_SIGNUP
     // The backend uses empty string to represent no required characters in the password
@@ -143,31 +132,33 @@ export const ProtectionAuthSettingsForm = () => {
       payload.PASSWORD_REQUIRED_CHARACTERS = ''
     }
 
-    updateAuthConfig({ projectRef: projectRef!, config: payload })
+    updateAuthConfig(
+      { projectRef: projectRef!, config: payload },
+      {
+        onError: (error) => {
+          toast.error(`Failed to update settings: ${error?.message}`)
+          setIsUpdatingProtection(false)
+        },
+        onSuccess: () => {
+          toast.success('Successfully updated settings')
+          setIsUpdatingProtection(false)
+        },
+      }
+    )
   }
 
   if (isError) {
     return (
-      <ScaffoldSection isFullWidth>
-        <AlertError error={authConfigError} subject="Failed to retrieve auth configuration" />
-      </ScaffoldSection>
+      <Alert_Shadcn_ variant="destructive">
+        <WarningIcon />
+        <AlertTitle_Shadcn_>Failed to retrieve auth configuration</AlertTitle_Shadcn_>
+        <AlertDescription_Shadcn_>{authConfigError.message}</AlertDescription_Shadcn_>
+      </Alert_Shadcn_>
     )
   }
 
   if (!canReadConfig) {
-    return (
-      <ScaffoldSection isFullWidth>
-        <NoPermission resourceText="view auth configuration settings" />
-      </ScaffoldSection>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <ScaffoldSection isFullWidth>
-        <GenericSkeletonLoader />
-      </ScaffoldSection>
-    )
+    return <NoPermission resourceText="view auth configuration settings" />
   }
 
   return (
@@ -230,9 +221,9 @@ export const ProtectionAuthSettingsForm = () => {
                           <InlineLink
                             href={
                               field.value === 'hcaptcha'
-                                ? `${DOCS_URL}/guides/auth/auth-captcha?queryGroups=captcha-method&captcha-method=hcaptcha-1`
+                                ? 'https://supabase.com/docs/guides/auth/auth-captcha?queryGroups=captcha-method&captcha-method=hcaptcha-1'
                                 : field.value === 'turnstile'
-                                  ? `${DOCS_URL}/guides/auth/auth-captcha?queryGroups=captcha-method&captcha-method=turnstile-1`
+                                  ? 'https://supabase.com/docs/guides/auth/auth-captcha?queryGroups=captcha-method&captcha-method=turnstile-1'
                                   : '/'
                             }
                             className="mt-2 text-xs text-foreground-light hover:text-foreground no-underline"
@@ -282,29 +273,6 @@ export const ProtectionAuthSettingsForm = () => {
               </>
             )}
 
-            <CardContent>
-              <FormField_Shadcn_
-                control={protectionForm.control}
-                name="PASSWORD_HIBP_ENABLED"
-                render={({ field }) => (
-                  <FormItemLayout
-                    layout="flex-row-reverse"
-                    label="Prevent use of leaked passwords"
-                    description="Rejects the use of known or easy to guess passwords on sign up or password change. "
-                  >
-                    <div className="flex items-center gap-2">
-                      <Badge variant={field.value ? 'success' : 'default'}>
-                        {field.value ? 'Enabled' : 'Disabled'}
-                      </Badge>
-                      <Link href={`/project/${projectRef}/auth/providers?provider=Email`}>
-                        <Button type="default">Configure email provider</Button>
-                      </Link>
-                    </div>
-                  </FormItemLayout>
-                )}
-              />
-            </CardContent>
-
             <CardFooter className="justify-end space-x-2">
               {protectionForm.formState.isDirty && (
                 <Button type="default" onClick={() => protectionForm.reset()}>
@@ -314,8 +282,10 @@ export const ProtectionAuthSettingsForm = () => {
               <Button
                 type="primary"
                 htmlType="submit"
-                disabled={!canUpdateConfig || isUpdatingConfig || !protectionForm.formState.isDirty}
-                loading={isUpdatingConfig}
+                disabled={
+                  !canUpdateConfig || isUpdatingProtection || !protectionForm.formState.isDirty
+                }
+                loading={isUpdatingProtection}
               >
                 Save changes
               </Button>
@@ -326,3 +296,5 @@ export const ProtectionAuthSettingsForm = () => {
     </ScaffoldSection>
   )
 }
+
+export default ProtectionAuthSettingsForm

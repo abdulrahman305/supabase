@@ -6,7 +6,6 @@ import { useParams } from 'common'
 import { LogDrainDestinationSheetForm } from 'components/interfaces/LogDrains/LogDrainDestinationSheetForm'
 import { LogDrains } from 'components/interfaces/LogDrains/LogDrains'
 import { LogDrainType } from 'components/interfaces/LogDrains/LogDrains.constants'
-import DefaultLayout from 'components/layouts/DefaultLayout'
 import SettingsLayout from 'components/layouts/ProjectSettingsLayout/SettingsLayout'
 import {
   ScaffoldContainer,
@@ -18,18 +17,14 @@ import { DocsButton } from 'components/ui/DocsButton'
 import { useCreateLogDrainMutation } from 'data/log-drains/create-log-drain-mutation'
 import { LogDrainData, useLogDrainsQuery } from 'data/log-drains/log-drains-query'
 import { useUpdateLogDrainMutation } from 'data/log-drains/update-log-drain-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { useCurrentOrgPlan } from 'hooks/misc/useCurrentOrgPlan'
-import { DOCS_URL } from 'lib/constants'
 import type { NextPageWithLayout } from 'types'
 import { Alert_Shadcn_, Button } from 'ui'
-import { GenericSkeletonLoader } from 'ui-patterns'
+import DefaultLayout from 'components/layouts/DefaultLayout'
 
 const LogDrainsSettings: NextPageWithLayout = () => {
-  const { can: canManageLogDrains, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
-    PermissionAction.ANALYTICS_ADMIN_WRITE,
-    'logflare'
-  )
+  const canManageLogDrains = useCheckPermissions(PermissionAction.ANALYTICS_ADMIN_WRITE, 'logflare')
 
   const [open, setOpen] = useState(false)
   const { ref } = useParams() as { ref: string }
@@ -40,7 +35,12 @@ const LogDrainsSettings: NextPageWithLayout = () => {
 
   const logDrainsEnabled = !planLoading && (plan?.id === 'team' || plan?.id === 'enterprise')
 
-  const { data: logDrains } = useLogDrainsQuery({ ref }, { enabled: logDrainsEnabled })
+  const { data: logDrains } = useLogDrainsQuery(
+    { ref },
+    {
+      enabled: logDrainsEnabled,
+    }
+  )
 
   const { mutate: createLogDrain, isLoading: createLoading } = useCreateLogDrainMutation({
     onSuccess: () => {
@@ -89,7 +89,7 @@ const LogDrainsSettings: NextPageWithLayout = () => {
             </ScaffoldDescription>
           </div>
           <div className="flex items-center justify-end gap-2">
-            <DocsButton href={`${DOCS_URL}/guides/platform/log-drains`} />
+            <DocsButton href="https://supabase.com/docs/guides/platform/log-drains" />
 
             {!(logDrains?.length === 0) && (
               <Button
@@ -144,15 +144,12 @@ const LogDrainsSettings: NextPageWithLayout = () => {
             }
           }}
         />
-
-        {isLoadingPermissions ? (
-          <GenericSkeletonLoader />
-        ) : !canManageLogDrains ? (
+        {canManageLogDrains ? (
+          <LogDrains onUpdateDrainClick={handleUpdateClick} onNewDrainClick={handleNewClick} />
+        ) : (
           <Alert_Shadcn_ variant="default">
             You do not have permission to manage log drains
           </Alert_Shadcn_>
-        ) : (
-          <LogDrains onUpdateDrainClick={handleUpdateClick} onNewDrainClick={handleNewClick} />
         )}
       </ScaffoldContainer>
     </>

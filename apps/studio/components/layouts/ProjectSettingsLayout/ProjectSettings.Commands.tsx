@@ -1,20 +1,11 @@
 import { useParams } from 'common'
 import { COMMAND_MENU_SECTIONS } from 'components/interfaces/App/CommandMenu/CommandMenu.utils'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
 import type { CommandOptions } from 'ui-patterns/CommandMenu'
 import { useRegisterCommands } from 'ui-patterns/CommandMenu'
-import { IRouteCommand } from 'ui-patterns/CommandMenu/internal/types'
 
 export function useProjectSettingsGotoCommands(options?: CommandOptions) {
   let { ref } = useParams()
   ref ||= '_'
-
-  const { projectSettingsLogDrains, projectSettingsCustomDomains, authenticationSignInProviders } =
-    useIsFeatureEnabled([
-      'project_settings:log_drains',
-      'project_settings:custom_domains',
-      'authentication:sign_in_providers',
-    ])
 
   useRegisterCommands(
     COMMAND_MENU_SECTIONS.NAVIGATE,
@@ -28,15 +19,13 @@ export function useProjectSettingsGotoCommands(options?: CommandOptions) {
       {
         id: 'nav-project-settings-database',
         name: 'Database Settings',
-        route: `/project/${ref}/database/settings`,
+        route: `/project/${ref}/settings/database`,
         defaultHidden: true,
       },
       {
         id: 'nav-project-settings-auth',
         name: 'Auth Settings',
-        route: authenticationSignInProviders
-          ? `/project/${ref}/auth/providers`
-          : `/project/${ref}/auth/policies`,
+        route: `/project/${ref}/auth/providers`,
         defaultHidden: true,
       },
       {
@@ -48,19 +37,15 @@ export function useProjectSettingsGotoCommands(options?: CommandOptions) {
       {
         id: 'nav-project-settings-storage',
         name: 'Storage Settings',
-        route: `/project/${ref}/storage/settings`,
+        route: `/project/${ref}/settings/storage`,
         defaultHidden: true,
       },
-      ...(projectSettingsCustomDomains
-        ? [
-            {
-              id: 'nav-project-settings-custom-domains',
-              name: 'Custom Domains',
-              route: `/project/${ref}/settings/general#custom-domains`,
-              defaultHidden: true,
-            } as IRouteCommand,
-          ]
-        : []),
+      {
+        id: 'nav-project-settings-custom-domains',
+        name: 'Custom Domains',
+        route: `/project/${ref}/settings/general#custom-domains`,
+        defaultHidden: true,
+      },
       {
         id: 'nav-project-settings-restart-project',
         name: 'Restart project',
@@ -112,25 +97,21 @@ export function useProjectSettingsGotoCommands(options?: CommandOptions) {
       {
         id: 'nav-project-settings-network-restrictions',
         name: 'Network restrictions',
-        route: `/project/${ref}/database/settings#network-restrictions`,
+        route: `/project/${ref}/settings/database#network-restrictions`,
         defaultHidden: true,
       },
       {
         id: 'nav-project-settings-banned-ips',
         name: 'Banned IPs',
-        route: `/project/${ref}/database/settings#banned-ips`,
+        route: `/project/${ref}/settings/database#banned-ips`,
         defaultHidden: true,
       },
-      ...(projectSettingsLogDrains
-        ? [
-            {
-              id: 'nav-project-settings-log-drains',
-              name: 'Log drains',
-              route: `/project/${ref}/settings/log-drains`,
-              defaultHidden: true,
-            } as IRouteCommand,
-          ]
-        : []),
+      {
+        id: 'nav-project-settings-log-drains',
+        name: 'Log drains',
+        route: `/project/${ref}/settings/log-drains`,
+        defaultHidden: true,
+      },
     ],
     { ...options, deps: [ref] }
   )

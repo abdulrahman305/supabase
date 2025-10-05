@@ -2,19 +2,19 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { toast } from 'sonner'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import NoPermission from 'components/ui/NoPermission'
 import { GenericSkeletonLoader } from 'components/ui/ShimmeringLoader'
 import { useHooksEnableMutation } from 'data/database/hooks-enable-mutation'
 import { useSchemasQuery } from 'data/database/schemas-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions, usePermissionsLoaded } from 'hooks/misc/useCheckPermissions'
 import { Admonition } from 'ui-patterns'
 import { IntegrationOverviewTab } from '../Integration/IntegrationOverviewTab'
 
 export const WebhooksOverviewTab = () => {
+  const { project } = useProjectContext()
   const { ref: projectRef } = useParams()
-  const { data: project } = useSelectedProjectQuery()
 
   const {
     data: schemas,
@@ -26,10 +26,8 @@ export const WebhooksOverviewTab = () => {
   })
 
   const isHooksEnabled = schemas?.some((schema) => schema.name === 'supabase_functions')
-  const { can: canReadWebhooks, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
-    PermissionAction.TENANT_SQL_ADMIN_READ,
-    'triggers'
-  )
+  const canReadWebhooks = useCheckPermissions(PermissionAction.TENANT_SQL_ADMIN_READ, 'triggers')
+  const isPermissionsLoaded = usePermissionsLoaded()
 
   const { mutate: enableHooks, isLoading: isEnablingHooks } = useHooksEnableMutation({
     onSuccess: async () => {
@@ -43,18 +41,18 @@ export const WebhooksOverviewTab = () => {
     enableHooks({ ref: projectRef })
   }
 
-  if (!isSchemasLoaded || isLoadingPermissions) {
+  if (isPermissionsLoaded && !canReadWebhooks) {
     return (
       <div className="p-10">
-        <GenericSkeletonLoader />
+        <NoPermission isFullPage resourceText="view database webhooks" />
       </div>
     )
   }
 
-  if (!canReadWebhooks) {
+  if (!isSchemasLoaded) {
     return (
       <div className="p-10">
-        <NoPermission isFullPage resourceText="view database webhooks" />
+        <GenericSkeletonLoader />
       </div>
     )
   }
@@ -75,13 +73,14 @@ export const WebhooksOverviewTab = () => {
             <ButtonTooltip
               className="w-fit"
               onClick={() => enableHooksForProject()}
-              disabled={isEnablingHooks}
+              disabled={!isPermissionsLoaded || isEnablingHooks}
               tooltip={{
                 content: {
                   side: 'bottom',
-                  text: !canReadWebhooks
-                    ? 'You need additional permissions to enable webhooks'
-                    : undefined,
+                  text:
+                    isPermissionsLoaded && !canReadWebhooks
+                      ? 'You need additional permissions to enable webhooks'
+                      : undefined,
                 },
               }}
             >

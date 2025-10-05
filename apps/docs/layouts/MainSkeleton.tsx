@@ -2,14 +2,13 @@
 
 import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
-import { memo, type PropsWithChildren, type ReactNode, useEffect } from 'react'
-// End of third-party imports
+import { memo, useEffect, type PropsWithChildren, type ReactNode } from 'react'
 
-import { isFeatureEnabled } from 'common'
 import { cn } from 'ui'
-import type { NavMenuSection } from '~/components/Navigation/Navigation.types'
+
+import { type NavMenuSection } from '~/components/Navigation/Navigation.types'
 import DefaultNavigationMenu, {
-  type MenuId,
+  MenuId,
 } from '~/components/Navigation/NavigationMenu/NavigationMenu'
 import { getMenuId } from '~/components/Navigation/NavigationMenu/NavigationMenu.utils'
 import TopNavBar from '~/components/Navigation/NavigationMenu/TopNavBar'
@@ -17,8 +16,6 @@ import { DOCS_CONTENT_CONTAINER_ID } from '~/features/ui/helpers.constants'
 import { menuState, useMenuMobileOpen } from '~/hooks/useMenuState'
 
 const Footer = dynamic(() => import('~/components/Navigation/Footer'))
-
-const footerEnabled = isFeatureEnabled('docs:footer')
 
 const levelsData = {
   home: {
@@ -378,7 +375,7 @@ function SidebarSkeleton({
   menuId: _menuId,
   menuName,
   NavigationMenu,
-  hideFooter = !footerEnabled,
+  hideFooter = false,
   className,
   hideSideNav,
   additionalNavItems,

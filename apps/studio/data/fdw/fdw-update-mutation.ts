@@ -31,14 +31,7 @@ export const getUpdateFDWSql = ({
   tables,
 }: Pick<FDWUpdateVariables, 'wrapper' | 'wrapperMeta' | 'formState' | 'tables'>) => {
   const deleteWrapperSql = getDeleteFDWSql({ wrapper, wrapperMeta })
-  const createWrapperSql = getCreateFDWSql({
-    wrapperMeta,
-    formState,
-    tables,
-    mode: 'tables',
-    sourceSchema: '',
-    targetSchema: '',
-  })
+  const createWrapperSql = getCreateFDWSql({ wrapperMeta, formState, tables })
 
   const sql = /* SQL */ `
     ${deleteWrapperSql}

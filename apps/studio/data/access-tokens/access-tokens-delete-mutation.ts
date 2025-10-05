@@ -15,6 +15,7 @@ export async function deleteAccessToken({ id }: AccessTokenDeleteVariables) {
   })
 
   if (error) handleError(error)
+
   return data
 }
 

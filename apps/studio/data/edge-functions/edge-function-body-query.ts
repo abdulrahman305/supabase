@@ -15,7 +15,6 @@ export type EdgeFunctionFile = {
 }
 
 export type EdgeFunctionBodyResponse = {
-  version: number
   files: EdgeFunctionFile[]
 }
 
@@ -52,14 +51,13 @@ export async function getEdgeFunctionBody(
       )
     }
 
-    const response = (await parseResponse.json()) as EdgeFunctionBodyResponse
-    return response
+    const { files } = await parseResponse.json()
+    return files as EdgeFunctionFile[]
   } catch (error) {
-    handleError(error)
-    return {
-      version: 0,
-      files: [],
-    } as EdgeFunctionBodyResponse
+    console.error('Failed to parse edge function code:', error)
+    throw new Error(
+      'Failed to parse function code. The file may be corrupted or in an invalid format.'
+    )
   }
 }
 

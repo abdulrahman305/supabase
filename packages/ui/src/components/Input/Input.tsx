@@ -8,7 +8,6 @@ import InputErrorIcon from '../../lib/Layout/InputErrorIcon'
 import InputIconContainer from '../../lib/Layout/InputIconContainer'
 import { HIDDEN_PLACEHOLDER } from '../../lib/constants'
 import styleHandler from '../../lib/theme/styleHandler'
-import { copyToClipboard } from '../../lib/utils'
 import { cn } from '../../lib/utils/cn'
 import { Button } from '../Button'
 import { useFormContext } from '../Form/FormContext'
@@ -38,7 +37,7 @@ export interface Props
 }
 
 /**
- * @deprecated Use `import { Input_shadcn_ } from "ui"` instead or ./ui-patterns/data-inputs/input
+ * @deprecated Use ./Input_shadcn_ instead or ./ui-patterns/data-inputs/input
  */
 function Input({
   autoComplete,
@@ -116,13 +115,20 @@ function Input({
   // }, [errors, touched])
 
   function _onCopy(value: any) {
-    copyToClipboard(value, () => {
-      setCopyLabel('Copied')
-      setTimeout(() => {
-        setCopyLabel('Copy')
-      }, 3000)
-      onCopy?.()
-    })
+    navigator.clipboard.writeText(value)?.then(
+      function () {
+        /* clipboard successfully set */
+        setCopyLabel('Copied')
+        setTimeout(function () {
+          setCopyLabel('Copy')
+        }, 3000)
+        onCopy?.()
+      },
+      function () {
+        /* clipboard write failed */
+        setCopyLabel('Failed to copy')
+      }
+    )
   }
 
   function onReveal() {
@@ -250,14 +256,20 @@ function TextArea({
   const [copyLabel, setCopyLabel] = useState('Copy')
 
   function _onCopy(value: any) {
-    copyToClipboard(value, () => {
-      /* clipboard successfully set */
-      setCopyLabel('Copied')
-      setTimeout(() => {
-        setCopyLabel('Copy')
-      }, 3000)
-      onCopy?.()
-    })
+    navigator.clipboard.writeText(value).then(
+      function () {
+        /* clipboard successfully set */
+        setCopyLabel('Copied')
+        setTimeout(function () {
+          setCopyLabel('Copy')
+        }, 3000)
+        onCopy?.()
+      },
+      function () {
+        /* clipboard write failed */
+        setCopyLabel('Failed to copy')
+      }
+    )
   }
 
   const { formContextOnChange, values, errors, handleBlur, touched, fieldLevelValidation } =

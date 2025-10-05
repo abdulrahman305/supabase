@@ -1,11 +1,11 @@
-import { BookOpen } from 'lucide-react'
+import React from 'react'
 import Link from 'next/link'
-
 import { useParams } from 'common'
+import { BookOpen } from 'lucide-react'
+import { Alert_Shadcn_, AlertTitle_Shadcn_, AlertDescription_Shadcn_, cn, Button } from 'ui'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { BASE_PATH, DOCS_URL } from 'lib/constants'
-import { Alert_Shadcn_, AlertDescription_Shadcn_, AlertTitle_Shadcn_, Button, cn } from 'ui'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { BASE_PATH } from 'lib/constants'
 
 const GrafanaPromoBanner = () => (
   <Alert_Shadcn_ className="relative overflow-hidden">
@@ -52,14 +52,14 @@ const GrafanaPromoBanner = () => (
 
 const GrafanaBannerActions = ({ className }: { className?: string }) => {
   const { ref } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
   const { mutate: sendEvent } = useSendEventMutation()
 
   return (
     <div className={cn('flex gap-2', className)}>
       <Button type="outline" className="bg-alternative" size="tiny" icon={<BookOpen />} asChild>
         <Link
-          href={`${DOCS_URL}/guides/telemetry/metrics`}
+          href="https://supabase.com/docs/guides/telemetry/metrics"
           target="_blank"
           onClick={() =>
             sendEvent({

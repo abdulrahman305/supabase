@@ -7,7 +7,6 @@ import {
   FeatureFlagProvider,
   IS_PLATFORM,
   PageTelemetry,
-  TelemetryTagManager,
   ThemeProvider,
   useThemeSandbox,
 } from 'common'
@@ -33,7 +32,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   useThemeSandbox()
 
-  const site_title = `${APP_NAME} | The Postgres Development Platform.`
+  const site_title = `${APP_NAME} | The Open Source Firebase Alternative`
   const { basePath } = useRouter()
 
   const isDarkLaunchWeek = useDarkLaunchWeeks()
@@ -86,8 +85,7 @@ export default function App({ Component, pageProps }: AppProps) {
       />
 
       <AuthProvider>
-        {/* [TODO] I think we need to deconflict with the providers in layout.tsx? */}
-        <FeatureFlagProvider API_URL={API_URL} enabled={{ cc: true, ph: false }}>
+        <FeatureFlagProvider API_URL={API_URL} enabled={IS_PLATFORM}>
           <ThemeProvider
             themes={themes.map((theme) => theme.value)}
             enableSystem
@@ -109,7 +107,6 @@ export default function App({ Component, pageProps }: AppProps) {
           </ThemeProvider>
         </FeatureFlagProvider>
       </AuthProvider>
-      <TelemetryTagManager />
     </>
   )
 }

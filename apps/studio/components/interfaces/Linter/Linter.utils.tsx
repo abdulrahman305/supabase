@@ -14,7 +14,6 @@ import Link from 'next/link'
 
 import { LINTER_LEVELS, LintInfo } from 'components/interfaces/Linter/Linter.constants'
 import { LINT_TYPES, Lint } from 'data/lint/lint-query'
-import { DOCS_URL } from 'lib/constants'
 import { Badge, Button } from 'ui'
 
 export const lintInfoMap: LintInfo[] = [
@@ -25,7 +24,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/database/indexes?schema=${metadata?.schema}`,
     linkText: 'Create an index',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0001_unindexed_foreign_keys`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0001_unindexed_foreign_keys',
     category: 'performance',
   },
   {
@@ -34,7 +34,8 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Lock className="text-foreground-muted" size={15} strokeWidth={1.5} />,
     link: ({ projectRef }) => `/project/${projectRef}/editor`,
     linkText: 'View table',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0002_auth_users_exposed`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0002_auth_users_exposed',
     category: 'security',
   },
   {
@@ -43,7 +44,8 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Table2 className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/policies`,
     linkText: 'View policies',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0003_auth_rls_initplan`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0003_auth_rls_initplan',
     category: 'performance',
   },
   {
@@ -52,7 +54,8 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Table2 className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/editor`,
     linkText: 'View table',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0004_no_primary_key`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0004_no_primary_key',
     category: 'performance',
   },
   {
@@ -62,7 +65,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/database/indexes?schema=${metadata?.schema}&table=${metadata?.name}`,
     linkText: 'View index',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0005_unused_index`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0005_unused_index',
     category: 'performance',
   },
   {
@@ -72,7 +76,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/auth/policies?schema=${metadata?.schema}&search=${metadata?.name}`,
     linkText: 'View policies',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0006_multiple_permissive_policies`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0006_multiple_permissive_policies',
     category: 'performance',
   },
   {
@@ -82,7 +87,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/auth/policies?schema=${metadata?.schema}&search=${metadata?.name}`,
     linkText: 'View policies',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0007_policy_exists_rls_disabled`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0007_policy_exists_rls_disabled',
     category: 'security',
   },
   {
@@ -92,7 +98,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/auth/policies?schema=${metadata?.schema}&search=${metadata?.name}`,
     linkText: 'View table',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0008_rls_enabled_no_policy`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0008_rls_enabled_no_policy',
     category: 'security',
   },
   {
@@ -102,7 +109,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/database/indexes?schema=${metadata?.schema}&table=${metadata?.name}`,
     linkText: 'View index',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0009_duplicate_index`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0009_duplicate_index',
     category: 'performance',
   },
   {
@@ -110,9 +118,10 @@ export const lintInfoMap: LintInfo[] = [
     title: 'Security Definer View',
     icon: <Eye className="text-foreground-muted" size={15} strokeWidth={1.5} />,
     link: () =>
-      `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0010_security_definer_view`,
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0010_security_definer_view',
     linkText: 'View docs',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0010_security_definer_view`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0010_security_definer_view',
     category: 'security',
   },
   {
@@ -122,7 +131,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/database/functions?schema=${metadata?.schema}&search=${metadata?.name}`,
     linkText: 'View functions',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0011_function_search_path_mutable`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0011_function_search_path_mutable',
     category: 'security',
   },
   {
@@ -132,7 +142,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/auth/policies?schema=${metadata?.schema}&search=${metadata?.name}`,
     linkText: 'View policies',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0013_rls_disabled_in_public`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0013_rls_disabled_in_public',
     category: 'security',
   },
   {
@@ -142,7 +153,8 @@ export const lintInfoMap: LintInfo[] = [
     link: ({ projectRef, metadata }) =>
       `/project/${projectRef}/database/extensions?filter=${metadata?.name}`,
     linkText: 'View extension',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0014_extension_in_public`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0014_extension_in_public',
     category: 'security',
   },
   {
@@ -151,7 +163,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Clock className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/providers`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/going-into-prod#security`,
+    docsLink: 'https://supabase.com/docs/guides/platform/going-into-prod#security',
     category: 'security',
   },
   {
@@ -160,7 +172,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Ruler className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/providers`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/going-into-prod#security`,
+    docsLink: 'https://supabase.com/docs/guides/platform/going-into-prod#security',
     category: 'security',
   },
   {
@@ -169,25 +181,30 @@ export const lintInfoMap: LintInfo[] = [
     icon: <User className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/policies`,
     linkText: 'View policies',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?queryGroups=lint&lint=0015_rls_references_user_metadata`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?queryGroups=lint&lint=0015_rls_references_user_metadata',
     category: 'security',
   },
   {
     name: 'materialized_view_in_api',
     title: 'Materialized View in API',
     icon: <Eye className="text-foreground-muted" size={15} strokeWidth={1.5} />,
-    link: () => `${DOCS_URL}/guides/database/database-advisors?lint=0016_materialized_view_in_api`,
+    link: () =>
+      `https://supabase.com/docs/guides/database/database-advisors?lint=0016_materialized_view_in_api`,
     linkText: 'View docs',
-    docsLink: `${DOCS_URL}/guides/database/database-advisors?lint=0016_materialized_view_in_api`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-advisors?lint=0016_materialized_view_in_api',
     category: 'security',
   },
   {
     name: 'foreign_table_in_api',
     title: 'Foreign Table in API',
     icon: <Table2 className="text-foreground-muted" size={15} strokeWidth={1.5} />,
-    link: () => `${DOCS_URL}/guides/database/database-linter?lint=0017_foreign_table_in_api`,
+    link: () =>
+      `https://supabase.com/docs/guides/database/database-linter?lint=0017_foreign_table_in_api`,
     linkText: 'View docs',
-    docsLink: `${DOCS_URL}/guides/database/database-linter?lint=0017_foreign_table_in_api`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-linter?lint=0017_foreign_table_in_api',
     category: 'security',
   },
   {
@@ -195,27 +212,28 @@ export const lintInfoMap: LintInfo[] = [
     title: 'Unsupported reg types',
     icon: <Table2 className="text-foreground-muted" size={15} strokeWidth={1.5} />,
     link: () =>
-      `${DOCS_URL}/guides/database/database-advisors?lint=0018_unsupported_reg_types&queryGroups=lint`,
+      `https://supabase.com/docs/guides/database/database-advisors?lint=0018_unsupported_reg_types&queryGroups=lint`,
     linkText: 'View docs',
-    docsLink: `${DOCS_URL}/guides/database/database-advisors?lint=0018_unsupported_reg_types&queryGroups=lint`,
+    docsLink:
+      'https://supabase.com/docs/guides/database/database-advisors?lint=0018_unsupported_reg_types&queryGroups=lint',
     category: 'security',
   },
   {
     name: 'ssl_not_enforced',
     title: 'SSL not enforced',
     icon: <Ruler className="text-foreground-muted" size={15} strokeWidth={1} />,
-    link: ({ projectRef }) => `/project/${projectRef}/database/settings`,
+    link: ({ projectRef }) => `/project/${projectRef}/settings/database`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/ssl-enforcement`,
+    docsLink: 'https://supabase.com/docs/guides/platform/ssl-enforcement',
     category: 'security',
   },
   {
     name: 'network_restrictions_not_set',
     title: 'No network restrictions',
     icon: <Ruler className="text-foreground-muted" size={15} strokeWidth={1} />,
-    link: ({ projectRef }) => `/project/${projectRef}/database/settings`,
+    link: ({ projectRef }) => `/project/${projectRef}/settings/database`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/network-restrictions`,
+    docsLink: 'https://supabase.com/docs/guides/platform/network-restrictions',
     category: 'security',
   },
   {
@@ -224,7 +242,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Ruler className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/providers?provider=Email`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/going-into-prod#security`,
+    docsLink: 'https://supabase.com/docs/guides/platform/going-into-prod#security',
     category: 'security',
   },
   {
@@ -233,7 +251,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <Ruler className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/database/backups/pitr`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/backups#point-in-time-recovery`,
+    docsLink: 'https://supabase.com/docs/guides/platform/backups#point-in-time-recovery',
     category: 'security',
   },
   {
@@ -242,7 +260,8 @@ export const lintInfoMap: LintInfo[] = [
     icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/providers?provider=Email`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/auth/password-security#password-strength-and-leaked-password-protection`,
+    docsLink:
+      'https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection',
     category: 'security',
   },
   {
@@ -251,7 +270,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/mfa`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/auth/auth-mfa`,
+    docsLink: 'https://supabase.com/docs/guides/auth/auth-mfa',
     category: 'security',
   },
   {
@@ -260,7 +279,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/providers?provider=Email`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/auth/password-security`,
+    docsLink: 'https://supabase.com/docs/guides/auth/password-security',
     category: 'security',
   },
   {
@@ -269,7 +288,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/settings/api`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/api/api-keys#the-servicerole-key`,
+    docsLink: 'https://supabase.com/docs/guides/api/api-keys#the-servicerole-key',
     category: 'security',
   },
   {
@@ -278,16 +297,7 @@ export const lintInfoMap: LintInfo[] = [
     icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
     link: ({ projectRef }) => `/project/${projectRef}/auth/mfa`,
     linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/auth/auth-mfa`,
-    category: 'security',
-  },
-  {
-    name: 'vulnerable_postgres_version',
-    title: 'Postgres version has security patches available',
-    icon: <LockIcon className="text-foreground-muted" size={15} strokeWidth={1} />,
-    link: ({ projectRef }) => `/project/${projectRef}/settings/infrastructure`,
-    linkText: 'View settings',
-    docsLink: `${DOCS_URL}/guides/platform/upgrading`,
+    docsLink: 'https://supabase.com/docs/guides/auth/auth-mfa',
     category: 'security',
   },
 ]
@@ -362,24 +372,4 @@ export const NoIssuesFound = ({ level }: { level: string }) => {
       </div>
     </div>
   )
-}
-
-export const createLintSummaryPrompt = (lint: Lint) => {
-  const title = lintInfoMap.find((item) => item.name === lint.name)?.title ?? lint.title
-  const entity =
-    (lint.metadata &&
-      (lint.metadata.entity ||
-        (lint.metadata.schema &&
-          lint.metadata.name &&
-          `${lint.metadata.schema}.${lint.metadata.name}`))) ||
-    'N/A'
-  const schema = lint.metadata?.schema ?? 'N/A'
-  const issue = lint.detail ? lint.detail.replace(/\\`/g, '`') : 'N/A'
-  const description = lint.description ? lint.description.replace(/\\`/g, '`') : 'N/A'
-  return `Summarize the issue and suggest fixes for the following lint item:
-Title: ${title}
-Entity: ${entity}
-Schema: ${schema}
-Issue Details: ${issue}
-Description: ${description}`
 }

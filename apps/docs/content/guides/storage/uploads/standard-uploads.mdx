@@ -48,7 +48,6 @@ async function uploadFile(file) {
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -59,8 +58,6 @@ Future<void> uploadFile(File file) async {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -73,8 +70,6 @@ try await supabase.storage.from("bucket_name").upload(path: "file_path", file: f
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -85,8 +80,6 @@ supabase.storage.from("bucket_name").upload("file_path", file)
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -94,7 +87,6 @@ response = supabase.storage.from_('bucket_name').upload('file_path', file)
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Overwriting files
@@ -125,7 +117,6 @@ await supabase.storage.from('bucket_name').upload('file_path', file, {
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -137,8 +128,6 @@ await supabase.storage.from('bucket_name').upload(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -158,8 +147,6 @@ try await supabase.storage.from("bucket_name")
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -169,8 +156,6 @@ supabase.storage.from("bucket_name").upload("file_path", bytes) {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -180,7 +165,6 @@ response = supabase.storage.from_('bucket_name').upload('file_path', file, {
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 We do advise against overwriting files when possible, as our Content Delivery Network will take sometime to propagate the changes to all the edge nodes leading to stale content.
@@ -213,7 +197,6 @@ await supabase.storage.from('bucket_name').upload('file_path', file, {
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -225,8 +208,6 @@ await supabase.storage.from('bucket_name').upload(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -246,8 +227,6 @@ try await supabase.storage.from("bucket_name")
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -257,8 +236,6 @@ supabase.storage.from("bucket_name").upload("file_path", bytes) {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -268,7 +245,6 @@ response = supabase.storage.from_('bucket_name').upload('file_path', file, {
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Concurrency

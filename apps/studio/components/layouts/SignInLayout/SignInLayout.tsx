@@ -1,15 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { DocsButton } from 'components/ui/DocsButton'
+import { useFlag } from 'hooks/ui/useFlag'
+import { BASE_PATH } from 'lib/constants'
+import { auth, buildPathWithParams, getAccessToken, getReturnToPath } from 'lib/gotrue'
 import { useTheme } from 'next-themes'
 import Image from 'next/legacy/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { PropsWithChildren, useEffect, useState } from 'react'
-
-import { useFlag } from 'common'
-import { DocsButton } from 'components/ui/DocsButton'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { BASE_PATH, DOCS_URL } from 'lib/constants'
-import { auth, buildPathWithParams, getAccessToken, getReturnToPath } from 'lib/gotrue'
 import { tweets } from 'shared-data'
 
 type SignInLayoutProps = {
@@ -30,8 +28,6 @@ const SignInLayout = ({
   const queryClient = useQueryClient()
   const { resolvedTheme } = useTheme()
   const ongoingIncident = useFlag('ongoingIncident')
-
-  const showTestimonial = useIsFeatureEnabled('dashboard_auth:show_testimonial')
 
   // This useEffect redirects the user to MFA if they're already halfway signed in
   useEffect(() => {
@@ -86,7 +82,7 @@ const SignInLayout = ({
 
   return (
     <>
-      <div className="relative flex flex-col bg-alternative min-h-screen">
+      <div className="relative flex flex-col bg-alternative h-screen">
         <div
           className={`absolute top-0 w-full px-8 mx-auto sm:px-6 lg:px-8 ${
             ongoingIncident ? 'mt-14' : 'mt-6'
@@ -111,7 +107,7 @@ const SignInLayout = ({
             </div>
 
             <div className="items-center hidden space-x-3 md:ml-10 md:flex md:pr-4">
-              <DocsButton abbrev={false} href={`${DOCS_URL}`} />
+              <DocsButton abbrev={false} href="https://supabase.com/docs" />
             </div>
           </nav>
         </div>
@@ -120,7 +116,7 @@ const SignInLayout = ({
           <main className="flex flex-col items-center flex-1 flex-shrink-0 px-5 pt-16 pb-8 border-r shadow-lg bg-studio border-default">
             <div className="flex-1 flex flex-col justify-center w-[330px] sm:w-[384px]">
               <div className="mb-10">
-                <h1 className="mt-8 mb-2 lg:text-3xl">{heading}</h1>
+                <h1 className="mt-8 mb-2 text-2xl lg:text-3xl">{heading}</h1>
                 <h2 className="text-sm text-foreground-light">{subheading}</h2>
               </div>
 
@@ -151,7 +147,7 @@ const SignInLayout = ({
           </main>
 
           <aside className="flex-col items-center justify-center flex-1 flex-shrink hidden basis-1/4 xl:flex">
-            {quote !== null && showTestimonial && (
+            {quote !== null && (
               <div className="relative flex flex-col gap-6">
                 <div className="absolute select-none -top-12 -left-11">
                   <span className="text-[160px] leading-none text-foreground-muted/30">{'“'}</span>

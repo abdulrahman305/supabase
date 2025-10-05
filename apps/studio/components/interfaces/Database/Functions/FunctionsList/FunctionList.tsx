@@ -3,10 +3,11 @@ import { includes, noop, sortBy } from 'lodash'
 import { Edit, Edit2, FileText, MoreVertical, Trash } from 'lucide-react'
 import { useRouter } from 'next/router'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
+import Table from 'components/to-be-cleaned/Table'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useDatabaseFunctionsQuery } from 'data/database-functions/database-functions-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { useAiAssistantStateSnapshot } from 'state/ai-assistant-state'
 import {
   Button,
@@ -15,8 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  TableCell,
-  TableRow,
 } from 'ui'
 
 interface FunctionListProps {
@@ -35,7 +34,7 @@ const FunctionList = ({
   deleteFunction = noop,
 }: FunctionListProps) => {
   const router = useRouter()
-  const { data: selectedProject } = useSelectedProjectQuery()
+  const { project: selectedProject } = useProjectContext()
   const aiSnap = useAiAssistantStateSnapshot()
 
   const { data: functions } = useDatabaseFunctionsQuery({
@@ -51,34 +50,34 @@ const FunctionList = ({
     (func) => func.name.toLocaleLowerCase()
   )
   const projectRef = selectedProject?.ref
-  const { can: canUpdateFunctions } = useAsyncCheckPermissions(
+  const canUpdateFunctions = useCheckPermissions(
     PermissionAction.TENANT_SQL_ADMIN_WRITE,
     'functions'
   )
 
   if (_functions.length === 0 && filterString.length === 0) {
     return (
-      <TableRow key={schema}>
-        <TableCell colSpan={5}>
+      <Table.tr key={schema}>
+        <Table.td colSpan={5}>
           <p className="text-sm text-foreground">No functions created yet</p>
           <p className="text-sm text-foreground-light">
             There are no functions found in the schema "{schema}"
           </p>
-        </TableCell>
-      </TableRow>
+        </Table.td>
+      </Table.tr>
     )
   }
 
   if (_functions.length === 0 && filterString.length > 0) {
     return (
-      <TableRow key={schema}>
-        <TableCell colSpan={5}>
+      <Table.tr key={schema}>
+        <Table.td colSpan={5}>
           <p className="text-sm text-foreground">No results found</p>
           <p className="text-sm text-foreground-light">
             Your search for "{filterString}" did not return any results
           </p>
-        </TableCell>
-      </TableRow>
+        </Table.td>
+      </Table.tr>
     )
   }
 
@@ -88,8 +87,8 @@ const FunctionList = ({
         const isApiDocumentAvailable = schema == 'public' && x.return_type !== 'trigger'
 
         return (
-          <TableRow key={x.id}>
-            <TableCell className="truncate">
+          <Table.tr key={x.id}>
+            <Table.td className="truncate">
               <Button
                 type="text"
                 className="text-foreground text-sm p-0 hover:bg-transparent"
@@ -97,30 +96,23 @@ const FunctionList = ({
               >
                 {x.name}
               </Button>
-            </TableCell>
-            <TableCell className="table-cell overflow-auto">
+            </Table.td>
+            <Table.td className="table-cell overflow-auto">
               <p title={x.argument_types} className="truncate">
                 {x.argument_types || '-'}
               </p>
-            </TableCell>
-            <TableCell className="table-cell">
+            </Table.td>
+            <Table.td className="table-cell">
               <p title={x.return_type}>{x.return_type}</p>
-            </TableCell>
-            <TableCell className="table-cell">
-              {x.security_definer ? 'Definer' : 'Invoker'}
-            </TableCell>
-            <TableCell className="text-right">
+            </Table.td>
+            <Table.td className="table-cell">{x.security_definer ? 'Definer' : 'Invoker'}</Table.td>
+            <Table.td className="text-right">
               {!isLocked && (
                 <div className="flex items-center justify-end">
                   {canUpdateFunctions ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-label="More options"
-                          type="default"
-                          className="px-1"
-                          icon={<MoreVertical />}
-                        />
+                        <Button type="default" className="px-1" icon={<MoreVertical />} />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="left" className="w-52">
                         {isApiDocumentAvailable && (
@@ -147,19 +139,9 @@ const FunctionList = ({
                                 title:
                                   'I can help you make a change to this function, here are a few example prompts to get you started:',
                                 prompts: [
-                                  {
-                                    label: 'Rename Function',
-                                    description: 'Rename this function to ...',
-                                  },
-                                  {
-                                    label: 'Modify Function',
-                                    description: 'Modify this function so that it ...',
-                                  },
-                                  {
-                                    label: 'Add Trigger',
-                                    description:
-                                      'Add a trigger for this function that calls it when ...',
-                                  },
+                                  'Rename this function to ...',
+                                  'Modify this function so that it ...',
+                                  'Add a trigger for this function that calls it when ...',
                                 ],
                               },
                               sqlSnippets: [x.complete_statement],
@@ -192,8 +174,8 @@ const FunctionList = ({
                   )}
                 </div>
               )}
-            </TableCell>
-          </TableRow>
+            </Table.td>
+          </Table.tr>
         )
       })}
     </>

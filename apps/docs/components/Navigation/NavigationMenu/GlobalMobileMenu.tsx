@@ -52,28 +52,26 @@ const AccordionMenuItem = ({ section }: { section: DropdownMenuItem[] }) => {
         >
           {section[0].menuItems?.map((menuItem, menuItemIndex) => (
             <Fragment key={`desktop-docs-menu-section-${menuItemIndex}`}>
-              {menuItem
-                .filter((item) => item.enabled !== false)
-                .map((item) =>
-                  !item.href ? (
-                    <div className="font-mono tracking-wider flex items-center text-foreground-muted text-xs uppercase rounded-md p-2 leading-none">
-                      {item.label}
-                    </div>
-                  ) : (
-                    <MenuItem
-                      href={item.href}
-                      title={item.label}
-                      community={item.community}
-                      icon={item.icon}
-                    />
-                  )
-                )}
+              {menuItem.map((item) =>
+                !item.href ? (
+                  <div className="font-mono tracking-wider flex items-center text-foreground-muted text-xs uppercase rounded-md p-2 leading-none">
+                    {item.label}
+                  </div>
+                ) : (
+                  <MenuItem
+                    href={item.href}
+                    title={item.label}
+                    community={item.community}
+                    icon={item.icon}
+                  />
+                )
+              )}
             </Fragment>
           ))}
         </Accordion.Item>
       ) : (
         <Link
-          href={section[0].href || '#'}
+          href={section[0].href}
           className={cn(activeLabel === section[0].label && '!text-foreground', itemClassName)}
         >
           {section[0].label}
@@ -92,7 +90,7 @@ const Menu = () => (
     justified
     chevronAlign="right"
   >
-    {GLOBAL_MENU_ITEMS.filter((section) => section[0].enabled !== false).map((section) => (
+    {GLOBAL_MENU_ITEMS.map((section) => (
       <AccordionMenuItem section={section} />
     ))}
   </Accordion>

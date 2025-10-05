@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic'
-import getContent from '~/data/home/content'
+import content from '~/data/home/content'
 import Layout from '~/components/Layouts/Default'
 import Hero from '~/components/Hero/Hero'
 import Logos from '~/components/logos'
@@ -13,8 +13,6 @@ const TwitterSocialSection = dynamic(() => import('~/components/TwitterSocialSec
 const CTABanner = dynamic(() => import('components/CTABanner/index'))
 
 const Index = () => {
-  const content = getContent()
-
   return (
     <Layout>
       <Hero />
@@ -24,7 +22,7 @@ const Index = () => {
       <CustomerStories />
       <BuiltWithSupabase />
       <DashboardFeatures {...content.dashboardFeatures} />
-      <TwitterSocialSection {...content.twitterSocialSection} />
+      <TwitterSocialSection />
       <CTABanner className="border-none" />
     </Layout>
   )

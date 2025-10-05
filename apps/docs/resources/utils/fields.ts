@@ -19,7 +19,7 @@ import {
   type ValueNode,
 } from 'graphql'
 
-let options = { processArguments: false, excludedFields: [] as string[] }
+let options = { processArguments: false, excludedFields: [] }
 
 function getSelections(ast: FieldNode | FragmentDefinitionNode | InlineFragmentNode) {
   if (
@@ -47,7 +47,7 @@ function getAST(ast: FragmentSpreadNode | InlineFragmentNode, info: GraphQLResol
 }
 
 function getArguments(ast: FieldNode, info: GraphQLResolveInfo) {
-  return ast.arguments?.map((argument) => {
+  return ast.arguments.map((argument) => {
     const argumentValue = getArgumentValue(argument.value, info)
 
     return {
@@ -81,8 +81,7 @@ function getArgumentValue(arg: ValueNode, info: GraphQLResolveInfo) {
 }
 
 function getDirectiveValue(directive: DirectiveNode, info: GraphQLResolveInfo) {
-  const arg = directive.arguments?.[0]
-  if (!arg) return undefined
+  const arg = directive.arguments[0]
   if (arg.value.kind !== 'Variable') {
     return arg.value.kind === 'BooleanValue' ? arg.value.value : undefined
   }
@@ -94,26 +93,22 @@ function getDirectiveResults(ast: SelectionNode, info: GraphQLResolveInfo) {
     shouldInclude: true,
     shouldSkip: false,
   }
-  return (
-    ast.directives?.reduce((result, directive) => {
-      switch (directive.name.value) {
-        case 'include':
-          const directiveValue = getDirectiveValue(directive, info)
-          if (directiveValue != undefined) {
-            return { ...result, shouldInclude: directiveValue }
-          }
-          return result
-        case 'skip':
-          const directiveSkipValue = getDirectiveValue(directive, info)
-          if (directiveSkipValue != undefined) {
-            return { ...result, shouldSkip: directiveSkipValue }
-          }
-          return result
-        default:
-          return result
-      }
-    }, directiveResult) ?? directiveResult
-  )
+  return ast.directives.reduce((result, directive) => {
+    switch (directive.name.value) {
+      case 'include':
+        const directiveValue = getDirectiveValue(directive, info)
+        if (directiveValue != undefined) {
+          return { ...result, shouldInclude: directiveValue }
+        }
+      case 'skip':
+        const directiveValule = getDirectiveValue(directive, info)
+        if (directiveValue != undefined) {
+          return { ...result, shouldSkip: directiveValue }
+        }
+      default:
+        return result
+    }
+  }, directiveResult)
 }
 
 function flattenAST(
@@ -133,7 +128,7 @@ function flattenAST(
       flattened = flattenAST(getAST(a, info), info, flattened)
     } else {
       const name = a.name.value
-      if (options.excludedFields && options.excludedFields.indexOf(name) !== -1) {
+      if (options.excludedFields.indexOf(name) !== -1) {
         return flattened
       }
       if (flattened[name] && flattened[name] !== '__arguments') {

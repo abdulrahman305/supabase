@@ -12,7 +12,7 @@ enum FontStyle {
 }
 
 export function getFontStyle(styleFlags: number): CSSProperties {
-  let style: CSSProperties = {}
+  let style: CSSProperties = null
 
   if (styleFlags & FontStyle.Italic) {
     ;(style ??= {}).fontStyle = 'italic'

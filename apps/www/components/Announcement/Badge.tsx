@@ -1,13 +1,11 @@
 import React, { ReactNode } from 'react'
 import Link from 'next/link'
 import { Badge, cn } from 'ui'
-import { ChevronRightIcon } from 'lucide-react'
+import { ArrowNarrowRightIcon } from '@heroicons/react/outline'
 
 interface Props {
   url: string
   announcement: string | ReactNode
-  /* Text or node to display on mobile */
-  announcementMobile?: string | ReactNode
   badge?: string | ReactNode
   target?: '_self' | '_blank' | string
   className?: string
@@ -18,7 +16,6 @@ interface Props {
 const AnnouncementBadge = ({
   url,
   announcement,
-  announcementMobile,
   badge,
   target = '_self',
   className,
@@ -32,12 +29,11 @@ const AnnouncementBadge = ({
       className={cn(
         `
           announcement-link
-          text-nowrap
           group/announcement
           relative
           flex flex-row
           items-center
-          p-1 pr-0.5
+          p-1 pr-3
           text-sm
           w-auto
           gap-2
@@ -52,7 +48,7 @@ const AnnouncementBadge = ({
           overflow-hidden
           focus-visible:outline-none focus-visible:ring-brand-600 focus-visible:ring-2 focus-visible:rounded-full
           `,
-        !badge && 'pl-4'
+        !badge && 'px-4'
       )}
     >
       {badge && (
@@ -60,25 +56,12 @@ const AnnouncementBadge = ({
           {badge}
         </Badge>
       )}
-      <span
-        className={cn('text-foreground announcement-text line-clamp-1 w-full', {
-          // only hide if announcementMobile is provided
-          'hidden md:[display:-webkit-box]': announcementMobile,
-        })}
-      >
-        {announcement}
-      </span>
-      {announcementMobile && (
-        <span className="text-foreground announcement-text-mobile md:hidden line-clamp-1">
-          {announcementMobile}
-        </span>
-      )}
-
+      <span className="text-foreground announcement-text">{announcement}</span>
       {hasArrow && (
-        <ChevronRightIcon className="announcement-icon h-4 ml-2 -translate-x-1 text-foreground transition-transform group-hover/announcement:translate-x-0" />
+        <ArrowNarrowRightIcon className="announcement-icon h-4 ml-2 -translate-x-1 text-foreground transition-transform group-hover/announcement:translate-x-0" />
       )}
       <div
-        className="announcement-overlay absolute inset-0 -z-10 bg-gradient-to-br
+        className="absolute inset-0 -z-10 bg-gradient-to-br
             opacity-70
             group-hover/announcement:opacity-100
             transition-opacity

@@ -1,5 +1,4 @@
 import { DocsButton } from 'components/ui/DocsButton'
-import { DOCS_URL } from 'lib/constants'
 import { cn } from 'ui'
 
 const NoChannelEmptyState = () => {
@@ -19,7 +18,7 @@ const NoChannelEmptyState = () => {
           <p className="text-foreground">Not sure what to do?</p>
           <p className="text-foreground-lighter text-xs">Browse our documentation</p>
         </div>
-        <DocsButton href={`${DOCS_URL}/guides/realtime`} />
+        <DocsButton href="https://supabase.com/docs/guides/realtime" />
       </div>
     </div>
   )

@@ -1,22 +1,37 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-
-import { PropsWithChildren } from 'react'
+import { useRouter } from 'next/router'
+import { PropsWithChildren, useEffect } from 'react'
 
 import NoPermission from 'components/ui/NoPermission'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useAsyncCheckProjectPermissions } from 'hooks/misc/useCheckPermissions'
+import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
 import { withAuth } from 'hooks/misc/withAuth'
 import ProjectLayout from '../ProjectLayout/ProjectLayout'
 import { LogsSidebarMenuV2 } from './LogsSidebarMenuV2'
+import { LOCAL_STORAGE_KEYS } from 'common'
 
 interface LogsLayoutProps {
   title?: string
 }
 
 const LogsLayout = ({ title, children }: PropsWithChildren<LogsLayoutProps>) => {
-  const { isLoading, can: canUseLogsExplorer } = useAsyncCheckPermissions(
+  const { isLoading, can: canUseLogsExplorer } = useAsyncCheckProjectPermissions(
     PermissionAction.ANALYTICS_READ,
     'logflare'
   )
+
+  const router = useRouter()
+  const [_, setLastLogsPage] = useLocalStorageQuery(
+    LOCAL_STORAGE_KEYS.LAST_VISITED_LOGS_PAGE,
+    router.pathname.split('/logs/')[1]
+  )
+
+  useEffect(() => {
+    if (router.pathname.includes('/logs/')) {
+      const path = router.pathname.split('/logs/')[1]
+      setLastLogsPage(path)
+    }
+  }, [router, setLastLogsPage])
 
   if (!canUseLogsExplorer) {
     if (isLoading) {

@@ -66,7 +66,6 @@ const ColumnType = ({
   description,
   showRecommendation = false,
   onOptionSelect = noop,
-  error,
 }: ColumnTypeProps) => {
   const [open, setOpen] = useState(false)
   const availableTypes = POSTGRES_DATA_TYPES.concat(
@@ -168,7 +167,7 @@ const ColumnType = ({
       <Popover_Shadcn_ open={open} onOpenChange={setOpen}>
         <PopoverTrigger_Shadcn_ asChild>
           <Button
-            type={error ? 'danger' : 'default'}
+            type="default"
             role="combobox"
             size={'small'}
             aria-expanded={open}
@@ -188,12 +187,7 @@ const ColumnType = ({
         <PopoverContent_Shadcn_ className="w-[460px] p-0" side="bottom" align="center">
           <ScrollArea className="h-[335px]">
             <Command_Shadcn_>
-              <CommandInput_Shadcn_
-                placeholder="Search types..."
-                // [Joshen] Addresses style issues when this component is being used in the old Form component
-                // Specifically in WrapperDynamicColumns - can be cleaned up once we're no longer using that
-                className="!bg-transparent focus:!shadow-none focus:!ring-0"
-              />
+              <CommandInput_Shadcn_ placeholder="Search types..." />
               <CommandEmpty_Shadcn_>Type not found.</CommandEmpty_Shadcn_>
 
               <CommandList_Shadcn_>

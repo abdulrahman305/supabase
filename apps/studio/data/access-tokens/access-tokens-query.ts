@@ -1,7 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 
 import { get, handleError } from 'data/fetchers'
-import { ResponseError } from 'types'
 import { accessTokenKeys } from './keys'
 
 export async function getAccessTokens(signal?: AbortSignal) {
@@ -13,7 +12,7 @@ export async function getAccessTokens(signal?: AbortSignal) {
 }
 
 export type AccessTokensData = Awaited<ReturnType<typeof getAccessTokens>>
-export type AccessTokensError = ResponseError
+export type AccessTokensError = unknown
 
 export type AccessToken = AccessTokensData[number]
 

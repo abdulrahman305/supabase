@@ -4,10 +4,11 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 
 import { useParams } from 'common/hooks'
-import { useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
+import Table from 'components/to-be-cleaned/Table'
 import { useCustomDomainsQuery } from 'data/custom-domains/custom-domains-query'
 import type { EdgeFunctionsResponse } from 'data/edge-functions/edge-functions-query'
-import { copyToClipboard, TableCell, TableRow, Tooltip, TooltipContent, TooltipTrigger } from 'ui'
+import { Tooltip, TooltipContent, TooltipTrigger } from 'ui'
 
 interface EdgeFunctionsListItemProps {
   function: EdgeFunctionsResponse
@@ -16,35 +17,37 @@ interface EdgeFunctionsListItemProps {
 export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemProps) => {
   const router = useRouter()
   const { ref } = useParams()
+  const { project } = useProjectContext()
   const [isCopied, setIsCopied] = useState(false)
 
-  const { data: settings } = useProjectSettingsV2Query({ projectRef: ref })
   const { data: customDomainData } = useCustomDomainsQuery({ projectRef: ref })
 
-  const protocol = settings?.app_config?.protocol ?? 'https'
-  const endpoint = settings?.app_config?.endpoint ?? ''
-  const functionUrl =
+  // get the .co or .net TLD from the restUrl
+  const restUrl = project?.restUrl
+  const restUrlTld = restUrl !== undefined ? new URL(restUrl).hostname.split('.').pop() : 'co'
+  const functionUrl = `https://${ref}.supabase.${restUrlTld}/functions/v1/${item.slug}`
+
+  const endpoint =
     customDomainData?.customDomain?.status === 'active'
       ? `https://${customDomainData.customDomain.hostname}/functions/v1/${item.slug}`
-      : `${protocol}://${endpoint}/functions/v1/${item.slug}`
+      : functionUrl
 
   return (
-    <TableRow
+    <Table.tr
       key={item.id}
       onClick={() => {
         router.push(`/project/${ref}/functions/${item.slug}`)
       }}
-      className="cursor-pointer"
     >
-      <TableCell>
+      <Table.td>
         <div className="flex items-center gap-2">
           <p className="text-sm text-foreground">{item.name}</p>
         </div>
-      </TableCell>
-      <TableCell>
+      </Table.td>
+      <Table.td>
         <div className="text-xs text-foreground-light flex gap-2 items-center truncate">
-          <p title={functionUrl} className="font-mono truncate hidden md:inline max-w-[30rem]">
-            {functionUrl}
+          <p title={endpoint} className="font-mono truncate hidden md:inline max-w-[30rem]">
+            {endpoint}
           </p>
           <button
             type="button"
@@ -52,11 +55,13 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
             onClick={(event: any) => {
               function onCopy(value: any) {
                 setIsCopied(true)
-                copyToClipboard(value)
-                setTimeout(() => setIsCopied(false), 3000)
+                navigator.clipboard.writeText(value).then()
+                setTimeout(function () {
+                  setIsCopied(false)
+                }, 3000)
               }
               event.stopPropagation()
-              onCopy(functionUrl)
+              onCopy(endpoint)
             }}
           >
             {isCopied ? (
@@ -72,13 +77,13 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
             )}
           </button>
         </div>
-      </TableCell>
-      <TableCell className="hidden 2xl:table-cell">
+      </Table.td>
+      <Table.td className="hidden 2xl:table-cell">
         <p className="text-foreground-light">
           {dayjs(item.created_at).format('DD MMM, YYYY HH:mm')}
         </p>
-      </TableCell>
-      <TableCell className="lg:table-cell">
+      </Table.td>
+      <Table.td className="lg:table-cell">
         <Tooltip>
           <TooltipTrigger>
             <div className="flex items-center space-x-2">
@@ -89,10 +94,10 @@ export const EdgeFunctionsListItem = ({ function: item }: EdgeFunctionsListItemP
             Last updated on {dayjs(item.updated_at).format('DD MMM, YYYY HH:mm')}
           </TooltipContent>
         </Tooltip>
-      </TableCell>
-      <TableCell className="lg:table-cell">
+      </Table.td>
+      <Table.td className="lg:table-cell">
         <p className="text-foreground-light">{item.version}</p>
-      </TableCell>
-    </TableRow>
+      </Table.td>
+    </Table.tr>
   )
 }

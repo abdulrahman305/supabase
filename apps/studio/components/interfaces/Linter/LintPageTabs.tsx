@@ -20,10 +20,17 @@ import { useRouter } from 'next/router'
 interface LintPageTabsProps {
   currentTab: string
   setCurrentTab: (value: LINTER_LEVELS) => void
+  setSelectedLint: (value: Lint | null) => void
   isLoading: boolean
   activeLints: Lint[]
 }
-const LintPageTabs = ({ currentTab, setCurrentTab, isLoading, activeLints }: LintPageTabsProps) => {
+const LintPageTabs = ({
+  currentTab,
+  setCurrentTab,
+  setSelectedLint,
+  isLoading,
+  activeLints,
+}: LintPageTabsProps) => {
   const router = useRouter()
 
   const warnLintsCount = activeLints.filter((x) => x.level === 'WARN').length
@@ -66,6 +73,7 @@ const LintPageTabs = ({ currentTab, setCurrentTab, isLoading, activeLints }: Lin
       defaultValue={currentTab}
       onValueChange={(value) => {
         setCurrentTab(value as LINTER_LEVELS)
+        setSelectedLint(null)
         const { sort, search, ...rest } = router.query
         router.push({ ...router, query: { ...rest, preset: value, id: null } })
       }}
@@ -95,7 +103,7 @@ const LintPageTabs = ({ currentTab, setCurrentTab, isLoading, activeLints }: Lin
                   tab.id === LINTER_LEVELS.ERROR
                     ? 'text-destructive-600'
                     : tab.id === LINTER_LEVELS.WARN
-                      ? 'text-warning'
+                      ? 'text-warning-600'
                       : 'text-brand-500'
                 }
               >

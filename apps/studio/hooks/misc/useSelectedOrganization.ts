@@ -1,21 +1,22 @@
 import { useIsLoggedIn, useParams } from 'common'
 import { useOrganizationsQuery } from 'data/organizations/organizations-query'
-import { useProjectByRefQuery } from './useSelectedProject'
+import { useMemo } from 'react'
 
-export function useSelectedOrganizationQuery({ enabled = true } = {}) {
+import { useProjectByRef } from './useSelectedProject'
+
+export function useSelectedOrganization({ enabled = true } = {}) {
   const isLoggedIn = useIsLoggedIn()
 
   const { ref, slug } = useParams()
-  const { data: selectedProject } = useProjectByRefQuery(ref)
+  const { data } = useOrganizationsQuery({ enabled: isLoggedIn && enabled })
 
-  return useOrganizationsQuery({
-    enabled: isLoggedIn && enabled,
-    select: (data) => {
-      return data.find((org) => {
-        if (slug !== undefined) return org.slug === slug
-        if (selectedProject !== undefined) return org.id === selectedProject.organization_id
-        return undefined
-      })
-    },
-  })
+  const selectedProject = useProjectByRef(ref)
+
+  return useMemo(() => {
+    return data?.find((org) => {
+      if (slug !== undefined) return org.slug === slug
+      if (selectedProject !== undefined) return org.id === selectedProject.organization_id
+      return undefined
+    })
+  }, [data, selectedProject, slug])
 }

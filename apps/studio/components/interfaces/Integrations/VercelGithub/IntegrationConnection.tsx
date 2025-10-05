@@ -12,7 +12,6 @@ import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useIntegrationsVercelConnectionSyncEnvsMutation } from 'data/integrations/integrations-vercel-connection-sync-envs-mutation'
 import type { IntegrationProjectConnection } from 'data/integrations/integrations.types'
 import { useProjectsQuery } from 'data/projects/projects-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
 import {
   Button,
   DropdownMenu,
@@ -22,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 
 interface IntegrationConnectionItemProps extends IntegrationConnectionProps {
   disabled?: boolean
@@ -31,13 +31,11 @@ interface IntegrationConnectionItemProps extends IntegrationConnectionProps {
 const IntegrationConnectionItem = forwardRef<HTMLLIElement, IntegrationConnectionItemProps>(
   ({ disabled, onDeleteConnection, ...props }, ref) => {
     const router = useRouter()
-    const { data: org } = useSelectedOrganizationQuery()
+    const org = useSelectedOrganization()
 
     const { type, connection } = props
-    const { data } = useProjectsQuery()
-    const project = (data?.projects ?? []).find(
-      (project) => project.ref === connection.supabase_project_ref
-    )
+    const { data: projects } = useProjectsQuery()
+    const project = projects?.find((project) => project.ref === connection.supabase_project_ref)
     const isBranchingEnabled = project?.is_branch_enabled === true
 
     const [isOpen, setIsOpen] = useState(false)
@@ -156,10 +154,18 @@ const IntegrationConnectionItem = forwardRef<HTMLLIElement, IntegrationConnectio
           onCancel={onCancel}
           onConfirm={onConfirm}
           loading={isDeleting}
+          alert={
+            type === 'GitHub' && isBranchingEnabled
+              ? {
+                  title: 'Branching will be disabled for this project',
+                  description: ` Deleting this GitHub connection will remove all preview branches on this project,
+                and also disable branching for ${project.name}`,
+                }
+              : undefined
+          }
         >
           <p className="text-sm text-foreground-light">
-            Deleting this GitHub connection will stop automatic creation and merging of preview
-            branches. Existing preview branches will remain unchanged.
+            This action cannot be undone. Are you sure you want to delete this {type} connection?
           </p>
         </ConfirmationModal>
       </>

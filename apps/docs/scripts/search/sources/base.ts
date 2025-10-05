@@ -1,4 +1,4 @@
-import type { Section } from '../../helpers.mdx.js'
+import type { Json, Section } from '../../helpers.mdx'
 
 export abstract class BaseLoader {
   type: string
@@ -14,7 +14,7 @@ export abstract class BaseLoader {
 export abstract class BaseSource {
   type: string
   checksum?: string
-  meta?: Record<string, unknown>
+  meta?: Json
   sections?: Section[]
 
   constructor(
@@ -22,12 +22,7 @@ export abstract class BaseSource {
     public path: string
   ) {}
 
-  abstract process(): Promise<{
-    checksum: string
-    meta?: Record<string, unknown>
-    ragIgnore?: boolean
-    sections: Section[]
-  }>
+  abstract process(): { checksum: string; meta?: Json; ragIgnore?: boolean; sections: Section[] }
 
   abstract extractIndexedContent(): string
 }

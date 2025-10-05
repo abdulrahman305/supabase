@@ -43,10 +43,6 @@ export const DATADOG_REGIONS = [
     value: 'AP1',
   },
   {
-    label: 'AP2',
-    value: 'AP2',
-  },
-  {
     label: 'EU',
     value: 'EU',
   },

@@ -1,18 +1,19 @@
+import dayjs from 'dayjs'
 import { ExternalLink, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect } from 'react'
 
 import { useParams } from 'common'
 import { LOGS_TABLES } from 'components/interfaces/Settings/Logs/Logs.constants'
-import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { GenericSkeletonLoader } from 'components/ui/ShimmeringLoader'
 import { User } from 'data/auth/users-infinite-query'
 import useLogsPreview from 'hooks/analytics/useLogsPreview'
-import { useLogsUrlState } from 'hooks/analytics/useLogsUrlState'
 import { Button, cn, CriticalIcon, Separator } from 'ui'
 import { Admonition, TimestampInfo } from 'ui-patterns'
 import { UserHeader } from './UserHeader'
-import { PANEL_PADDING } from './Users.constants'
+import { PANEL_PADDING } from './UserPanel'
+import { ButtonTooltip } from 'components/ui/ButtonTooltip'
+import { useLogsUrlState } from 'hooks/analytics/useLogsUrlState'
 
 interface UserLogsProps {
   user: User
@@ -127,7 +128,10 @@ export const UserLogs = ({ user }: UserLogsProps) => {
                         )}
                       >
                         {(is400 || is500) && (
-                          <CriticalIcon hideBackground className={cn(is400 && 'text-warning')} />
+                          <CriticalIcon
+                            hideBackground
+                            className={cn(is400 && 'text-warning-600')}
+                          />
                         )}
                         {status}
                       </div>

@@ -14,9 +14,8 @@ import InformationBox from 'components/ui/InformationBox'
 import NoPermission from 'components/ui/NoPermission'
 import { GenericSkeletonLoader } from 'components/ui/ShimmeringLoader'
 import { useBackupsQuery } from 'data/database/backups-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions, usePermissionsLoaded } from 'hooks/misc/useCheckPermissions'
 import { useIsOrioleDbInAws } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL } from 'lib/constants'
 import type { NextPageWithLayout } from 'types'
 import { Admonition } from 'ui-patterns'
 
@@ -27,11 +26,9 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
 
   const isOrioleDbInAws = useIsOrioleDbInAws()
   const isPitrEnabled = backups?.pitr_enabled
+  const isPermissionsLoaded = usePermissionsLoaded()
 
-  const { can: canReadScheduledBackups, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'back_ups'
-  )
+  const canReadScheduledBackups = useCheckPermissions(PermissionAction.READ, 'back_ups')
 
   return (
     <ScaffoldContainer>
@@ -48,7 +45,7 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
                 title="Database backups are not available for OrioleDB"
                 description="OrioleDB is currently in public alpha and projects created are strictly ephemeral with no database backups"
               >
-                <DocsButton abbrev={false} className="mt-2" href={`${DOCS_URL}`} />
+                <DocsButton abbrev={false} className="mt-2" href="https://supabase.com/docs" />
               </Admonition>
             ) : (
               <div className="flex flex-col gap-y-4">
@@ -80,7 +77,7 @@ const DatabaseScheduledBackups: NextPageWithLayout = () => {
                             terms of the granular recovery that can be performed.{' '}
                             <a
                               className="text-brand transition-colors hover:text-brand-600"
-                              href={`${DOCS_URL}/guides/platform/backups`}
+                              href="https://supabase.com/docs/guides/platform/backups"
                             >
                               Learn more
                             </a>

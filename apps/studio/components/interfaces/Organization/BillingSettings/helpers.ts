@@ -3,7 +3,6 @@ import { PricingMetric } from 'data/analytics/org-daily-stats-query'
 const pricingMetricBytes = [
   PricingMetric.DATABASE_SIZE,
   PricingMetric.EGRESS,
-  PricingMetric.CACHED_EGRESS,
   PricingMetric.STORAGE_SIZE,
 ]
 

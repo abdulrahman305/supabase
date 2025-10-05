@@ -1,12 +1,11 @@
 import { useBreakpoint } from 'common'
 import { AnimatePresence, motion } from 'framer-motion'
-import { startCase } from 'lib/helpers'
+import { startCase } from 'lodash'
 import { useSearchParams } from 'next/navigation'
-import { useRouter } from 'next/compat/router'
-import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import { useKey } from 'react-use'
-import type PostTypes from 'types/post'
+import type PostTypes from '~/types/post'
 
 import {
   Button,
@@ -24,7 +23,6 @@ interface Props {
   events?: PostTypes[]
   setEvents: (posts: any) => void
   categories: { [key: string]: number }
-  onDemandEvents?: PostTypes[]
 }
 
 /**
@@ -32,7 +30,7 @@ interface Props {
  * search via category and reset q param if present
  */
 
-function EventFilters({ allEvents, setEvents, categories, onDemandEvents }: Props) {
+function EventFilters({ allEvents, setEvents, categories }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [category, setCategory] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState<string>('')
@@ -63,9 +61,9 @@ function EventFilters({ allEvents, setEvents, categories, onDemandEvents }: Prop
   }, [q])
 
   const handleReplaceRouter = () => {
-    if (!searchTerm && category !== 'all' && router) {
+    if (!searchTerm && category !== 'all') {
       router.query.category = category
-      router?.replace(router, undefined, { shallow: true, scroll: false })
+      router.replace(router, undefined, { shallow: true, scroll: false })
     }
   }
 
@@ -89,20 +87,19 @@ function EventFilters({ allEvents, setEvents, categories, onDemandEvents }: Prop
   }, [isMobile])
 
   useEffect(() => {
-    if (router?.isReady && q) {
+    if (router.isReady && q) {
       setSearchTerm(q)
     }
-    if (router?.isReady && activeCategory && activeCategory !== 'all') {
+    if (router.isReady && activeCategory && activeCategory !== 'all') {
       setCategory(activeCategory)
     }
-  }, [activeCategory, router?.isReady, q])
+  }, [activeCategory, router.isReady, q])
 
   const handleSearchByText = (text: string) => {
     setSearchTerm(text)
-    searchParams?.has('q') &&
-      router?.replace('/events', undefined, { shallow: true, scroll: false })
-    router?.replace(`/events?q=${text}`, undefined, { shallow: true, scroll: false })
-    if (text.length < 1) router?.replace('/events', undefined, { shallow: true, scroll: false })
+    searchParams?.has('q') && router.replace('/events', undefined, { shallow: true, scroll: false })
+    router.replace(`/events?q=${text}`, undefined, { shallow: true, scroll: false })
+    if (text.length < 1) router.replace('/events', undefined, { shallow: true, scroll: false })
 
     const matches = allEvents.filter((event: any) => {
       const found =
@@ -120,8 +117,8 @@ function EventFilters({ allEvents, setEvents, categories, onDemandEvents }: Prop
     searchTerm && setSearchTerm('')
     setCategory(category)
     category === 'all'
-      ? router?.replace('/events', undefined, { shallow: true, scroll: false })
-      : router?.replace(`/events?category=${category}`, undefined, {
+      ? router.replace('/events', undefined, { shallow: true, scroll: false })
+      : router.replace(`/events?category=${category}`, undefined, {
           shallow: true,
           scroll: false,
         })
@@ -210,22 +207,6 @@ function EventFilters({ allEvents, setEvents, categories, onDemandEvents }: Prop
               {category === 'all' ? 'All' : startCase(category.replaceAll('-', ' '))}{' '}
             </Button>
           ))}
-          {!!onDemandEvents?.length && (
-            <Button
-              key="on-demand"
-              type="outline"
-              size={is2XL ? 'tiny' : 'small'}
-              className="rounded-full"
-              iconRight={
-                <span className="text-foreground-lighter text-xs flex items-center h-[16px] self-center">
-                  {onDemandEvents.length}
-                </span>
-              }
-              asChild
-            >
-              <Link href="#on-demand">On Demand</Link>
-            </Button>
-          )}
         </div>
       </AnimatePresence>
       {!showSearchInput && (

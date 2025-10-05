@@ -19,12 +19,10 @@ const ContentFile = ({ projectKeys }: ContentFileProps) => {
 
       <ConnectTabContent value=".env.local">
         <SimpleCodeBlock className="bash" parentClassName="min-h-72">
-          {[
-            '',
-            `SUPABASE_URL=${projectKeys.apiUrl ?? 'your-project-url'}`,
-            `SUPABASE_KEY=${projectKeys?.publishableKey ?? projectKeys?.anonKey ?? 'your-anon-key'}`,
-            '',
-          ].join('\n')}
+          {`
+SUPABASE_URL=${projectKeys.apiUrl ?? 'your-project-url'}
+SUPABASE_ANON_KEY=${projectKeys.anonKey ?? 'your-anon-key'}
+        `}
         </SimpleCodeBlock>
       </ConnectTabContent>
 
@@ -34,7 +32,7 @@ const ContentFile = ({ projectKeys }: ContentFileProps) => {
 import { createClient } from "@refinedev/supabase";
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_KEY
 
 export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
   db: {

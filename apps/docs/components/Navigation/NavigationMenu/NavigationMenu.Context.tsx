@@ -3,7 +3,7 @@
 import { createContext, useContext } from 'react'
 
 interface ContextProps {
-  activeRefItem: string | undefined
+  activeRefItem: string
   setActiveRefItem: (x: string) => void
 }
 
@@ -15,7 +15,7 @@ interface Provider extends ContextProps {
 // createContext matches the shape that the consumers expect!
 const NavMenuContext = createContext<ContextProps>({
   activeRefItem: undefined,
-  setActiveRefItem: () => {},
+  setActiveRefItem: undefined,
 })
 
 export const NavigationMenuContextProvider = (props: Provider) => {

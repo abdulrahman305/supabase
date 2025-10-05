@@ -1,4 +1,3 @@
-import { LOAD_TAB_FROM_CACHE_PARAM } from 'components/grid/SupabaseGrid.utils'
 import { DiamondIcon, ExternalLink, Fingerprint, Hash, Key, Table2 } from 'lucide-react'
 import Link from 'next/link'
 import { Handle, NodeProps } from 'reactflow'
@@ -40,7 +39,7 @@ const TableNode = ({
   return (
     <>
       {data.isForeign ? (
-        <header className="text-[0.55rem] px-2 py-1 border-[0.5px] rounded-[4px] bg-alternative flex gap-1 items-center">
+        <header className="text-[0.55rem] px-2 py-1 border-[0.5px] rounded-[4px] bg-alternative text-default flex gap-1 items-center">
           {data.name}
           {targetPosition && (
             <Handle
@@ -58,7 +57,7 @@ const TableNode = ({
         >
           <header
             className={cn(
-              'text-[0.55rem] pl-2 pr-1 bg-alternative flex items-center justify-between',
+              'text-[0.55rem] pl-2 pr-1 bg-alternative text-default flex items-center justify-between',
               itemHeight
             )}
           >
@@ -68,9 +67,7 @@ const TableNode = ({
             </div>
             {data.id && !placeholder && (
               <Button asChild type="text" className="px-0 w-[16px] h-[16px] rounded">
-                <Link
-                  href={`/project/${data.ref}/editor/${data.id}?${LOAD_TAB_FROM_CACHE_PARAM}=true`}
-                >
+                <Link href={`/project/${data.ref}/editor/${data.id}`}>
                   <ExternalLink size={10} className="text-foreground-light" />
                 </Link>
               </Button>

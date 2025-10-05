@@ -1,7 +1,7 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { MenuId } from '~/components/Navigation/NavigationMenu/NavigationMenu'
 import type { ICommonItem } from '~/components/reference/Reference.types'
 import type { Json } from '~/features/helpers.types'
@@ -52,10 +52,7 @@ export function deepFilterSections<T extends ICommonItem>(
  *
  * See https://webpack.js.org/api/module-methods/#dynamic-expressions-in-import
  */
-export function useCommonSections(
-  commonSectionsFile: string,
-  { enabled = true }: { enabled: boolean }
-) {
+export function useCommonSections(commonSectionsFile: string) {
   const [commonSections, setCommonSections] = useState<ICommonItem[]>()
 
   useEffect(() => {
@@ -69,10 +66,6 @@ export function useCommonSections(
     }
     fetchCommonSections()
   }, [commonSectionsFile])
-
-  if (!enabled) {
-    return null
-  }
 
   return commonSections
 }

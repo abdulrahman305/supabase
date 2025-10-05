@@ -19,14 +19,10 @@ const ContentFile = ({ projectKeys }: ContentFileProps) => {
 
       <ConnectTabContent value=".env">
         <SimpleCodeBlock className="bash" parentClassName="min-h-72">
-          {[
-            '',
-            `VITE_SUPABASE_URL=${projectKeys.apiUrl ?? 'your-project-url'}`,
-            projectKeys?.publishableKey
-              ? `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY=${projectKeys.publishableKey}`
-              : `VITE_SUPABASE_ANON_KEY=${projectKeys.anonKey ?? 'your-anon-key'}`,
-            '',
-          ].join('\n')}
+          {`
+VITE_SUPABASE_URL=${projectKeys.apiUrl ?? 'your-project-url'}
+VITE_SUPABASE_ANON_KEY=${projectKeys.anonKey ?? 'your-anon-key'}
+        `}
         </SimpleCodeBlock>
       </ConnectTabContent>
 
@@ -36,8 +32,7 @@ const ContentFile = ({ projectKeys }: ContentFileProps) => {
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.${projectKeys.publishableKey ? 'VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY' : 'VITE_SUPABASE_ANON_KEY'};
-
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default supabase

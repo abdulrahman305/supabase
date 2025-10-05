@@ -1,4 +1,3 @@
-import { CloudProvider } from 'shared-data'
 import { z } from 'zod'
 import { ComputeInstanceAddonVariantId } from './DiskManagement.types'
 import {
@@ -10,6 +9,7 @@ import {
   formatNumber,
 } from './DiskManagement.utils'
 import { DISK_LIMITS, DiskType } from './ui/DiskManagement.constants'
+import { CloudProvider } from 'shared-data'
 
 const baseSchema = z.object({
   storageType: z.enum(['io2', 'gp3']).describe('Type of storage: io2 or gp3'),
@@ -41,22 +41,13 @@ const baseSchema = z.object({
     .nullable(),
 })
 
-export const CreateDiskStorageSchema = ({
-  defaultTotalSize,
-  cloudProvider,
-}: {
-  defaultTotalSize: number
-  cloudProvider: CloudProvider
-}) => {
+export const CreateDiskStorageSchema = (defaultTotalSize: number, cloudProvider: CloudProvider) => {
   const isFlyProject = cloudProvider === 'FLY'
-  const isAwsNimbusProject = cloudProvider === 'AWS_NIMBUS'
-
-  const validateDiskConfiguration = !isFlyProject && !isAwsNimbusProject
 
   const schema = baseSchema.superRefine((data, ctx) => {
     const { storageType, totalSize, provisionedIOPS, throughput, maxSizeGb } = data
 
-    if (validateDiskConfiguration && totalSize < 8) {
+    if (!isFlyProject && totalSize < 8) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Allocated disk size must be at least 8 GB.',
@@ -64,7 +55,7 @@ export const CreateDiskStorageSchema = ({
       })
     }
 
-    if (validateDiskConfiguration && totalSize < defaultTotalSize) {
+    if (!isFlyProject && totalSize < defaultTotalSize) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Disk size cannot be reduced in size. Reduce your database size and then head to the Infrastructure settings and go through a Postgres version upgrade to right-size your disk.`,
@@ -73,7 +64,7 @@ export const CreateDiskStorageSchema = ({
     }
 
     // Validate maxSizeGb cannot be lower than totalSize
-    if (validateDiskConfiguration && !!maxSizeGb && maxSizeGb < totalSize) {
+    if (!isFlyProject && !!maxSizeGb && maxSizeGb < totalSize) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Max disk size cannot be lower than the current disk size. Must be at least ${formatNumber(totalSize)} GB.`,
@@ -81,7 +72,7 @@ export const CreateDiskStorageSchema = ({
       })
     }
 
-    if (validateDiskConfiguration && storageType === 'io2') {
+    if (!isFlyProject && storageType === 'io2') {
       // Validation rules for io2
 
       if (provisionedIOPS > DISK_LIMITS[DiskType.IO2].maxIops) {
@@ -138,7 +129,7 @@ export const CreateDiskStorageSchema = ({
       }
     }
 
-    if (validateDiskConfiguration && storageType === 'gp3') {
+    if (!isFlyProject && storageType === 'gp3') {
       const maxIopsAllowedForDiskSizeWithGp3 = calculateMaxIopsAllowedForDiskSizeWithGp3(totalSize)
 
       if (provisionedIOPS > DISK_LIMITS[DiskType.GP3].maxIops) {

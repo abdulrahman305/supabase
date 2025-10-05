@@ -13,7 +13,6 @@ import 'styles/reactflow.scss'
 import 'styles/storage.scss'
 import 'styles/stripe.scss'
 import 'styles/toast.scss'
-import 'styles/typography.scss'
 import 'styles/ui.scss'
 import 'ui/build/css/themes/dark.css'
 import 'ui/build/css/themes/light.css'
@@ -24,22 +23,15 @@ import { Hydrate, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
-import duration from 'dayjs/plugin/duration'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import timezone from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import Head from 'next/head'
 import { NuqsAdapter } from 'nuqs/adapters/next/pages'
-import { ErrorInfo, useCallback } from 'react'
+import { ErrorInfo } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 
-import {
-  FeatureFlagProvider,
-  getFlags,
-  TelemetryTagManager,
-  ThemeProvider,
-  useThemeSandbox,
-} from 'common'
+import { FeatureFlagProvider, ThemeProvider, useThemeSandbox } from 'common'
 import MetaFaviconsPagesRouter from 'common/MetaFavicons/pages-router'
 import { RouteValidationWrapper } from 'components/interfaces/App'
 import { AppBannerContextProvider } from 'components/interfaces/App/AppBannerWrapperContext'
@@ -47,14 +39,16 @@ import { StudioCommandMenu } from 'components/interfaces/App/CommandMenu'
 import { FeaturePreviewContextProvider } from 'components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import FeaturePreviewModal from 'components/interfaces/App/FeaturePreview/FeaturePreviewModal'
 import { MonacoThemeProvider } from 'components/interfaces/App/MonacoThemeProvider'
-import { GlobalErrorBoundaryState } from 'components/ui/GlobalErrorBoundaryState'
+import { GenerateSql } from 'components/interfaces/SqlGenerator/SqlGenerator'
+import { ErrorBoundaryState } from 'components/ui/ErrorBoundaryState'
 import { useRootQueryClient } from 'data/query-client'
 import { customFont, sourceCodePro } from 'fonts'
-import { useCustomContent } from 'hooks/custom-content/useCustomContent'
 import { AuthProvider } from 'lib/auth'
-import { API_URL, BASE_PATH, IS_PLATFORM, useDefaultProvider } from 'lib/constants'
+import { getFlags as getConfigCatFlags } from 'lib/configcat'
+import { API_URL, BASE_PATH, IS_PLATFORM } from 'lib/constants'
 import { ProfileProvider } from 'lib/profile'
 import { Telemetry } from 'lib/telemetry'
+import HCaptchaLoadedStore from 'stores/hcaptcha-loaded-store'
 import { AppPropsWithLayout } from 'types'
 import { SonnerToaster, TooltipProvider } from 'ui'
 import { CommandProvider } from 'ui-patterns/CommandMenu'
@@ -63,7 +57,6 @@ dayjs.extend(customParseFormat)
 dayjs.extend(utc)
 dayjs.extend(timezone)
 dayjs.extend(relativeTime)
-dayjs.extend(duration)
 
 loader.config({
   // [Joshen] Attempt for offline support/bypass ISP issues is to store the assets required for monaco
@@ -85,18 +78,13 @@ loader.config({
 
 function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
   const queryClient = useRootQueryClient()
-  const { appTitle } = useCustomContent(['app:title'])
 
   const getLayout = Component.getLayout ?? ((page) => page)
 
   const errorBoundaryHandler = (error: Error, info: ErrorInfo) => {
     Sentry.withScope(function (scope) {
       scope.setTag('globalErrorBoundary', true)
-      const eventId = Sentry.captureException(error)
-      // Attach the Sentry event ID to the error object so it can be accessed by the error boundary
-      if (eventId && error && typeof error === 'object') {
-        ;(error as any).sentryId = eventId
-      }
+      Sentry.captureException(error)
     })
 
     console.error(error.stack)
@@ -106,18 +94,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
 
   const isTestEnv = process.env.NEXT_PUBLIC_NODE_ENV === 'test'
 
-  const cloudProvider = useDefaultProvider()
-
-  const getConfigCatFlags = useCallback(
-    (userEmail?: string) => {
-      const customAttributes = cloudProvider ? { cloud_provider: cloudProvider } : undefined
-      return getFlags(userEmail, customAttributes)
-    },
-    [cloudProvider]
-  )
-
   return (
-    <ErrorBoundary FallbackComponent={GlobalErrorBoundaryState} onError={errorBoundaryHandler}>
+    <ErrorBoundary FallbackComponent={ErrorBoundaryState} onError={errorBoundaryHandler}>
       <QueryClientProvider client={queryClient}>
         <NuqsAdapter>
           <Hydrate state={pageProps.dehydratedState}>
@@ -129,9 +107,8 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
               >
                 <ProfileProvider>
                   <Head>
-                    <title>{appTitle ?? 'Supabase'}</title>
+                    <title>Supabase</title>
                     <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-                    <meta property="og:image" content={`${BASE_PATH}/img/supabase-logo.png`} />
                     {/* [Alaister]: This has to be an inline style tag here and not a separate component due to next/font */}
                     <style
                       dangerouslySetInnerHTML={{
@@ -153,6 +130,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
                             <FeaturePreviewContextProvider>
                               {getLayout(<Component {...pageProps} />)}
                               <StudioCommandMenu />
+                              <GenerateSql />
                               <FeaturePreviewModal />
                             </FeaturePreviewContextProvider>
                             <SonnerToaster position="top-right" />
@@ -163,6 +141,7 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
                     </RouteValidationWrapper>
                   </TooltipProvider>
                   <Telemetry />
+                  {!isTestEnv && <HCaptchaLoadedStore />}
                   {!isTestEnv && (
                     <ReactQueryDevtools initialIsOpen={false} position="bottom-right" />
                   )}
@@ -172,7 +151,6 @@ function CustomApp({ Component, pageProps }: AppPropsWithLayout) {
           </Hydrate>
         </NuqsAdapter>
       </QueryClientProvider>
-      <TelemetryTagManager />
     </ErrorBoundary>
   )
 }

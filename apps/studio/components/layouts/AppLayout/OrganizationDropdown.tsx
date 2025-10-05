@@ -8,7 +8,7 @@ import PartnerIcon from 'components/ui/PartnerIcon'
 import ShimmeringLoader from 'components/ui/ShimmeringLoader'
 import { useOrganizationsQuery } from 'data/organizations/organizations-query'
 import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import {
   Badge,
   Button,
@@ -29,7 +29,7 @@ import {
 export const OrganizationDropdown = () => {
   const router = useRouter()
   const { slug: routeSlug } = useParams()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
   const { data: organizations, isLoading: isLoadingOrganizations } = useOrganizationsQuery()
 
   const organizationCreationEnabled = useIsFeatureEnabled('organizations:create')
@@ -45,22 +45,12 @@ export const OrganizationDropdown = () => {
 
   return (
     <>
-      <Link
-        href={slug ? `/org/${slug}` : '/organizations'}
-        className="flex items-center gap-2 flex-shrink-0 text-sm"
-      >
+      <Link href={`/org/${slug}`} className="flex items-center gap-2 flex-shrink-0 text-sm">
         <Boxes size={14} strokeWidth={1.5} className="text-foreground-lighter" />
-        <span
-          className={cn(
-            'max-w-32 lg:max-w-none truncate hidden md:block',
-            !!selectedOrganization ? 'text-foreground' : 'text-foreground-lighter'
-          )}
-        >
-          {orgName ?? 'Select an organization'}
+        <span className="text-foreground max-w-32 lg:max-w-none truncate hidden md:block">
+          {orgName}
         </span>
-        {!!selectedOrganization && (
-          <Badge variant="default">{selectedOrganization?.plan.name}</Badge>
-        )}
+        <Badge variant="default">{selectedOrganization?.plan.name}</Badge>
       </Link>
       <Popover_Shadcn_ open={open} onOpenChange={setOpen} modal={false}>
         <PopoverTrigger_Shadcn_ asChild>
@@ -81,7 +71,6 @@ export const OrganizationDropdown = () => {
                     const href = !!routeSlug
                       ? router.pathname.replace('[slug]', org.slug)
                       : `/org/${org.slug}`
-
                     return (
                       <CommandItem_Shadcn_
                         key={org.slug}

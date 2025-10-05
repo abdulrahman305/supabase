@@ -8,7 +8,6 @@ import Snippets from 'components/interfaces/Docs/Snippets'
 import { useCustomDomainsQuery } from 'data/custom-domains/custom-domains-query'
 import { useProjectJsonSchemaQuery } from 'data/docs/project-json-schema-query'
 import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { DOCS_URL } from 'lib/constants'
 
 interface ResourceContentProps {
   apiEndpoint: string
@@ -121,7 +120,7 @@ const ResourceContent = ({
               </p>
               <p>
                 <a
-                  href={`${DOCS_URL}/reference/javascript/select`}
+                  href="https://supabase.com/docs/reference/javascript/select"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -158,7 +157,7 @@ const ResourceContent = ({
               <p>Supabase provides a wide range of filters.</p>
               <p>
                 <a
-                  href={`${DOCS_URL}/reference/javascript/using-filters`}
+                  href="https://supabase.com/docs/reference/javascript/using-filters"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -189,7 +188,7 @@ const ResourceContent = ({
               </p>
               <p>
                 <a
-                  href={`${DOCS_URL}/reference/javascript/insert`}
+                  href="https://supabase.com/docs/reference/javascript/insert"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -229,7 +228,7 @@ const ResourceContent = ({
               </p>
               <p>
                 <a
-                  href={`${DOCS_URL}/reference/javascript/update`}
+                  href="https://supabase.com/docs/reference/javascript/update"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -257,7 +256,7 @@ const ResourceContent = ({
               </p>
               <p>
                 <a
-                  href={`${DOCS_URL}/reference/javascript/delete`}
+                  href="https://supabase.com/docs/reference/javascript/delete"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -286,7 +285,7 @@ const ResourceContent = ({
                 </p>
                 <p>
                   <a
-                    href={`${DOCS_URL}/reference/javascript/subscribe`}
+                    href="https://supabase.com/docs/reference/javascript/subscribe"
                     target="_blank"
                     rel="noreferrer"
                   >

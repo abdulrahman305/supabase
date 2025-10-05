@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import { AnimatePresence, motion } from 'framer-motion'
 import Link from 'next/link'
 
@@ -7,7 +8,8 @@ import { EntityTypeIcon } from 'components/ui/EntityTypeIcon'
 import { ENTITY_TYPE } from 'data/entity-types/entity-type-constants'
 import { editorEntityTypes, useTabsStateSnapshot } from 'state/tabs'
 import { useEditorType } from '../editors/EditorsLayout.hooks'
-import { LOAD_TAB_FROM_CACHE_PARAM } from 'components/grid/SupabaseGrid.utils'
+
+dayjs.extend(relativeTime)
 
 export function RecentItems() {
   const { ref } = useParams()
@@ -61,7 +63,7 @@ export function RecentItems() {
                             item.type === 'm' ||
                             item.type === 'f' ||
                             item.type === 'p'
-                          ? `editor/${item.metadata?.tableId}?schema=${item.metadata?.schema}&${LOAD_TAB_FROM_CACHE_PARAM}=true`
+                          ? `editor/${item.metadata?.tableId}?schema=${item.metadata?.schema}`
                           : `explorer/${item.type}/${item.metadata?.schema}/${item.metadata?.name}`
                     }`}
                     className="flex items-center gap-4 rounded-lg bg-surface-100 py-2 transition-colors hover:bg-surface-200"

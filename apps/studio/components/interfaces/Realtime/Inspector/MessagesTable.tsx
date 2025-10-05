@@ -1,4 +1,3 @@
-import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { isEqual } from 'lodash'
 import { ExternalLink, Loader2, Megaphone } from 'lucide-react'
 import Link from 'next/link'
@@ -7,14 +6,10 @@ import DataGrid, { Row } from 'react-data-grid'
 
 import { useParams } from 'common'
 import { DocsButton } from 'components/ui/DocsButton'
-import NoPermission from 'components/ui/NoPermission'
 import ShimmerLine from 'components/ui/ShimmerLine'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { DOCS_URL } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { Button, IconBroadcast, IconDatabaseChanges, IconPresence, cn } from 'ui'
-import { GenericSkeletonLoader } from 'ui-patterns'
 import MessageSelection from './MessageSelection'
 import type { LogData } from './Messages.types'
 import NoChannelEmptyState from './NoChannelEmptyState'
@@ -35,18 +30,9 @@ const NoResultAlert = ({
 }) => {
   const { ref } = useParams()
 
-  const { can: canReadAPIKeys, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'service_api_keys'
-  )
-
   return (
     <div className="w-full max-w-md flex items-center flex-col">
-      {isLoadingPermissions ? (
-        <GenericSkeletonLoader className="w-80" />
-      ) : !canReadAPIKeys ? (
-        <NoPermission isFullPage resourceText="use the realtime inspector" />
-      ) : !hasChannelSet ? (
+      {!hasChannelSet ? (
         <NoChannelEmptyState />
       ) : (
         <>
@@ -99,7 +85,7 @@ const NoResultAlert = ({
                 <p className="text-foreground">Not sure what to do?</p>
                 <p className="text-foreground-lighter text-xs">Browse our documentation</p>
               </div>
-              <DocsButton href={`${DOCS_URL}/guides/realtime`} />
+              <DocsButton href="https://supabase.com/docs/guides/realtime" />
             </div>
           </div>
         </>
@@ -125,7 +111,7 @@ const MessagesTable = ({
   const stringData = JSON.stringify(data)
 
   const { ref } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
   const { mutate: sendEvent } = useSendEventMutation()
 
   useEffect(() => {

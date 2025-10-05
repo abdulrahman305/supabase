@@ -6,7 +6,6 @@ import { useNavigationMenuContext } from '~/components/Navigation/NavigationMenu
 import { menuState } from '~/hooks/useMenuState'
 import Image from 'next/legacy/image'
 import { cn } from 'ui'
-import { safeHistoryReplaceState } from '~/lib/historyUtils'
 
 interface ISectionContainer {
   id: string
@@ -90,7 +89,7 @@ const StickyHeader: FC<StickyHeader> = ({ icon, ...props }) => {
 
   // we're serving search bots a different file (/crawlers/[...slug])
   // and need to modify content to suit that
-  const isCrawlerPage = router?.route.includes('/crawlers/[...slug]') || false
+  const isCrawlerPage = router.route.includes('/crawlers/[...slug]')
 
   const { ref } = useInView({
     threshold: 1,
@@ -98,7 +97,7 @@ const StickyHeader: FC<StickyHeader> = ({ icon, ...props }) => {
     onChange: (inView, entry) => {
       if (inView && window) highlightSelectedNavItem(entry.target.attributes['data-ref-id'].value)
       if (inView && props.scrollSpyHeader) {
-        safeHistoryReplaceState(entry.target.id)
+        window.history.replaceState(null, '', entry.target.id)
         // if (setActiveRefItem) setActiveRefItem(entry.target.attributes['data-ref-id'].value)
         menuState.setMenuActiveRefId(entry.target.attributes['data-ref-id'].value)
         // router.push(`/reference/javascript/${entry.target.attributes['data-ref-id'].value}`, null, {

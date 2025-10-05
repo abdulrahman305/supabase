@@ -1,20 +1,23 @@
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
-import { components } from 'api-types'
-import { handleError, post } from 'data/fetchers'
 import { organizationKeys } from 'data/organizations/keys'
 import { permissionKeys } from 'data/permissions/keys'
+import { post } from 'lib/common/fetch'
+import { API_URL } from 'lib/constants'
 import type { ResponseError } from 'types'
 import { profileKeys } from './keys'
+import type { Profile } from './types'
 
-export type ProfileResponse = components['schemas']['ProfileResponse']
+export type ProfileResponse = Profile
 
 export async function createProfile() {
-  const { data, error } = await post('/platform/profile')
+  const response = await post(`${API_URL}/profile`, {})
+  if (response.error) {
+    throw response.error
+  }
 
-  if (error) handleError(error)
-  return data
+  return response as ProfileResponse
 }
 
 type ProfileCreateData = Awaited<ReturnType<typeof createProfile>>

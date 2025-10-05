@@ -2,9 +2,9 @@ import { createClient } from "@refinedev/supabase";
 
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabasePublishableKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabaseClient = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
     schema: "public",
   },

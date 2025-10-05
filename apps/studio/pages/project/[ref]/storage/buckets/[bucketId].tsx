@@ -1,22 +1,24 @@
 import { useParams } from 'common'
+import { find } from 'lodash'
 
-import { AnalyticBucketDetails } from 'components/interfaces/Storage/AnalyticBucketDetails'
-import StorageBucketsError from 'components/interfaces/Storage/StorageBucketsError'
-import { StorageExplorer } from 'components/interfaces/Storage/StorageExplorer/StorageExplorer'
-import { useSelectedBucket } from 'components/interfaces/Storage/StorageExplorer/useSelectedBucket'
 import DefaultLayout from 'components/layouts/DefaultLayout'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
+import StorageBucketsError from 'components/layouts/StorageLayout/StorageBucketsError'
 import StorageLayout from 'components/layouts/StorageLayout/StorageLayout'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { StorageExplorer } from 'components/to-be-cleaned/Storage'
+import { useBucketsQuery } from 'data/storage/buckets-query'
 import { useStorageExplorerStateSnapshot } from 'state/storage-explorer'
 import type { NextPageWithLayout } from 'types'
 
 const PageLayout: NextPageWithLayout = () => {
-  const { bucketId } = useParams()
-  const { data: project } = useSelectedProjectQuery()
+  const { ref, bucketId } = useParams()
+  const { project } = useProjectContext()
   const { projectRef } = useStorageExplorerStateSnapshot()
-  const { bucket, error, isSuccess, isError } = useSelectedBucket()
 
-  // [Joshen] Checking against projectRef from storage explorer to check if the store has initialized
+  const { data, isSuccess, isError, error } = useBucketsQuery({ projectRef: ref })
+  const buckets = data ?? []
+  const bucket = find(buckets, { id: bucketId })
+
   if (!project || !projectRef) return null
 
   return (
@@ -28,8 +30,6 @@ const PageLayout: NextPageWithLayout = () => {
           <div className="flex h-full w-full items-center justify-center">
             <p className="text-sm text-foreground-light">Bucket {bucketId} cannot be found</p>
           </div>
-        ) : bucket.type === 'ANALYTICS' ? (
-          <AnalyticBucketDetails bucket={bucket} />
         ) : (
           <StorageExplorer bucket={bucket} />
         )

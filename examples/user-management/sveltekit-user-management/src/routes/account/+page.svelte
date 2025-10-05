@@ -1,16 +1,21 @@
+<!-- src/routes/account/+page.svelte -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
     import Avatar from './Avatar.svelte'
 
-	let { data, form } = $props()
-	let { session, supabase, profile } = $derived(data)
+	export let data
+	export let form
+
+	let { session, supabase, profile } = data
+	$: ({ session, supabase, profile } = data)
+
 	let profileForm: HTMLFormElement
-	let loading = $state(false)
+	let loading = false
 	let fullName: string = profile?.full_name ?? ''
 	let username: string = profile?.username ?? ''
 	let website: string = profile?.website ?? ''
-	let avatarUrl: string = $state(profile?.avatar_url ?? '')
+	let avatarUrl: string = profile?.avatar_url ?? ''
 
 	const handleSubmit: SubmitFunction = () => {
 		loading = true
@@ -40,7 +45,7 @@
             {supabase}
             bind:url={avatarUrl}
             size={10}
-            onupload={() => {
+            on:upload={() => {
                 profileForm.requestSubmit();
             }}
         />

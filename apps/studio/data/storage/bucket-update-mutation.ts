@@ -2,11 +2,11 @@ import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react
 import { toast } from 'sonner'
 
 import { components } from 'api-types'
-import { patch } from 'data/fetchers'
+import { handleError, patch } from 'data/fetchers'
 import type { ResponseError } from 'types'
 import { storageKeys } from './keys'
 
-type BucketUpdateVariables = {
+export type BucketUpdateVariables = {
   projectRef: string
   id: string
   isPublic: boolean
@@ -23,13 +23,13 @@ type UpdateStorageBucketBody = Omit<
   file_size_limit: number | null
 }
 
-async function updateBucket({
+export async function updateBucket({
   projectRef,
   id,
   isPublic,
   file_size_limit,
   allowed_mime_types,
-}: BucketUpdateVariables): Promise<BucketUpdateResult> {
+}: BucketUpdateVariables) {
   if (!projectRef) throw new Error('projectRef is required')
   if (!id) throw new Error('Bucket name is requried')
 
@@ -42,15 +42,10 @@ async function updateBucket({
     body: payload as any,
   })
 
-  if (error) {
-    // Return the error instead of throwing it, so we can handle it gracefully
-    return { data: null, error }
-  }
-
-  return { data, error: null }
+  if (error) handleError(error)
+  return data
 }
 
-type BucketUpdateResult = { data: any; error: null } | { data: null; error: any }
 type BucketUpdateData = Awaited<ReturnType<typeof updateBucket>>
 
 export const useBucketUpdateMutation = ({
@@ -64,13 +59,7 @@ export const useBucketUpdateMutation = ({
   const queryClient = useQueryClient()
 
   return useMutation<BucketUpdateData, ResponseError, BucketUpdateVariables>(
-    async (vars) => {
-      const result = await updateBucket(vars)
-      if (result.error) {
-        throw result.error
-      }
-      return result.data
-    },
+    (vars) => updateBucket(vars),
     {
       async onSuccess(data, variables, context) {
         const { projectRef } = variables

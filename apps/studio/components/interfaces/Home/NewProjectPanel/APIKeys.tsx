@@ -4,14 +4,13 @@ import { AlertCircle, Loader } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
+import { SimpleCodeBlock } from 'ui'
 import { useParams } from 'common'
 import Panel from 'components/ui/Panel'
-import { getKeys, useAPIKeysQuery } from 'data/api-keys/api-keys-query'
 import { useJwtSecretUpdatingStatusQuery } from 'data/config/jwt-secret-updating-status-query'
-import { useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { Input, SimpleCodeBlock } from 'ui'
+import { getAPIKeys, useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { Input } from 'ui'
 
 const generateInitSnippet = (endpoint: string) => ({
   js: `
@@ -30,23 +29,12 @@ Future<void> main() async {
 }`,
 })
 
-export const APIKeys = () => {
+const APIKeys = () => {
   const { ref: projectRef } = useParams()
 
-  const {
-    projectConnectionJavascriptExample: javascriptExampleEnabled,
-    projectConnectionDartExample: dartExampleEnabled,
-  } = useIsFeatureEnabled([
-    'project_connection:javascript_example',
-    'project_connection:dart_example',
-  ])
-
   const availableLanguages = [
-    {
-      name: javascriptExampleEnabled ? 'Javascript' : 'Typescript',
-      key: 'js',
-    },
-    ...(dartExampleEnabled ? [{ name: 'Dart', key: 'dart' }] : []),
+    { name: 'Javascript', key: 'js' },
+    { name: 'Dart', key: 'dart' },
   ]
   const [selectedLanguage, setSelectedLanguage] = useState(availableLanguages[0])
 
@@ -54,13 +42,13 @@ export const APIKeys = () => {
     data: settings,
     isError: isProjectSettingsError,
     isLoading: isProjectSettingsLoading,
-  } = useProjectSettingsV2Query({ projectRef })
-
-  const { data: apiKeys } = useAPIKeysQuery({ projectRef })
-  const { anonKey, serviceKey } = getKeys(apiKeys)
+  } = useProjectSettingsV2Query({
+    projectRef,
+  })
 
   // API keys should not be empty. However it can be populated with a delay on project creation
-  const isApiKeysEmpty = !anonKey && !serviceKey
+  const apiKeys = settings?.service_api_keys ?? []
+  const isApiKeysEmpty = apiKeys.length === 0
 
   const {
     data,
@@ -70,17 +58,9 @@ export const APIKeys = () => {
     { projectRef },
     { enabled: !isProjectSettingsLoading && isApiKeysEmpty }
   )
-
-  // Only show JWT loading state if the query is actually enabled
-  const showJwtLoading =
-    isJwtSecretUpdateStatusLoading && !isProjectSettingsLoading && isApiKeysEmpty
-
   const jwtSecretUpdateStatus = data?.jwtSecretUpdateStatus
 
-  const { can: canReadAPIKeys } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'service_api_keys'
-  )
+  const canReadAPIKeys = useCheckPermissions(PermissionAction.READ, 'service_api_keys')
 
   const isNotUpdatingJwtSecret =
     jwtSecretUpdateStatus === undefined || jwtSecretUpdateStatus === JwtSecretUpdateStatus.Updated
@@ -88,11 +68,10 @@ export const APIKeys = () => {
   const protocol = settings?.app_config?.protocol ?? 'https'
   const endpoint = settings?.app_config?.endpoint
   const apiUrl = `${protocol}://${endpoint ?? '-'}`
+  const { anonKey } = getAPIKeys(settings)
 
   const clientInitSnippet: any = generateInitSnippet(apiUrl)
-  const selectedLanguageSnippet = !!selectedLanguage
-    ? clientInitSnippet[selectedLanguage.key]
-    : 'No snippet available'
+  const selectedLanguageSnippet = clientInitSnippet[selectedLanguage.key] ?? 'No snippet available'
 
   return (
     <Panel
@@ -114,20 +93,14 @@ export const APIKeys = () => {
             {isProjectSettingsError ? 'Failed to retrieve API keys' : 'Failed to update JWT secret'}
           </p>
         </div>
-      ) : isProjectSettingsLoading ? (
+      ) : isApiKeysEmpty || isProjectSettingsLoading || isJwtSecretUpdateStatusLoading ? (
         <div className="flex items-center justify-center py-8 space-x-2">
           <Loader className="animate-spin" size={16} strokeWidth={1.5} />
-          <p className="text-sm text-foreground-light">Retrieving API keys</p>
-        </div>
-      ) : isApiKeysEmpty ? (
-        <div className="flex items-center justify-center py-8 space-x-2">
-          <Loader className="animate-spin" size={16} strokeWidth={1.5} />
-          <p className="text-sm text-foreground-light">Retrieving API keys</p>
-        </div>
-      ) : showJwtLoading ? (
-        <div className="flex items-center justify-center py-8 space-x-2">
-          <Loader className="animate-spin" size={16} strokeWidth={1.5} />
-          <p className="text-sm text-foreground-light">JWT secret is being updated</p>
+          <p className="text-sm text-foreground-light">
+            {isProjectSettingsLoading || isApiKeysEmpty
+              ? 'Retrieving API keys'
+              : 'JWT secret is being updated'}
+          </p>
         </div>
       ) : (
         <>
@@ -158,13 +131,17 @@ export const APIKeys = () => {
                 <div className="space-y-2">
                   <p className="text-sm">API Key</p>
                   <div className="flex items-center space-x-1 -ml-1">
-                    <code className="text-xs">{anonKey?.name}</code>
-                    <code className="text-xs">public</code>
+                    {anonKey?.tags?.split(',').map((x: any, i: number) => (
+                      <code key={`${x}${i}`} className="text-xs">
+                        {x}
+                      </code>
+                    ))}
+                    <code className="text-xs">{'public'}</code>
                   </div>
                 </div>
               }
               copy={canReadAPIKeys && isNotUpdatingJwtSecret}
-              reveal={anonKey?.name !== 'anon' && canReadAPIKeys && isNotUpdatingJwtSecret}
+              reveal={anonKey?.tags !== 'anon' && canReadAPIKeys && isNotUpdatingJwtSecret}
               value={
                 !canReadAPIKeys
                   ? 'You need additional permissions to view API keys'
@@ -191,34 +168,34 @@ export const APIKeys = () => {
               }
             />
           </Panel.Content>
-          {availableLanguages.length > 0 && (
-            <div className="border-t border-panel-border-interior-light dark:border-panel-border-interior-dark">
-              <div className="flex items-center bg-studio">
-                {availableLanguages.map((language) => {
-                  const isSelected = selectedLanguage.key === language.key
-                  return (
-                    <div
-                      key={language.key}
-                      className={[
-                        'px-3 py-1 text-sm cursor-pointer transition',
-                        `${!isSelected ? 'bg-studio text-foreground-light' : 'bg-surface-100'}`,
-                      ].join(' ')}
-                      onClick={() => setSelectedLanguage(language)}
-                    >
-                      {language.name}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="bg-surface-100 px-4 py-6 min-h-[200px]">
-                <SimpleCodeBlock className={selectedLanguage.key}>
-                  {selectedLanguageSnippet}
-                </SimpleCodeBlock>
-              </div>
+          <div className="border-t border-panel-border-interior-light dark:border-panel-border-interior-dark">
+            <div className="flex items-center bg-studio">
+              {availableLanguages.map((language) => {
+                const isSelected = selectedLanguage.key === language.key
+                return (
+                  <div
+                    key={language.key}
+                    className={[
+                      'px-3 py-1 text-sm cursor-pointer transition',
+                      `${!isSelected ? 'bg-studio text-foreground-light' : 'bg-surface-100'}`,
+                    ].join(' ')}
+                    onClick={() => setSelectedLanguage(language)}
+                  >
+                    {language.name}
+                  </div>
+                )
+              })}
             </div>
-          )}
+            <div className="bg-surface-100 px-4 py-6 min-h-[200px]">
+              <SimpleCodeBlock className={selectedLanguage.key}>
+                {selectedLanguageSnippet}
+              </SimpleCodeBlock>
+            </div>
+          </div>
         </>
       )}
     </Panel>
   )
 }
+
+export default APIKeys

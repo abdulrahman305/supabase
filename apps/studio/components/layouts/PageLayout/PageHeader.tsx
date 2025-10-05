@@ -15,8 +15,8 @@ import {
 import { ScaffoldDescription, ScaffoldTitle } from '../Scaffold'
 
 interface PageHeaderProps {
-  title?: string | ReactNode
-  subtitle?: string | ReactNode
+  title?: string
+  subtitle?: string
   icon?: ReactNode
   breadcrumbs?: Array<{
     label?: string

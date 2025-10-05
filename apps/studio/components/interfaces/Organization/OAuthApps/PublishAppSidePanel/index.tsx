@@ -11,7 +11,6 @@ import {
 } from 'data/oauth/oauth-app-create-mutation'
 import { useOAuthAppUpdateMutation } from 'data/oauth/oauth-app-update-mutation'
 import type { OAuthApp } from 'data/oauth/oauth-apps-query'
-import { DOCS_URL } from 'lib/constants'
 import { isValidHttpUrl, uuidv4 } from 'lib/helpers'
 import { uploadAttachment } from 'lib/upload'
 import {
@@ -27,7 +26,7 @@ import {
   SidePanel,
   cn,
 } from 'ui'
-import { AuthorizeRequesterDetails } from '../AuthorizeRequesterDetails'
+import AuthorizeRequesterDetails from '../AuthorizeRequesterDetails'
 import { OAuthSecrets } from '../OAuthSecrets/OAuthSecrets'
 import { ScopesPanel } from './Scopes'
 
@@ -350,7 +349,7 @@ export const PublishAppSidePanel = ({
                           projects.
                         </span>
                       </div>
-                      <DocsButton href={`${DOCS_URL}/guides/platform/oauth-apps/oauth-scopes`} />
+                      <DocsButton href="https://supabase.com/docs/guides/platform/oauth-apps/oauth-scopes" />
                     </div>
 
                     <ScopesPanel scopes={scopes} setScopes={setScopes} />

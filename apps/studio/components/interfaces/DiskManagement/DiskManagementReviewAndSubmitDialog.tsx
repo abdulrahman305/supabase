@@ -3,11 +3,11 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useIsAwsNimbusCloudProvider, useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { formatCurrency } from 'lib/helpers'
 import {
   Alert_Shadcn_,
@@ -148,21 +148,16 @@ export const DiskManagementReviewAndSubmitDialog = ({
   message,
   buttonSize = 'medium',
 }: DiskSizeMeterProps) => {
-  const { data: project } = useSelectedProjectQuery()
-  const { data: org } = useSelectedOrganizationQuery()
-  const isAwsNimbus = useIsAwsNimbusCloudProvider()
+  const { project } = useProjectContext()
+  const org = useSelectedOrganization()
 
   const { formState, getValues } = form
 
-  const { can: canUpdateDiskConfiguration } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'projects',
-    {
-      resource: {
-        project_id: project?.id,
-      },
-    }
-  )
+  const canUpdateDiskConfiguration = useCheckPermissions(PermissionAction.UPDATE, 'projects', {
+    resource: {
+      project_id: project?.id,
+    },
+  })
 
   /**
    * Queries
@@ -214,22 +209,19 @@ export const DiskManagementReviewAndSubmitDialog = ({
   const hasComputeChanges =
     form.formState.defaultValues?.computeSize !== form.getValues('computeSize')
   const hasTotalSizeChanges =
-    !isAwsNimbus && form.formState.defaultValues?.totalSize !== form.getValues('totalSize')
+    form.formState.defaultValues?.totalSize !== form.getValues('totalSize')
   const hasStorageTypeChanges =
-    !isAwsNimbus && form.formState.defaultValues?.storageType !== form.getValues('storageType')
+    form.formState.defaultValues?.storageType !== form.getValues('storageType')
   const hasThroughputChanges =
-    !isAwsNimbus && form.formState.defaultValues?.throughput !== form.getValues('throughput')
+    form.formState.defaultValues?.throughput !== form.getValues('throughput')
   const hasIOPSChanges =
-    !isAwsNimbus &&
     form.formState.defaultValues?.provisionedIOPS !== form.getValues('provisionedIOPS')
 
   const hasGrowthPercentChanges =
-    !isAwsNimbus && form.formState.defaultValues?.growthPercent !== form.getValues('growthPercent')
+    form.formState.defaultValues?.growthPercent !== form.getValues('growthPercent')
   const hasMinIncrementChanges =
-    !isAwsNimbus &&
     form.formState.defaultValues?.minIncrementGb !== form.getValues('minIncrementGb')
-  const hasMaxSizeChanges =
-    !isAwsNimbus && form.formState.defaultValues?.maxSizeGb !== form.getValues('maxSizeGb')
+  const hasMaxSizeChanges = form.formState.defaultValues?.maxSizeGb !== form.getValues('maxSizeGb')
 
   const hasDiskConfigChanges =
     hasIOPSChanges ||

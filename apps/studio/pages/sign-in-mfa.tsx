@@ -1,11 +1,10 @@
-import * as Sentry from '@sentry/nextjs'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useParams } from 'common'
-import { SignInMfaForm } from 'components/interfaces/SignIn/SignInMfaForm'
+import SignInMfaForm from 'components/interfaces/SignIn/SignInMfaForm'
 import SignInLayout from 'components/layouts/SignInLayout/SignInLayout'
 import { Loading } from 'components/ui/Loading'
 import { useAddLoginEvent } from 'data/misc/audit-login-mutation'
@@ -66,8 +65,8 @@ const SignInMfaPage: NextPageWithLayout = () => {
             await queryClient.resetQueries()
             router.push(getReturnToPath())
             return
-          } else {
-            // Show the MFA form
+          }
+          if (data.currentLevel !== data.nextLevel) {
             setLoading(false)
             return
           }
@@ -78,13 +77,7 @@ const SignInMfaPage: NextPageWithLayout = () => {
           return
         }
       })
-      .catch((error) => {
-        Sentry.captureException(error)
-        console.error('Auth initialization error:', error)
-        toast.error('Failed to initialize authentication. Please try again.')
-        setLoading(false)
-        router.push({ pathname: '/sign-in', query: router.query })
-      })
+      .catch(() => {}) // catch all errors thrown by auth methods
   }, [])
 
   if (loading) {

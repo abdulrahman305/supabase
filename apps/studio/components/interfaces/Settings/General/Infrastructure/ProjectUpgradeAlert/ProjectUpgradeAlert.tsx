@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { useFlag, useParams } from 'common'
+import { useParams } from 'common'
 import { PLAN_DETAILS } from 'components/interfaces/DiskManagement/ui/DiskManagement.constants'
 import { Markdown } from 'components/interfaces/Markdown'
 import { useDiskAttributesQuery } from 'data/config/disk-attributes-query'
@@ -16,11 +16,11 @@ import {
   ProjectUpgradeTargetVersion,
   useProjectUpgradeEligibilityQuery,
 } from 'data/config/project-upgrade-eligibility-query'
-import { ReleaseChannel } from 'data/projects/new-project.constants'
-import { useProjectUpgradeMutation } from 'data/projects/project-upgrade-mutation'
+import { ReleaseChannel, useProjectUpgradeMutation } from 'data/projects/project-upgrade-mutation'
 import { setProjectStatus } from 'data/projects/projects-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { DOCS_URL, PROJECT_STATUS } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useFlag } from 'hooks/ui/useFlag'
+import { PROJECT_STATUS } from 'lib/constants'
 import {
   AlertDescription_Shadcn_,
   AlertTitle_Shadcn_,
@@ -66,7 +66,7 @@ const ProjectUpgradeAlert = () => {
   const router = useRouter()
   const { ref } = useParams()
   const queryClient = useQueryClient()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const projectUpgradeDisabled = useFlag('disableProjectUpgrade')
@@ -183,10 +183,9 @@ const ProjectUpgradeAlert = () => {
                     extLinks
                     className="text-foreground"
                     content={`Your current disk size of ${diskAttributes?.attributes.size_gb}GB will also be
-                    [right-sized](${DOCS_URL}/guides/platform/upgrading#disk-sizing) with the upgrade.`}
+                    [right-sized](https://supabase.com/docs/guides/platform/upgrading#disk-sizing) with the upgrade.`}
                   />
                 )}
-                {/* @ts-ignore */}
                 {(data?.potential_breaking_changes ?? []).length > 0 && (
                   <Alert_Shadcn_ variant="destructive" title="Breaking changes">
                     <AlertCircle className="h-4 w-4" strokeWidth={2} />
@@ -200,7 +199,7 @@ const ProjectUpgradeAlert = () => {
                       <div>
                         <Button size="tiny" type="default" asChild>
                           <Link
-                            href={`${DOCS_URL}/guides/platform/migrating-and-upgrading-projects#caveats`}
+                            href="https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects#caveats"
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -242,7 +241,7 @@ const ProjectUpgradeAlert = () => {
                       <div>
                         <Button size="tiny" type="default" asChild>
                           <Link
-                            href={`${DOCS_URL}/guides/platform/migrating-and-upgrading-projects#caveats`}
+                            href="https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects#caveats"
                             target="_blank"
                             rel="noreferrer"
                           >

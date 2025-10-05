@@ -1,5 +1,5 @@
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import {
   Button,
   Dialog,
@@ -26,8 +26,8 @@ export const ConfirmRestoreDialog = ({
   onSelectContinue,
   additionalMonthlySpend,
 }: ConfirmRestoreDialogProps) => {
-  const { data: project } = useSelectedProjectQuery()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const { project } = useProjectContext()
+  const organization = useSelectedOrganization()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -61,6 +61,7 @@ export const ConfirmRestoreDialog = ({
               <li>Storage objects & settings</li>
               <li>Edge Functions</li>
               <li>Auth settings & API keys</li>
+              <li>Realtime settings</li>
               <li>Database extensions and settings</li>
               <li>Read replicas</li>
             </ul>

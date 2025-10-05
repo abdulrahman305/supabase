@@ -51,7 +51,7 @@ At it's most basic a function has the following parts:
 
 1. `create or replace function hello_world()`: The function declaration, where `hello_world` is the name of the function. You can use either `create` when creating a new function or `replace` when replacing an existing function. Or you can use `create or replace` together to handle either.
 2. `returns text`: The type of data that the function returns. If it returns nothing, you can `returns void`.
-3. `language sql`: The language used inside the function body. This can also be a procedural language: `plpgsql`, `plpython`, etc.
+3. `language sql`: The language used inside the function body. This can also be a procedural language: `plpgsql`, `plv8`, `plpython`, etc.
 4. `as $$`: The function wrapper. Anything enclosed inside the `$$` symbols will be part of the function body.
 5. `select 'hello world';`: A simple function body. The final `select` statement inside a function body will be returned if there are no statements following it.
 6. `$$;`: The closing symbols of the function wrapper.
@@ -59,12 +59,6 @@ At it's most basic a function has the following parts:
 </details>
 
 <br />
-
-<Admonition type="caution">
-
-When naming your functions, make the name of the function unique as overloaded functions are not supported.
-
-</Admonition>
 
 After the Function is created, we have several ways of "executing" the function - either directly inside the database using SQL, or with one of the client libraries.
 
@@ -91,7 +85,6 @@ const { data, error } = await supabase.rpc('hello_world')
 Reference: [`rpc()`](../../reference/javascript/rpc)
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -102,8 +95,6 @@ final data = await supabase
 Reference: [`rpc()`](../../reference/dart/rpc)
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -113,8 +104,6 @@ try await supabase.rpc("hello_world").execute()
 Reference: [`rpc()`](../../reference/swift/rpc)
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -124,8 +113,6 @@ val data = supabase.postgrest.rpc("hello_world")
 Reference: [`rpc()`](../../reference/kotlin/rpc)
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -135,7 +122,6 @@ data = supabase.rpc('hello_world').execute()
 Reference: [`rpc()`](../../reference/python/rpc)
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Returning data sets
@@ -244,7 +230,6 @@ const { data, error } = supabase.rpc('get_planets').eq('id', 1)
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -254,8 +239,6 @@ final data = await supabase
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 ```swift
@@ -263,8 +246,6 @@ let response = try await supabase.rpc("get_planets").eq("id", value: 1).execute(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -276,8 +257,6 @@ val data = supabase.postgrest.rpc("get_planets") {
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -285,7 +264,6 @@ data = supabase.rpc('get_planets').eq('id', 1).execute()
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Passing parameters
@@ -332,7 +310,6 @@ const { data, error } = await supabase.rpc('add_planet', { name: 'Jakku' })
 ```
 
 </TabPanel>
-<$Show if="sdk:dart">
 <TabPanel id="dart" label="Dart">
 
 ```dart
@@ -341,8 +318,6 @@ final data = await supabase
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:swift">
 <TabPanel id="swift" label="Swift">
 
 Using `Encodable` type:
@@ -370,8 +345,6 @@ try await supabase.rpc(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:kotlin">
 <TabPanel id="kotlin" label="Kotlin">
 
 ```kotlin
@@ -384,8 +357,6 @@ val data = supabase.postgrest.rpc(
 ```
 
 </TabPanel>
-</$Show>
-<$Show if="sdk:python">
 <TabPanel id="python" label="Python">
 
 ```python
@@ -393,7 +364,6 @@ data = supabase.rpc('add_planet', params={'name': 'Jakku'}).execute()
 ```
 
 </TabPanel>
-</$Show>
 </Tabs>
 
 ## Suggestions
@@ -469,7 +439,7 @@ Good targets to log include:
 
 #### General logging
 
-To create custom logs in the [Dashboard's Postgres Logs](/dashboard/project/_/logs/postgres-logs), you can use the `raise` keyword. By default, there are 3 observed severity levels:
+To create custom logs in the [Dashboard's Postgres Logs](https://supabase.com/dashboard/project/_/logs/postgres-logs), you can use the `raise` keyword. By default, there are 3 observed severity levels:
 
 - `log`
 - `warning`

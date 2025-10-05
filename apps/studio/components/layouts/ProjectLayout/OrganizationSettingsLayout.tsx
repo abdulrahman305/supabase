@@ -3,7 +3,7 @@ import { PropsWithChildren } from 'react'
 
 import { useParams } from 'common'
 import { useCurrentPath } from 'hooks/misc/useCurrentPath'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
+import { useFlag } from 'hooks/ui/useFlag'
 import { NavMenu, NavMenuItem } from 'ui'
 import { ScaffoldContainerLegacy, ScaffoldTitle } from '../Scaffold'
 
@@ -13,37 +13,36 @@ function OrganizationSettingsLayout({ children }: PropsWithChildren) {
   const fullCurrentPath = useCurrentPath()
   const [currentPath] = fullCurrentPath.split('#')
 
-  const {
-    organizationShowSsoSettings: showSsoSettings,
-    organizationShowSecuritySettings: showSecuritySettings,
-  } = useIsFeatureEnabled(['organization:show_sso_settings', 'organization:show_security_settings'])
+  // [Joshen] RE Organization Settings - need to figure out how to enforce MFA across users before this goes live
+  const newSecurityPage = useFlag('showOrganizationSecuritySettings')
+
+  // Hide these settings in the new layout on the following paths
+  const isHidden = (path: string) => {
+    return (
+      path === `/org/${slug}/team` ||
+      path === `/org/${slug}/integrations` ||
+      path === `/org/${slug}/usage` ||
+      path === `/org/${slug}/billing`
+    )
+  }
+
+  if (isHidden(currentPath)) {
+    return children
+  }
 
   const navMenuItems = [
     {
       label: 'General',
       href: `/org/${slug}/general`,
     },
-    ...(showSecuritySettings
-      ? [
-          {
-            label: 'Security',
-            href: `/org/${slug}/security`,
-          },
-        ]
-      : []),
+    newSecurityPage && {
+      label: 'Security',
+      href: `/org/${slug}/security`,
+    },
     {
       label: 'OAuth Apps',
       href: `/org/${slug}/apps`,
     },
-    ...(showSsoSettings
-      ? [
-          {
-            label: 'SSO',
-            href: `/org/${slug}/sso`,
-          },
-        ]
-      : []),
-
     {
       label: 'Audit Logs',
       href: `/org/${slug}/audit`,
@@ -66,7 +65,7 @@ function OrganizationSettingsLayout({ children }: PropsWithChildren) {
           ))}
         </NavMenu>
       </ScaffoldContainerLegacy>
-      <div className="h-full w-full overflow-y-auto">{children}</div>
+      <main className="h-full w-full overflow-y-auto">{children}</main>
     </>
   )
 }

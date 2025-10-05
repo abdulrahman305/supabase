@@ -1,5 +1,4 @@
 import { Editor } from '@monaco-editor/react'
-import { MAX_CHARACTERS } from '@supabase/pg-meta/src/query/table-row-query'
 import { Loader } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import remarkGfm from 'remark-gfm'
@@ -11,7 +10,8 @@ import TwoOptionToggle from 'components/ui/TwoOptionToggle'
 import { useTableEditorQuery } from 'data/table-editor/table-editor-query'
 import { isTableLike } from 'data/table-editor/table-editor-types'
 import { useGetCellValueMutation } from 'data/table-rows/get-cell-value-mutation'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { MAX_CHARACTERS } from '@supabase/pg-meta/src/query/table-row-query'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { Button, SidePanel, cn } from 'ui'
 import ActionBar from '../ActionBar'
 import { isValueTruncated } from './RowEditor.utils'
@@ -35,7 +35,7 @@ export const TextEditor = ({
 }: TextEditorProps) => {
   const { id: _id } = useParams()
   const id = _id ? Number(_id) : undefined
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
 
   const { data: selectedTable } = useTableEditorQuery({
     projectRef: project?.ref,

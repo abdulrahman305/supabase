@@ -1,17 +1,14 @@
 import { OAuthScope } from '@supabase/shared-types/out/constants'
 import { Check } from 'lucide-react'
 
-import { PERMISSIONS_DESCRIPTIONS } from './OAuthApps.constants'
-
 export interface AuthorizeRequesterDetailsProps {
   icon: string | null
   name: string
   domain: string
   scopes: OAuthScope[]
-  showOnlyScopes?: boolean
 }
 
-export const ScopeSection = ({
+const ScopeSection = ({
   description,
   hasReadScope,
   hasWriteScope,
@@ -51,100 +48,88 @@ export const ScopeSection = ({
   return null
 }
 
-export const AuthorizeRequesterDetails = ({
+const AuthorizeRequesterDetails = ({
   icon,
   name,
   domain,
   scopes,
-  showOnlyScopes = false,
 }: AuthorizeRequesterDetailsProps) => {
   return (
     <div className="flex gap-y-4 flex-col">
-      {!showOnlyScopes && (
-        <div className="flex flex-row gap-x-4 items-center">
-          <div className="flex items-center">
-            <div
-              className="w-12 h-12 md:w-14 md:h-14 bg-center bg-no-repeat bg-cover flex items-center justify-center rounded-md border border-control"
-              style={{
-                backgroundImage: !!icon ? `url('${icon}')` : 'none',
-              }}
-            >
-              {!icon && <p className="text-foreground-light text-lg">{name[0]}</p>}
-            </div>
+      <div className="flex flex-row gap-x-4 items-center">
+        <div className="flex items-center">
+          <div
+            className="w-14 h-14 md:w-16 md:h-16 bg-center bg-no-repeat bg-cover flex items-center justify-center rounded-md border border-control"
+            style={{
+              backgroundImage: !!icon ? `url('${icon}')` : 'none',
+            }}
+          >
+            {!icon && <p className="text-foreground-light text-lg">{name[0]}</p>}
           </div>
-          <p className="text-foreground">
-            {name} ({domain}) is requesting API access to an organization.
-          </p>
         </div>
-      )}
+        <p className="text-foreground">
+          {name} ({domain}) is requesting API access to an organization.
+        </p>
+      </div>
       <div>
-        {!showOnlyScopes && (
-          <>
-            <h3>Permissions</h3>
-            <p className="text-sm text-foreground-light">
-              The following scopes will apply for the{' '}
-              <span className="text-amber-900">selected organization and all of its projects.</span>
-            </p>
-          </>
-        )}
+        <h2>Permissions</h2>
+        <p className="text-sm text-foreground-light">
+          The following scopes will apply for the{' '}
+          <span className="text-amber-900">selected organization and all of its projects.</span>
+        </p>
         <div className="pt-2">
-          {scopes.length === 0 && (
-            <p className="text-foreground-lighter text-sm">
-              No permissions requested, {name} will not have access to your organization or projects
-            </p>
-          )}
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.ANALYTICS}
+            description="access to analytics logs."
             hasReadScope={scopes.includes(OAuthScope.ANALYTICS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.ANALYTICS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.AUTH}
+            description="access to auth configurations and SSO providers."
             hasReadScope={scopes.includes(OAuthScope.AUTH_READ)}
             hasWriteScope={scopes.includes(OAuthScope.AUTH_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.DATABASE}
+            description="access to Postgres configurations, SQL snippets, SSL enforcement configurations and Typescript schema types."
             hasReadScope={scopes.includes(OAuthScope.DATABASE_READ)}
             hasWriteScope={scopes.includes(OAuthScope.DATABASE_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.DOMAINS}
+            description="access to custom domains and vanity subdomains."
             hasReadScope={scopes.includes(OAuthScope.DOMAINS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.DOMAINS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.EDGE_FUNCTIONS}
+            description="access to edge functions."
             hasReadScope={scopes.includes(OAuthScope.EDGE_FUNCTIONS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.EDGE_FUNCTIONS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.ENVIRONMENT}
+            description="access to environments/branches."
             hasReadScope={scopes.includes(OAuthScope.ENVIRONMENT_READ)}
             hasWriteScope={scopes.includes(OAuthScope.ENVIRONMENT_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.ORGANIZATIONS}
+            description="access to the organization and all its members."
             hasReadScope={scopes.includes(OAuthScope.ORGANIZATIONS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.ORGANIZATIONS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.PROJECTS}
+            description="access to metadata, its upgrade status, network restrictions and network bans."
             hasReadScope={scopes.includes(OAuthScope.PROJECTS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.PROJECTS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.REST}
+            description="access to PostgREST configurations."
             hasReadScope={scopes.includes(OAuthScope.REST_READ)}
             hasWriteScope={scopes.includes(OAuthScope.REST_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.SECRETS}
+            description="access to API keys, secrets and pgsodium configurations."
             hasReadScope={scopes.includes(OAuthScope.SECRETS_READ)}
             hasWriteScope={scopes.includes(OAuthScope.SECRETS_WRITE)}
           />
           <ScopeSection
-            description={PERMISSIONS_DESCRIPTIONS.STORAGE}
+            description="access to storage buckets and files."
             hasReadScope={scopes.includes(OAuthScope.STORAGE_READ)}
             hasWriteScope={scopes.includes(OAuthScope.STORAGE_WRITE)}
           />
@@ -153,3 +138,5 @@ export const AuthorizeRequesterDetails = ({
     </div>
   )
 }
+
+export default AuthorizeRequesterDetails

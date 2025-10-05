@@ -5,11 +5,10 @@ import type { OrgSubscription, ProjectAddon } from 'data/subscriptions/types'
 import { PricingInformation } from 'shared-data'
 import { Modal } from 'ui'
 import { Admonition } from 'ui-patterns'
-import { plans as subscriptionsPlans } from 'shared-data/plans'
-import { useMemo } from 'react'
 
 export interface DowngradeModalProps {
   visible: boolean
+  selectedPlan?: PricingInformation
   subscription?: OrgSubscription
   onClose: () => void
   onConfirm: () => void
@@ -51,13 +50,12 @@ const ProjectDowngradeListItem = ({ projectAddon }: { projectAddon: ProjectAddon
 
 const DowngradeModal = ({
   visible,
+  selectedPlan,
   subscription,
   onClose,
   onConfirm,
   projects,
 }: DowngradeModalProps) => {
-  const selectedPlan = useMemo(() => subscriptionsPlans.find((tier) => tier.id === 'tier_free'), [])
-
   // Filter out the micro addon as we're dealing with that separately
   const previousProjectAddons =
     subscription?.project_addons.flatMap((projectAddons) => {

@@ -7,11 +7,11 @@ import { clientSecretKeys } from './keys'
 import { components } from 'api-types'
 
 export type Secret =
-  components['schemas']['ListOAuthAppClientSecretsResponse']['client_secrets'][0] & {
-    client_secret?: components['schemas']['CreateOAuthAppClientSecretResponse']['client_secret']
+  components['schemas']['ListOAuthAppClientSecretsResponseDto']['client_secrets'][0] & {
+    client_secret?: components['schemas']['CreateOAuthAppClientSecretResponseDto']['client_secret']
   }
 
-export type CreatedSecret = components['schemas']['CreateOAuthAppClientSecretResponse']
+export type CreatedSecret = components['schemas']['CreateOAuthAppClientSecretResponseDto']
 
 export interface SecretRowProps {
   secret: Secret

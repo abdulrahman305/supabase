@@ -895,14 +895,14 @@ parameters:
       - name: 'Auth Server configuration'
         link: 'https://supabase.com/docs/reference/auth'
 
-  - id: 'auth.email.otp_expiry'
-    title: 'auth.email.otp_expiry'
+  - id: 'auth.email.otp_exp'
+    title: 'auth.email.otp_exp'
     tags: ['auth']
     required: false
-    default: '3600'
+    default: '300'
     description: |
       The expiry time for an OTP code in seconds.
-      Default is 3600 seconds (1 hour).
+      Default is 300 seconds (5 minutes).
     links:
       - name: 'Auth Server configuration'
         link: 'https://supabase.com/docs/reference/auth'

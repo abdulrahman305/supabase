@@ -7,13 +7,13 @@
 		"dev": "vite",
 		"build": "vite build",
 		"serve": "vite preview",
-		"format": "prettier --cache --write \"src/*.{js,json,ts,tsx,jsx}\""
+		"format": "prettier --write \"src/*.{js,json,ts,tsx,jsx}\""
 	},
 	"license": "MIT",
 	"devDependencies": {
 		"prettier": "^2.7.1",
 		"typescript": "^4.7.4",
-		"vite": "^4.3.9",
+		"vite": "^6.0.0",
 		"vite-plugin-solid": "^2.3.0"
 	},
 	"dependencies": {

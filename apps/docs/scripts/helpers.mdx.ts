@@ -1,12 +1,17 @@
+import { createHash } from 'crypto'
+import { ObjectExpression } from 'estree'
 import GithubSlugger from 'github-slugger'
 import matter from 'gray-matter'
 import { type Content, type Root } from 'mdast'
 import { fromMarkdown } from 'mdast-util-from-markdown'
 import { toMarkdown } from 'mdast-util-to-markdown'
-import { mdxFromMarkdown, mdxToMarkdown } from 'mdast-util-mdx'
+import { mdxFromMarkdown, type MdxjsEsm } from 'mdast-util-mdx'
 import { toString } from 'mdast-util-to-string'
 import { mdxjs } from 'micromark-extension-mdxjs'
 import { u } from 'unist-builder'
+import { filter } from 'unist-util-filter'
+
+type Json = Record<string, string | number | boolean | null | Json[] | { [key: string]: Json }>
 
 type Section = {
   content: string
@@ -16,16 +21,8 @@ type Section = {
 
 export type ProcessedMdx = {
   checksum: string
-  meta: Record<string, unknown>
+  meta: Json
   sections: Section[]
-}
-
-async function createHash(content: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(content)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 /**
@@ -33,8 +30,8 @@ async function createHash(content: string): Promise<string> {
  *
  * Splits MDX content into sections based on headings, and calculates checksum.
  */
-async function processMdx(content: string, options?: { yaml?: boolean }): Promise<ProcessedMdx> {
-  const checksum = await createHash(content)
+function processMdx(content: string, options?: { yaml?: boolean }): ProcessedMdx {
+  const checksum = createHash('sha256').update(content).digest('base64')
 
   let frontmatter: Record<string, unknown> = {}
   if (options?.yaml) {
@@ -48,18 +45,45 @@ async function processMdx(content: string, options?: { yaml?: boolean }): Promis
     mdastExtensions: [mdxFromMarkdown()],
   })
 
-  const sectionTrees = splitTreeBy(mdxTree, (node) => node.type === 'heading')
+  let meta: Record<string, unknown>
+  if (options?.yaml) {
+    meta = frontmatter
+  } else {
+    meta = extractMetaExport(mdxTree)
+  }
+
+  const serializableMeta: Json = meta && JSON.parse(JSON.stringify(meta))
+
+  // Remove all MDX elements from markdown
+  const mdTree = filter(
+    mdxTree,
+    (node) =>
+      ![
+        'mdxjsEsm',
+        'mdxJsxFlowElement',
+        'mdxJsxTextElement',
+        'mdxFlowExpression',
+        'mdxTextExpression',
+      ].includes(node.type)
+  )
+
+  if (!mdTree) {
+    return {
+      checksum,
+      meta: serializableMeta,
+      sections: [],
+    }
+  }
+
+  const sectionTrees = splitTreeBy(mdTree, (node) => node.type === 'heading')
 
   const slugger = new GithubSlugger()
 
   const sections = sectionTrees.map((tree) => {
     const [firstNode] = tree.children
-    const content = toMarkdown(tree, {
-      extensions: [mdxToMarkdown()],
-    })
+    const content = toMarkdown(tree)
 
-    const rawHeading: string | undefined =
-      firstNode.type === 'heading' ? toString(firstNode) : undefined
+    const rawHeading: string = firstNode.type === 'heading' ? toString(firstNode) : undefined
 
     if (!rawHeading) {
       return { content }
@@ -78,9 +102,72 @@ async function processMdx(content: string, options?: { yaml?: boolean }): Promis
 
   return {
     checksum,
+    meta: serializableMeta,
     sections,
-    meta: frontmatter,
   }
+}
+
+/**
+ * Extracts the `meta` ESM export from the MDX file.
+ *
+ * This info is akin to frontmatter.
+ */
+function extractMetaExport(mdxTree: Root) {
+  const metaExportNode = mdxTree.children.find((node): node is MdxjsEsm => {
+    return (
+      node.type === 'mdxjsEsm' &&
+      node.data?.estree?.body[0]?.type === 'ExportNamedDeclaration' &&
+      node.data.estree.body[0].declaration?.type === 'VariableDeclaration' &&
+      node.data.estree.body[0].declaration.declarations[0]?.id.type === 'Identifier' &&
+      node.data.estree.body[0].declaration.declarations[0].id.name === 'meta'
+    )
+  })
+
+  if (!metaExportNode) {
+    return undefined
+  }
+
+  const objectExpression =
+    (metaExportNode.data?.estree?.body[0]?.type === 'ExportNamedDeclaration' &&
+      metaExportNode.data.estree.body[0].declaration?.type === 'VariableDeclaration' &&
+      metaExportNode.data.estree.body[0].declaration.declarations[0]?.id.type === 'Identifier' &&
+      metaExportNode.data.estree.body[0].declaration.declarations[0].id.name === 'meta' &&
+      metaExportNode.data.estree.body[0].declaration.declarations[0].init?.type ===
+        'ObjectExpression' &&
+      metaExportNode.data.estree.body[0].declaration.declarations[0].init) ||
+    undefined
+
+  if (!objectExpression) {
+    return undefined
+  }
+
+  return getObjectFromExpression(objectExpression)
+}
+
+/**
+ * Extracts ES literals from an `estree` `ObjectExpression`
+ * into a plain JavaScript object.
+ */
+function getObjectFromExpression(node: ObjectExpression) {
+  return node.properties.reduce<
+    Record<string, string | number | bigint | true | RegExp | undefined>
+  >((object, property) => {
+    if (property.type !== 'Property') {
+      return object
+    }
+
+    const key = (property.key.type === 'Identifier' && property.key.name) || undefined
+    const value = (property.value.type === 'Literal' && property.value.value) || undefined
+
+    if (!key) {
+      return object
+    }
+
+    return {
+      ...object,
+      [key]: value,
+    }
+  }, {})
 }
 
 /**
@@ -122,4 +209,4 @@ function parseHeading(heading: string): { heading: string; customAnchor?: string
 }
 
 export { processMdx }
-export type { Section }
+export type { Json, Section }

@@ -10,18 +10,11 @@ import { IS_PLATFORM, useParams } from 'common'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { DownloadResultsButton } from 'components/ui/DownloadResultsButton'
 import { useSelectedLog } from 'hooks/analytics/useSelectedLog'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { copyToClipboard } from 'lib/helpers'
 import { useProfile } from 'lib/profile'
-import { toast } from 'sonner'
 import { ResponseError } from 'types'
-import {
-  Button,
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-  cn,
-  copyToClipboard,
-} from 'ui'
+import { Button, ResizableHandle, ResizablePanel, ResizablePanelGroup, cn } from 'ui'
 import AuthColumnRenderer from './LogColumnRenderers/AuthColumnRenderer'
 import DatabaseApiColumnRender from './LogColumnRenderers/DatabaseApiColumnRender'
 import DatabasePostgresColumnRender from './LogColumnRenderers/DatabasePostgresColumnRender'
@@ -49,6 +42,8 @@ interface Props {
   onSave?: () => void
   hasEditorValue?: boolean
   className?: string
+  collectionName?: string // Used for warehouse queries
+  warehouseError?: string
   EmptyState?: ReactNode
   showHeader?: boolean
   showHistogramToggle?: boolean
@@ -77,6 +72,7 @@ const LogTable = ({
   onSave,
   hasEditorValue,
   className,
+  collectionName,
   EmptyState,
   showHeader = true,
   showHistogramToggle = true,
@@ -94,14 +90,10 @@ const LogTable = ({
   const [selectionOpen, setSelectionOpen] = useState(false)
   const [selectedRow, setSelectedRow] = useState<LogData | null>(null)
 
-  const { can: canCreateLogQuery } = useAsyncCheckPermissions(
-    PermissionAction.CREATE,
-    'user_content',
-    {
-      resource: { type: 'log_sql', owner_id: profile?.id },
-      subject: { id: profile?.id },
-    }
-  )
+  const canCreateLogQuery = useCheckPermissions(PermissionAction.CREATE, 'user_content', {
+    resource: { type: 'log_sql', owner_id: profile?.id },
+    subject: { id: profile?.id },
+  })
 
   const firstRow = data[0]
 
@@ -129,13 +121,7 @@ const LogTable = ({
       resizable: true,
       renderCell: ({ row }: any) => {
         return (
-          <span
-            onContextMenu={(e) => {
-              e.preventDefault()
-              setCellPosition({ row, column: { name: v } })
-              showContextMenu(e, { id: LOGS_EXPLORER_CONTEXT_MENU_ID })
-            }}
-          >
+          <span onContextMenu={(e) => showContextMenu(e, { id: LOGS_EXPLORER_CONTEXT_MENU_ID })}>
             {formatCellValue(row?.[v])}
           </span>
         )
@@ -155,6 +141,9 @@ const LogTable = ({
     columns
   } else {
     switch (queryType) {
+      case 'warehouse':
+        columns = DEFAULT_COLUMNS
+        break
       case 'api':
         columns = DatabaseApiColumnRender
         break
@@ -212,23 +201,9 @@ const LogTable = ({
 
   const RowRenderer = useCallback<(key: Key, props: RenderRowProps<LogData, unknown>) => ReactNode>(
     (key, props) => {
-      const handleContextMenu = (e: React.MouseEvent) => {
-        if (columns.length > 0) {
-          setCellPosition({ row: props.row, column: columns[0] })
-        }
-        showContextMenu(e, { id: LOGS_EXPLORER_CONTEXT_MENU_ID })
-      }
-      return (
-        <Row
-          key={key}
-          {...props}
-          isRowSelected={false}
-          selectedCellIdx={undefined}
-          onContextMenu={handleContextMenu}
-        />
-      )
+      return <Row key={key} {...props} isRowSelected={false} selectedCellIdx={undefined} />
     },
-    [columns, showContextMenu]
+    []
   )
 
   const formatCellValue = (value: any) => {
@@ -240,11 +215,12 @@ const LogTable = ({
   }
 
   const onCopyCell = () => {
-    if (!cellPosition) return
-    const eventMessage = cellPosition.row.event_message
-    copyToClipboard(eventMessage, () => {
-      toast.success('Copied to clipboard')
-    })
+    if (cellPosition) {
+      const { row, column } = cellPosition
+      const cellValue = row?.[column.name] ?? ''
+      const value = formatCellValue(cellValue)
+      copyToClipboard(value)
+    }
   }
 
   const LogsExplorerTableHeader = () => (
@@ -438,13 +414,12 @@ const LogTable = ({
               <Menu id={LOGS_EXPLORER_CONTEXT_MENU_ID} animation={false}>
                 <Item onClick={onCopyCell}>
                   <Clipboard size={14} />
-                  <span className="ml-2 text-xs">Copy event message</span>
+                  <span className="ml-2 text-xs">Copy cell content</span>
                 </Item>
               </Menu>,
               document.body
             )}
         </ResizablePanel>
-
         <ResizableHandle withHandle />
 
         {selectionOpen && (
@@ -459,6 +434,7 @@ const LogTable = ({
               log={selectedLog}
               error={selectedLogError}
               queryType={queryType}
+              collectionName={collectionName}
             />
           </ResizablePanel>
         )}

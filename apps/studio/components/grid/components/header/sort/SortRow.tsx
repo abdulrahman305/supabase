@@ -5,7 +5,7 @@ import { useDrag, useDrop } from 'react-dnd'
 
 import type { DragItem, Sort } from 'components/grid/types'
 import { useTableEditorTableStateSnapshot } from 'state/table-editor-table'
-import { Button, Switch } from 'ui'
+import { Button, Toggle } from 'ui'
 
 export interface SortRowProps {
   index: number
@@ -113,14 +113,17 @@ const SortRow = ({ index, columnName, sort, onDelete, onToggle, onDrag }: SortRo
           <span className="text-xs text-foreground-lighter">
             {index > 0 ? 'then by' : 'sort by'}
           </span>
-          <span className="text-xs">{column.name}</span>
+          {column.name}
         </span>
       </div>
-      <div className="flex items-center gap-x-1.5">
+      <div className="flex items-center gap-1">
         <label className="text-xs text-foreground-lighter">ascending:</label>
-        <Switch
+        <Toggle
+          size="tiny"
+          layout="flex"
           defaultChecked={sort.ascending}
-          onCheckedChange={(e: boolean) => onToggle(columnName, e)}
+          // @ts-ignore
+          onChange={(e: boolean) => onToggle(columnName, e)}
         />
       </div>
       <Button

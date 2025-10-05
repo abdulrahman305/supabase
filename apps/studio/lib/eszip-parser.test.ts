@@ -62,7 +62,6 @@ describe('eszip-parser', () => {
       mockParser.parseBytes.mockResolvedValue(mockSpecifiers)
       mockParser.load.mockResolvedValue(undefined)
       mockParser.getModuleSource
-        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(mockModuleSource1)
         .mockResolvedValueOnce(mockModuleSource2)
 
@@ -71,13 +70,12 @@ describe('eszip-parser', () => {
       expect(Parser.createInstance).toHaveBeenCalledTimes(1)
       expect(mockParser.parseBytes).toHaveBeenCalledWith(mockBytes)
       expect(mockParser.load).toHaveBeenCalled()
-      expect(result.version).toEqual(0)
-      expect(result.files).toHaveLength(2)
-      expect(result.files[0]).toEqual({
+      expect(result).toHaveLength(2)
+      expect(result[0]).toEqual({
         name: 'file1.ts',
         content: mockModuleSource1,
       })
-      expect(result.files[1]).toEqual({
+      expect(result[1]).toEqual({
         name: 'file2.ts',
         content: mockModuleSource2,
       })
@@ -113,10 +111,9 @@ describe('eszip-parser', () => {
 
       const result = await parseEszip(mockBytes)
       // Only file1.ts and file2.ts should be included
-      expect(result.version).toEqual(0)
-      expect(result.files).toHaveLength(2)
-      expect(result.files[0].name).toBe('file1.ts')
-      expect(result.files[1].name).toBe('file2.ts')
+      expect(result).toHaveLength(2)
+      expect(result[0].name).toBe('file1.ts')
+      expect(result[1].name).toBe('file2.ts')
     })
   })
 })

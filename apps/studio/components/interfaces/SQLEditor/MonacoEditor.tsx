@@ -5,7 +5,7 @@ import { MutableRefObject, useEffect, useRef } from 'react'
 
 import { LOCAL_STORAGE_KEYS, useParams } from 'common'
 import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { useProfile } from 'lib/profile'
 import { useAiAssistantStateSnapshot } from 'state/ai-assistant-state'
 import { useSqlEditorV2StateSnapshot } from 'state/sql-editor-v2'
@@ -32,7 +32,6 @@ export type MonacoEditorProps = {
     startLineNumber: number
     endLineNumber: number
   }) => void
-  placeholder?: string
 }
 
 const MonacoEditor = ({
@@ -40,7 +39,6 @@ const MonacoEditor = ({
   editorRef,
   monacoRef,
   autoFocus = true,
-  placeholder = '',
   className,
   executeQuery,
   onHasSelection,
@@ -50,7 +48,7 @@ const MonacoEditor = ({
   const router = useRouter()
   const { profile } = useProfile()
   const { ref, content } = useParams()
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
   const snapV2 = useSqlEditorV2StateSnapshot()
   const tabsSnap = useTabsStateSnapshot()
 
@@ -85,17 +83,6 @@ const MonacoEditor = ({
       contextMenuOrder: 0,
       run: () => {
         executeQueryRef.current()
-      },
-    })
-
-    editor.addAction({
-      id: 'save-query',
-      label: 'Save Query',
-      keybindings: [monaco.KeyMod.CtrlCmd + monaco.KeyCode.KeyS],
-      contextMenuGroupId: 'operation',
-      contextMenuOrder: 0,
-      run: () => {
-        if (snippet) snapV2.addNeedsSaving(snippet.snippet.id)
       },
     })
 
@@ -217,7 +204,6 @@ const MonacoEditor = ({
         options={{
           tabSize: 2,
           fontSize: 13,
-          placeholder,
           lineDecorationsWidth: 0,
           readOnly: disableEdit,
           minimap: { enabled: false },

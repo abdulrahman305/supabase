@@ -1,116 +1,101 @@
-import { UIMessage as VercelMessage } from '@ai-sdk/react'
-import { useState } from 'react'
-import { toast } from 'sonner'
+import { User } from 'lucide-react'
+import { createContext, PropsWithChildren, useMemo } from 'react'
+import ReactMarkdown from 'react-markdown'
+import { Components } from 'react-markdown/lib/ast-to-react'
+import remarkGfm from 'remark-gfm'
 
-import { cn } from 'ui'
-import { DeleteMessageConfirmModal } from './DeleteMessageConfirmModal'
-import { MessageActions } from './Message.Actions'
-import type { AddToolResult, MessageInfo } from './Message.Context'
-import { MessageDisplay } from './Message.Display'
-import { MessageProvider, useMessageActionsContext, useMessageInfoContext } from './Message.Context'
+import { AiIconAnimation, cn, markdownComponents, WarningIcon } from 'ui'
+import { Heading3, InlineCode, Link, ListItem, MarkdownPre, OrderedList } from './MessageMarkdown'
 
-function AssistantMessage({ message }: { message: VercelMessage }) {
-  const { variant, state } = useMessageInfoContext()
-  const { onCancelEdit } = useMessageActionsContext()
-
-  return (
-    <MessageDisplay.Container
-      className={cn(
-        variant === 'warning' && 'bg-warning-200',
-        state === 'predecessor-editing' && 'opacity-50 transition-opacity cursor-pointer'
-      )}
-      onClick={state === 'predecessor-editing' ? onCancelEdit : undefined}
-    >
-      <MessageDisplay.MainArea>
-        <MessageDisplay.Content message={message} />
-      </MessageDisplay.MainArea>
-    </MessageDisplay.Container>
-  )
+interface MessageContextType {
+  isLoading: boolean
+  readOnly?: boolean
 }
+export const MessageContext = createContext<MessageContextType>({ isLoading: false })
 
-function UserMessage({ message }: { message: VercelMessage }) {
-  const { id, variant, state } = useMessageInfoContext()
-  const { onCancelEdit, onEdit, onDelete } = useMessageActionsContext()
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
-
-  return (
-    <>
-      <MessageDisplay.Container
-        className={cn(
-          'mt-6 text-foreground',
-          variant === 'warning' && 'bg-warning-200',
-          state === 'predecessor-editing' && 'opacity-50 transition-opacity cursor-pointer'
-        )}
-        onClick={state === 'predecessor-editing' ? onCancelEdit : undefined}
-      >
-        <MessageDisplay.MainArea>
-          <MessageDisplay.ProfileImage />
-          <MessageDisplay.Content message={message} />
-        </MessageDisplay.MainArea>
-        <MessageActions>
-          <MessageActions.Edit
-            onClick={state === 'idle' ? () => onEdit(id) : onCancelEdit}
-            tooltip={state === 'idle' ? 'Edit message' : 'Cancel editing'}
-          />
-          <MessageActions.Delete onClick={() => setShowDeleteConfirmModal(true)} />
-        </MessageActions>
-      </MessageDisplay.Container>
-      <DeleteMessageConfirmModal
-        visible={showDeleteConfirmModal}
-        onConfirm={() => {
-          onDelete(id)
-          setShowDeleteConfirmModal(false)
-          toast.success('Message deleted successfully')
-        }}
-        onCancel={() => setShowDeleteConfirmModal(false)}
-      />
-    </>
-  )
+const baseMarkdownComponents: Partial<Components> = {
+  ol: OrderedList,
+  li: ListItem,
+  h3: Heading3,
+  code: InlineCode,
+  a: Link,
 }
 
 interface MessageProps {
   id: string
-  message: VercelMessage
+  role: 'function' | 'system' | 'user' | 'assistant' | 'data' | 'tool'
+  content?: string
   isLoading: boolean
   readOnly?: boolean
+  action?: React.ReactNode
   variant?: 'default' | 'warning'
-  addToolResult?: AddToolResult
-  onDelete: (id: string) => void
-  onEdit: (id: string) => void
-  isAfterEditedMessage: boolean
-  isBeingEdited: boolean
-  onCancelEdit: () => void
-  isLastMessage?: boolean
+  onResults: ({
+    messageId,
+    resultId,
+    results,
+  }: {
+    messageId: string
+    resultId?: string
+    results: any[]
+  }) => void
 }
 
-export function Message(props: MessageProps) {
-  const message = props.message
-  const { role } = message
-  const isUserMessage = role === 'user'
+export const Message = function Message({
+  id,
+  role,
+  content,
+  isLoading,
+  readOnly,
+  action = null,
+  variant = 'default',
+  onResults,
+}: PropsWithChildren<MessageProps>) {
+  const isUser = role === 'user'
+  const allMarkdownComponents: Partial<Components> = useMemo(
+    () => ({
+      ...markdownComponents,
+      ...baseMarkdownComponents,
+      pre: ({ children }) => (
+        <MarkdownPre id={id} onResults={onResults}>
+          {children}
+        </MarkdownPre>
+      ),
+    }),
+    []
+  )
 
-  const messageInfo = {
-    id: props.id,
-    isLoading: props.isLoading,
-    readOnly: props.readOnly,
-    variant: props.variant,
-    state: props.isBeingEdited
-      ? 'editing'
-      : props.isAfterEditedMessage
-        ? 'predecessor-editing'
-        : 'idle',
-    isLastMessage: props.isLastMessage,
-  } satisfies MessageInfo
-
-  const messageActions = {
-    addToolResult: props.addToolResult,
-    onDelete: props.onDelete,
-    onEdit: props.onEdit,
-    onCancelEdit: props.onCancelEdit,
-  }
+  if (!content) return null
 
   return (
-    <MessageProvider messageInfo={messageInfo} messageActions={messageActions}>
-      {isUserMessage ? <UserMessage message={message} /> : <AssistantMessage message={message} />}
-    </MessageProvider>
+    <MessageContext.Provider value={{ isLoading, readOnly }}>
+      <div
+        className={cn(
+          'mb-5 text-foreground-light text-sm',
+          isUser && 'text-foreground',
+          variant === 'warning' && 'bg-warning-200'
+        )}
+      >
+        {variant === 'warning' && <WarningIcon className="w-6 h-6" />}
+
+        {action}
+
+        <div className="flex gap-4 w-auto overflow-hidden">
+          {isUser ? (
+            <figure className="w-5 h-5 shrink-0 bg-foreground rounded-full flex items-center justify-center">
+              <User size={16} strokeWidth={1.5} className="text-background" />
+            </figure>
+          ) : (
+            <AiIconAnimation size={20} className="text-foreground-muted shrink-0" />
+          )}
+          <ReactMarkdown
+            className="space-y-5 flex-1 [&>*>code]:text-xs [&>*>*>code]:text-xs min-w-0 [&_li]:space-y-4"
+            remarkPlugins={[remarkGfm]}
+            components={allMarkdownComponents}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+      </div>
+    </MessageContext.Provider>
   )
 }

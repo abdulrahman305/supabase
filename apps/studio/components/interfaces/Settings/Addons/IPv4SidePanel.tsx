@@ -1,5 +1,4 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -10,26 +9,21 @@ import { useProjectAddonRemoveMutation } from 'data/subscriptions/project-addon-
 import { useProjectAddonUpdateMutation } from 'data/subscriptions/project-addon-update-mutation'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
 import type { AddonVariantId } from 'data/subscriptions/types'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useIsAwsCloudProvider } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { formatCurrency } from 'lib/helpers'
+import { ExternalLink } from 'lucide-react'
 import { useAddonsPagePanel } from 'state/addons-page'
 import { Button, Radio, SidePanel, cn } from 'ui'
 import { Admonition } from 'ui-patterns'
 
 const IPv4SidePanel = () => {
-  const isAws = useIsAwsCloudProvider()
   const { ref: projectRef } = useParams()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const organization = useSelectedOrganization()
 
   const [selectedOption, setSelectedOption] = useState<string>('ipv4_none')
 
-  const { can: canUpdateIPv4 } = useAsyncCheckPermissions(
-    PermissionAction.BILLING_WRITE,
-    'stripe.subscriptions'
-  )
+  const canUpdateIPv4 = useCheckPermissions(PermissionAction.BILLING_WRITE, 'stripe.subscriptions')
 
   const { panel, closePanel } = useAddonsPagePanel()
   const visible = panel === 'ipv4'
@@ -92,7 +86,7 @@ const IPv4SidePanel = () => {
       onCancel={closePanel}
       onConfirm={onConfirm}
       loading={isLoading || isSubmitting}
-      disabled={isFreePlan || isLoading || !hasChanges || isSubmitting || !canUpdateIPv4 || !isAws}
+      disabled={isFreePlan || isLoading || !hasChanges || isSubmitting || !canUpdateIPv4}
       tooltip={
         isFreePlan
           ? 'Unable to enable IPv4 on a Free Plan'
@@ -105,7 +99,7 @@ const IPv4SidePanel = () => {
           <h4>Dedicated IPv4 address</h4>
           <Button asChild type="default" icon={<ExternalLink strokeWidth={1.5} />}>
             <Link
-              href={`${DOCS_URL}/guides/platform/ipv4-address`}
+              href="https://supabase.com/docs/guides/platform/ipv4-address"
               target="_blank"
               rel="noreferrer"
             >
@@ -123,13 +117,6 @@ const IPv4SidePanel = () => {
             database via a IPv4 address.
           </p>
 
-          {!isAws && (
-            <Admonition
-              type="default"
-              title="Dedicated IPv4 address is only available for AWS projects"
-            />
-          )}
-
           {isPgBouncerEnabled ? (
             <Admonition
               type="default"
@@ -140,7 +127,7 @@ const IPv4SidePanel = () => {
             <p className="text-sm">
               If you are connecting via the Shared connection pooler, you do not need this add-on as
               our pooler resolves to IPv4 addresses. You can check your connection info in your{' '}
-              <InlineLink href={`/project/${projectRef}/database/settings#connection-pooler`}>
+              <InlineLink href={`/project/${projectRef}/settings/database#connection-pooler`}>
                 project database settings
               </InlineLink>
               .
@@ -181,7 +168,7 @@ const IPv4SidePanel = () => {
                   className="col-span-4 !p-0"
                   name="ipv4"
                   key={option.identifier}
-                  disabled={isFreePlan || !isAws}
+                  disabled={isFreePlan}
                   checked={selectedOption === option.identifier}
                   label={option.name}
                   value={option.identifier}

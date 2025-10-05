@@ -4,16 +4,15 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { LOCAL_STORAGE_KEYS } from 'common'
-import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useOrganizationDeleteMutation } from 'data/organizations/organization-delete-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { Button, Form, Input, Modal } from 'ui'
 
 export const DeleteOrganizationButton = () => {
   const router = useRouter()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
   const { slug: orgSlug, name: orgName } = selectedOrganization ?? {}
 
   const [isOpen, setIsOpen] = useState(false)
@@ -24,11 +23,7 @@ export const DeleteOrganizationButton = () => {
     ''
   )
 
-  const { can: canDeleteOrganization } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'organizations'
-  )
-
+  const canDeleteOrganization = useCheckPermissions(PermissionAction.UPDATE, 'organizations')
   const { mutate: deleteOrganization, isLoading: isDeleting } = useOrganizationDeleteMutation({
     onSuccess: () => {
       toast.success(`Successfully deleted ${orgName}`)
@@ -42,7 +37,7 @@ export const DeleteOrganizationButton = () => {
     if (!values.orgName) {
       errors.orgName = 'Enter the name of the organization.'
     }
-    if (values.orgName.trim() !== orgSlug?.trim()) {
+    if (values.orgName !== orgSlug) {
       errors.orgName = 'Value entered does not match the value above.'
     }
     return errors
@@ -60,22 +55,9 @@ export const DeleteOrganizationButton = () => {
   return (
     <>
       <div className="mt-2">
-        <ButtonTooltip
-          type="danger"
-          disabled={!canDeleteOrganization}
-          loading={!orgSlug}
-          onClick={() => setIsOpen(true)}
-          tooltip={{
-            content: {
-              side: 'bottom',
-              text: !canDeleteOrganization
-                ? 'You need additional permissions to delete this organization'
-                : undefined,
-            },
-          }}
-        >
+        <Button loading={!orgSlug} onClick={() => setIsOpen(true)} type="danger">
           Delete organization
-        </ButtonTooltip>
+        </Button>
       </div>
       <Modal
         hideFooter

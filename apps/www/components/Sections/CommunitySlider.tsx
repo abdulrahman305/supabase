@@ -46,21 +46,21 @@ const cards: CardInterface[] = [
     role: 'Co-Founder, Markprompt',
     quote:
       'We decided to use Supabase over other specialized vector databases because it enabled us to be GDPR compliant from day one with little effort.',
-    image: vectorImagesDir + 'supabase+firecrawl.svg',
+    image: vectorImagesDir + 'supabase+mendable.svg',
     abstract: 'Markprompt and Supabase - GDPR-Compliant AI Chatbots for Docs and Websites.',
     url: '/customers/markprompt',
   },
   {
     type: 'customer-story',
     avatar: '',
-    customer: 'Firecrawl',
+    customer: 'Mendable',
     author: 'Caleb Peffer',
-    role: 'CEO, Firecrawl',
+    role: 'CEO, Mendable',
     quote:
       'We tried other vector databases - we tried Faiss, we tried Weaviate, we tried Pinecone. We found them to be incredibly expensive and not very intuitive. If you’re just doing vector search they’re great, but if you need to store a bunch of metadata that becomes a huge pain.',
     image: vectorImagesDir + 'supabase+markprompt.svg',
-    abstract: 'Firecrawl switches from Pinecone to Supabase for PostgreSQL vector embeddings.',
-    url: '/customers/firecrawl',
+    abstract: 'Mendable switches from Pinecone to Supabase for PostgreSQL vector embeddings.',
+    url: '/customers/mendable',
   },
   {
     type: 'twitter',

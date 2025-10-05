@@ -26,7 +26,7 @@ export type SidePanel =
       type: 'foreign-row-selector'
       foreignKey: ForeignKeyState
     }
-  | { type: 'csv-import'; file?: File }
+  | { type: 'csv-import' }
 
 export type ConfirmationDialog =
   | { type: 'table'; isDeleteWithCascade: boolean }
@@ -181,10 +181,10 @@ export const createTableEditorState = () => {
         sidePanel: { type: 'foreign-row-selector', foreignKey },
       }
     },
-    onImportData: (file?: File) => {
+    onImportData: () => {
       state.ui = {
         open: 'side-panel',
-        sidePanel: { type: 'csv-import', file },
+        sidePanel: { type: 'csv-import' },
       }
     },
 

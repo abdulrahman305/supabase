@@ -1,6 +1,6 @@
 import { Info } from 'lucide-react'
 
-export const BackupsEmpty = () => {
+const BackupsEmpty = () => {
   return (
     <div className="block w-full rounded border border-muted border-opacity-50 bg-gray-300 p-3">
       <div className="flex space-x-3">
@@ -10,3 +10,5 @@ export const BackupsEmpty = () => {
     </div>
   )
 }
+
+export default BackupsEmpty

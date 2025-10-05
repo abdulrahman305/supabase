@@ -83,12 +83,6 @@ export async function generateAiPromptMetadata(props: { params: Promise<{ slug: 
   const { slug } = await props.params
   const prompt = await getAiPrompt(slug)
 
-  if (!prompt) {
-    return {
-      title: 'AI Prompt | Supabase Docs',
-    }
-  }
-
   return {
     title: `AI Prompt: ${prompt.heading} | Supabase Docs`,
   }

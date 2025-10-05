@@ -1,28 +1,13 @@
 import { Timer } from 'lucide-react'
 import { CubeIcon } from '@heroicons/react/outline'
 import { Image } from 'ui'
-import type {
-  CTASection,
-  FeaturesSection,
-  HeroSection,
-  Metadata,
-  Quotes,
-  Testimonials,
-} from './solutions.utils'
+import { AIData } from './solutions.types'
 
-const data: {
-  metadata: Metadata
-  heroSection: HeroSection
-  quotes: Quotes
-  why: FeaturesSection
-  features: FeaturesSection
-  testimonials: Testimonials
-  'cta-section': CTASection
-} = {
+const data: AIData = {
   metadata: {
     metaTitle: 'Supabase for AI Builders',
     metaDescription:
-      'Supabase gives your users an integrated and scalable backend that lets them focus on building without worrying about infrastructure.',
+      'Leading enterprises use Supabase to build faster, better, and more scalable products.',
   },
   heroSection: {
     id: 'hero',
@@ -35,7 +20,17 @@ const data: {
         without worrying about infrastructure.
       </>,
     ],
-    image: undefined,
+    image: (
+      <Image
+        src={{
+          dark: '/images/solutions/ai-builders/ai-builders-agent-dark.svg',
+          light: '/images/solutions/ai-builders/ai-builders-agent-light.svg',
+        }}
+        alt="AI agent for ai builders"
+        width={1000}
+        height={1000}
+      />
+    ),
     ctas: [
       {
         label: 'Start your project',
@@ -138,21 +133,18 @@ const data: {
     ),
     features: [
       {
-        id: 'get-to-market-faster',
         icon: Timer,
         heading: 'Get to market faster',
         subheading:
           'Supabase is easy to use and set up. Use your existing Postgres knowledge and skills. Build with your favorite frameworks and tools.',
       },
       {
-        id: 'the-tools-you-need-at-a-great-price',
         icon: CubeIcon,
         heading: 'The tools you need at a great price',
         subheading:
           'Supabase offers a fully integrated suite of tools including authentication, storage, edge functions, real-time subscriptions, and vector search. Use one or all.',
       },
       {
-        id: 'scalable-and-dependable',
         icon: (props: any) => (
           <svg
             width="23"
@@ -189,8 +181,8 @@ const data: {
     ),
     subheading:
       'Build a delightful application building experience backed seamlessly by a powerful application backend.',
-    features: [
-      {
+    features: {
+      'mgmt-api': {
         id: 'mgmt-api',
         icon: Timer,
         heading: (
@@ -233,7 +225,7 @@ const data: {
           />
         ),
       },
-      {
+      postgres: {
         id: 'postgres',
         icon: Timer,
         heading: (
@@ -463,7 +455,7 @@ const data: {
           </svg>
         ),
       },
-      {
+      branching: {
         id: 'branching',
         icon: Timer,
         heading: (
@@ -515,7 +507,7 @@ const data: {
           </>
         ),
       },
-      {
+      pricing: {
         id: 'pricing',
         icon: Timer,
         heading: (
@@ -559,7 +551,7 @@ const data: {
           </>
         ),
       },
-    ],
+    },
   },
   testimonials: {
     id: 'testimonials',

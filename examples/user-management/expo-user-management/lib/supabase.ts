@@ -2,9 +2,9 @@ import { createClient } from '@supabase/supabase-js'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const supabaseUrl = 'https://project.supabase.co'
-const supabasePublishableKey = 'your-publishable-key'
+const supabaseAnonKey = 'your-anon-key'
 
-export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage as any,
     autoRefreshToken: true,

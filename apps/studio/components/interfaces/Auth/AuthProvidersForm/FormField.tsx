@@ -7,7 +7,6 @@ import { Markdown } from 'components/interfaces/Markdown'
 import { DatePicker } from 'components/ui/DatePicker'
 import { BASE_PATH } from 'lib/constants'
 import { Button, Input, InputNumber, Listbox, Toggle } from 'ui'
-import { InfoTooltip } from 'ui-patterns/info-tooltip'
 import type { Enum } from './AuthProvidersForm.types'
 
 interface FormFieldProps {
@@ -224,18 +223,17 @@ const FormField = ({
           id={name}
           name={name}
           disabled={disabled}
-          label={
-            <div className="flex items-center gap-x-2">
-              <span>{properties.title}</span>
-              {properties.link && (
-                <a href={properties.link} target="_blank" rel="noreferrer noopener">
-                  <InfoTooltip side="bottom">Documentation</InfoTooltip>
-                </a>
-              )}
-            </div>
-          }
+          label={properties.title}
           descriptionText={
-            properties.description ? <Markdown content={properties.description} /> : null
+            properties.description ? (
+              <ReactMarkdown
+                unwrapDisallowed
+                disallowedElements={['p']}
+                className="form-field-markdown"
+              >
+                {properties.description}
+              </ReactMarkdown>
+            ) : null
           }
         />
       )
@@ -284,7 +282,7 @@ const FormField = ({
       break
   }
 
-  return null
+  return <></>
 }
 
 export default FormField

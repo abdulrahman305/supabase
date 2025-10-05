@@ -1,9 +1,11 @@
-import { sortBy } from 'lodash'
+import { partition, sortBy } from 'lodash'
 import { AlertCircle, Search, Trash } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
+import Table from 'components/to-be-cleaned/Table'
 import AlertError from 'components/ui/AlertError'
 import CodeEditor from 'components/ui/CodeEditor/CodeEditor'
 import SchemaSelector from 'components/ui/SchemaSelector'
@@ -12,26 +14,14 @@ import { useDatabaseIndexDeleteMutation } from 'data/database-indexes/index-dele
 import { DatabaseIndex, useIndexesQuery } from 'data/database-indexes/indexes-query'
 import { useSchemasQuery } from 'data/database/schemas-query'
 import { useQuerySchemaState } from 'hooks/misc/useSchemaQueryState'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { useIsProtectedSchema } from 'hooks/useProtectedSchemas'
-import {
-  Button,
-  Input,
-  SidePanel,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TableHeader,
-  Card,
-} from 'ui'
+import { PROTECTED_SCHEMAS } from 'lib/constants/schemas'
+import { Button, Input, SidePanel } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
-import { ProtectedSchemaWarning } from '../ProtectedSchemaWarning'
+import ProtectedSchemaWarning from '../ProtectedSchemaWarning'
 import CreateIndexSidePanel from './CreateIndexSidePanel'
 
 const Indexes = () => {
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const { schema: urlSchema, table } = useParams()
 
   const [search, setSearch] = useState('')
@@ -68,7 +58,11 @@ const Indexes = () => {
     },
   })
 
-  const { isSchemaLocked } = useIsProtectedSchema({ schema: selectedSchema })
+  const [protectedSchemas] = partition(schemas ?? [], (schema) =>
+    PROTECTED_SCHEMAS.includes(schema?.name ?? '')
+  )
+  const schema = schemas?.find((schema) => schema.name === selectedSchema)
+  const isLocked = protectedSchemas.some((s) => s.id === schema?.id)
 
   const sortedIndexes = sortBy(allIndexes ?? [], (index) => index.name.toLocaleLowerCase())
   const indexes =
@@ -83,7 +77,6 @@ const Indexes = () => {
       projectRef: project.ref,
       connectionString: project.connectionString,
       name: index.name,
-      schema: selectedSchema,
     })
   }
 
@@ -128,7 +121,7 @@ const Indexes = () => {
               icon={<Search size={14} />}
             />
 
-            {!isSchemaLocked && (
+            {!isLocked && (
               <Button
                 className="ml-auto flex-grow lg:flex-grow-0"
                 type="primary"
@@ -140,7 +133,7 @@ const Indexes = () => {
             )}
           </div>
 
-          {isSchemaLocked && <ProtectedSchemaWarning schema={selectedSchema} entity="indexes" />}
+          {isLocked && <ProtectedSchemaWarning schema={selectedSchema} entity="indexes" />}
 
           {isLoadingIndexes && <GenericSkeletonLoader />}
 
@@ -149,58 +142,55 @@ const Indexes = () => {
           )}
 
           {isSuccessIndexes && (
-            <div className="w-full overflow-hidden">
-              <Card>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead key="schema">Schema</TableHead>
-                      <TableHead key="table">Table</TableHead>
-                      <TableHead key="name">Name</TableHead>
-                      <TableHead key="buttons"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+            <div className="w-full overflow-hidden overflow-x-auto">
+              <Table
+                head={[
+                  <Table.th key="schema">Schema</Table.th>,
+                  <Table.th key="table">Table</Table.th>,
+                  <Table.th key="name">Name</Table.th>,
+                  <Table.th key="buttons"></Table.th>,
+                ]}
+                body={
+                  <>
                     {sortedIndexes.length === 0 && search.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
+                      <Table.tr>
+                        <Table.td colSpan={4}>
                           <p className="text-sm text-foreground">No indexes created yet</p>
                           <p className="text-sm text-foreground-light">
                             There are no indexes found in the schema "{selectedSchema}"
                           </p>
-                        </TableCell>
-                      </TableRow>
+                        </Table.td>
+                      </Table.tr>
                     )}
                     {sortedIndexes.length === 0 && search.length > 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4}>
+                      <Table.tr>
+                        <Table.td colSpan={4}>
                           <p className="text-sm text-foreground">No results found</p>
                           <p className="text-sm text-foreground-light">
                             Your search for "{search}" did not return any results
                           </p>
-                        </TableCell>
-                      </TableRow>
+                        </Table.td>
+                      </Table.tr>
                     )}
                     {indexes.length > 0 &&
                       indexes.map((index) => (
-                        <TableRow key={index.name}>
-                          <TableCell>
+                        <Table.tr key={index.name}>
+                          <Table.td>
                             <p title={index.schema}>{index.schema}</p>
-                          </TableCell>
-                          <TableCell>
+                          </Table.td>
+                          <Table.td>
                             <p title={index.table}>{index.table}</p>
-                          </TableCell>
-                          <TableCell>
+                          </Table.td>
+                          <Table.td>
                             <p title={index.name}>{index.name}</p>
-                          </TableCell>
-                          <TableCell>
+                          </Table.td>
+                          <Table.td>
                             <div className="flex justify-end items-center space-x-2">
                               <Button type="default" onClick={() => setSelectedIndex(index)}>
                                 View definition
                               </Button>
-                              {!isSchemaLocked && (
+                              {!isLocked && (
                                 <Button
-                                  aria-label="Delete index"
                                   type="text"
                                   className="px-1"
                                   icon={<Trash />}
@@ -208,12 +198,12 @@ const Indexes = () => {
                                 />
                               )}
                             </div>
-                          </TableCell>
-                        </TableRow>
+                          </Table.td>
+                        </Table.tr>
                       ))}
-                  </TableBody>
-                </Table>
-              </Card>
+                  </>
+                }
+              />
             </div>
           )}
         </div>

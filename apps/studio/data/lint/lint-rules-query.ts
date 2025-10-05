@@ -2,7 +2,7 @@ import { UseQueryOptions, useQuery } from '@tanstack/react-query'
 
 import { components } from 'api-types'
 import { get, handleError } from 'data/fetchers'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { PROJECT_STATUS } from 'lib/constants'
 import { ResponseError } from 'types'
 import { lintKeys } from './keys'
@@ -10,7 +10,7 @@ import { lintKeys } from './keys'
 type ProjectLintRulesVariables = {
   projectRef?: string
 }
-type LintDismissalResponse = components['schemas']['ListNotificationExceptionsResponse']
+type LintDismissalResponse = components['schemas']['ListNotificationExceptionsResponseDto']
 export type LintException = LintDismissalResponse['exceptions'][0]
 
 export async function getProjectLintRules(
@@ -39,7 +39,7 @@ export const useProjectLintRulesQuery = <TData = ProjectLintRulesData>(
     ...options
   }: UseQueryOptions<ProjectLintRulesData, ProjectLintRulesError, TData> = {}
 ) => {
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
   const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
 
   return useQuery<ProjectLintRulesData, ProjectLintRulesError, TData>(

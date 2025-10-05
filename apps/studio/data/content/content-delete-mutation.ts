@@ -15,7 +15,7 @@ export async function deleteContents(
     headers: { Version: '2' },
     params: {
       path: { ref: projectRef },
-      query: { ids: ids.join(',') },
+      query: { ids },
     },
     signal,
   })
@@ -41,10 +41,7 @@ export const useContentDeleteMutation = ({
     {
       async onSuccess(data, variables, context) {
         const { projectRef } = variables
-        await Promise.all([
-          queryClient.invalidateQueries(contentKeys.allContentLists(projectRef)),
-          queryClient.invalidateQueries(contentKeys.infiniteList(projectRef)),
-        ])
+        await queryClient.invalidateQueries(contentKeys.allContentLists(projectRef))
 
         await onSuccess?.(data, variables, context)
       },

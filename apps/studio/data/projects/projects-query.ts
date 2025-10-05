@@ -12,23 +12,13 @@ export type ProjectsVariables = {
   ref?: string
 }
 
-type PaginatedProjectsResponse = components['schemas']['ListProjectsPaginatedResponse']
-export type ProjectInfo = PaginatedProjectsResponse['projects'][number]
+export type ProjectInfo = components['schemas']['ProjectInfo']
 
-export async function getProjects({
-  signal,
-  headers,
-}: {
-  signal?: AbortSignal
-  headers?: Record<string, string>
-}) {
-  const { data, error } = await get('/platform/projects', { signal, headers })
+export async function getProjects(signal?: AbortSignal) {
+  const { data, error } = await get('/platform/projects', { signal })
 
   if (error) handleError(error)
-  // The /platform/projects endpoint has a v2 which is activated by passing a {version: '2'} header. The v1 API returns
-  // all projects while the v2 returns paginated list of projects. Wrapping the v1 API response into a
-  // { projects: ProjectInfo[] } is intentional to be forward compatible with the structure of v2 for easier migration.
-  return { projects: data }
+  return data as ProjectInfo[]
 }
 
 export type ProjectsData = Awaited<ReturnType<typeof getProjects>>
@@ -41,7 +31,7 @@ export const useProjectsQuery = <TData = ProjectsData>({
   const { profile } = useProfile()
   return useQuery<ProjectsData, ProjectsError, TData>(
     projectKeys.list(),
-    ({ signal }) => getProjects({ signal }),
+    ({ signal }) => getProjects(signal),
     {
       enabled: enabled && profile !== undefined,
       staleTime: 30 * 60 * 1000, // 30 minutes
@@ -51,7 +41,7 @@ export const useProjectsQuery = <TData = ProjectsData>({
 }
 
 export function prefetchProjects(client: QueryClient) {
-  return client.prefetchQuery(projectKeys.list(), ({ signal }) => getProjects({ signal }))
+  return client.prefetchQuery(projectKeys.list(), ({ signal }) => getProjects(signal))
 }
 
 export function useProjectsPrefetch() {
@@ -81,20 +71,17 @@ export function setProjectStatus(
   projectRef: Project['ref'],
   status: Project['status']
 ) {
-  client.setQueriesData<PaginatedProjectsResponse | undefined>(
+  client.setQueriesData<Project[] | undefined>(
     projectKeys.list(),
     (old) => {
       if (!old) return old
 
-      return {
-        ...old,
-        projects: old.projects.map((project) => {
-          if (project.ref === projectRef) {
-            return { ...project, status }
-          }
-          return project
-        }),
-      }
+      return old.map((project) => {
+        if (project.ref === projectRef) {
+          return { ...project, status }
+        }
+        return project
+      })
     },
     { updatedAt: Date.now() }
   )

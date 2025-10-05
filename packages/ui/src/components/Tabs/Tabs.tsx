@@ -38,7 +38,7 @@ interface TabsSubComponents {
 }
 
 /**
- * @deprecated Use `import { Tabs_shadcn_ } from "ui"` instead
+ * @deprecated Use ./Tabs_shadcn_ instead
  */
 const Tabs: React.FC<PropsWithChildren<TabsProps>> & TabsSubComponents = ({
   defaultActiveId,

@@ -1,14 +1,12 @@
-import { parseAsString, useQueryState } from 'nuqs'
 import { toast } from 'sonner'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { useDatabaseCronJobDeleteMutation } from 'data/database-cron-jobs/database-cron-jobs-delete-mutation'
-import { CronJob } from 'data/database-cron-jobs/database-cron-jobs-infinite-query'
+import { CronJob } from 'data/database-cron-jobs/database-cron-jobs-query'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { cleanPointerEventsNoneOnBody } from 'lib/helpers'
-import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 import TextConfirmModal from 'ui-patterns/Dialogs/TextConfirmModal'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 
 interface DeleteCronJobProps {
   cronJob: CronJob
@@ -17,9 +15,8 @@ interface DeleteCronJobProps {
 }
 
 export const DeleteCronJob = ({ cronJob, visible, onClose }: DeleteCronJobProps) => {
-  const { data: project } = useSelectedProjectQuery()
-  const { data: org } = useSelectedOrganizationQuery()
-  const [searchQuery] = useQueryState('search', parseAsString.withDefault(''))
+  const { project } = useProjectContext()
+  const org = useSelectedOrganization()
 
   const { mutate: sendEvent } = useSendEventMutation()
   const { mutate: deleteDatabaseCronJob, isLoading } = useDatabaseCronJobDeleteMutation({
@@ -40,7 +37,6 @@ export const DeleteCronJob = ({ cronJob, visible, onClose }: DeleteCronJobProps)
       jobId: cronJob.jobid,
       projectRef: project.ref,
       connectionString: project.connectionString,
-      searchTerm: searchQuery,
     })
   }
 
@@ -54,10 +50,7 @@ export const DeleteCronJob = ({ cronJob, visible, onClose }: DeleteCronJobProps)
       <ConfirmationModal
         variant="destructive"
         visible={visible}
-        onCancel={() => {
-          onClose()
-          cleanPointerEventsNoneOnBody()
-        }}
+        onCancel={() => onClose()}
         onConfirm={handleDelete}
         title={`Delete the cron job`}
         loading={isLoading}
@@ -71,11 +64,8 @@ export const DeleteCronJob = ({ cronJob, visible, onClose }: DeleteCronJobProps)
     <TextConfirmModal
       variant="destructive"
       visible={visible}
+      onCancel={() => onClose()}
       onConfirm={handleDelete}
-      onCancel={() => {
-        onClose()
-        cleanPointerEventsNoneOnBody()
-      }}
       title="Delete this cron job"
       loading={isLoading}
       confirmLabel={`Delete cron job ${cronJob.jobname}`}

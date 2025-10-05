@@ -8,12 +8,10 @@ interface Props {
 export default function Avatar(props: Props) {
   const { caption, img } = props
 
-  const imageUrl = img.startsWith('http') ? img : '/images/blog/avatars/' + img
-
   return (
     <div className="align-center m-0 flex h-8 items-center gap-3">
       <Image
-        src={imageUrl}
+        src={'/images/blog/avatars/' + img}
         className="h-8 w-8 rounded-full object-cover text-center m-0"
         alt={`${caption} avatar`}
         width={32}

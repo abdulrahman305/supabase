@@ -3,15 +3,8 @@ import { toast } from 'sonner'
 
 import { handleError, patch } from 'data/fetchers'
 import type { ResponseError } from 'types'
-import { EnvironmentTargets } from './integrations.types'
+import type { UpdateConnectionPayload } from './integrations.types'
 import { integrationKeys } from './keys'
-
-type UpdateConnectionPayload = {
-  id: string
-  organizationIntegrationId: string
-  envSyncTargets: EnvironmentTargets[]
-  publicEnvVarPrefix?: string
-}
 
 export async function updateVercelConnection({
   id,

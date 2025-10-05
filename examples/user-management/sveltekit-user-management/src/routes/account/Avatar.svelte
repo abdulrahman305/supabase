@@ -1,18 +1,17 @@
 <!-- src/routes/account/Avatar.svelte -->
 <script lang="ts">
 	import type { SupabaseClient } from '@supabase/supabase-js'
+	import { createEventDispatcher } from 'svelte'
 
-	interface Props {
-		size?: number
-		url?: string
-		supabase: SupabaseClient
-		onupload?: () => void
-	}
-	let { size = 10, url = $bindable(), supabase, onupload }: Props = $props()
+	export let size = 10
+	export let url: string
+	export let supabase: SupabaseClient
 
-	let avatarUrl: string | null = $state(null)
-	let uploading = $state(false)
-	let files: FileList = $state()
+	let avatarUrl: string | null = null
+	let uploading = false
+	let files: FileList
+
+	const dispatch = createEventDispatcher()
 
 	const downloadImage = async (path: string) => {
 		try {
@@ -51,7 +50,7 @@
 
 			url = filePath
 			setTimeout(() => {
-				onupload?.()
+				dispatch('upload')
 			}, 100)
 		} catch (error) {
 			if (error instanceof Error) {
@@ -62,9 +61,7 @@
 		}
 	}
 
-	$effect(() => {
-		if (url) downloadImage(url)
-	})
+	$: if (url) downloadImage(url)
 </script>
 
 <div>
@@ -76,7 +73,7 @@
 			style="height: {size}em; width: {size}em;"
 		/>
 	{:else}
-		<div class="avatar no-image" style="height: {size}em; width: {size}em;"></div>
+		<div class="avatar no-image" style="height: {size}em; width: {size}em;" />
 	{/if}
 	<input type="hidden" name="avatarUrl" value={url} />
 
@@ -90,7 +87,7 @@
 			id="single"
 			accept="image/*"
 			bind:files
-			onchange={uploadAvatar}
+			on:change={uploadAvatar}
 			disabled={uploading}
 		/>
 	</div>

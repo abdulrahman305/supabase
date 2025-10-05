@@ -12,26 +12,20 @@ interface ConnectTabTriggersProps {
 
 interface ConnectFileTabProps {
   children: ReactNode[]
-  value?: string
-  onValueChange?: (value: string) => void
 }
 
 interface ConnectTabContentProps {
   children: ReactNode
   value: string
 }
-const ConnectTabs = ({ children, value, onValueChange }: ConnectFileTabProps) => {
+const ConnectTabs = ({ children }: ConnectFileTabProps) => {
   const firstChild = children[0]
 
   const defaultValue = isValidElement(firstChild)
     ? (firstChild.props as any)?.children[0]?.props?.value || ''
     : null
 
-  return (
-    <Tabs_Shadcn_ defaultValue={defaultValue} value={value} onValueChange={onValueChange}>
-      {children}
-    </Tabs_Shadcn_>
-  )
+  return <Tabs_Shadcn_ defaultValue={defaultValue}>{children}</Tabs_Shadcn_>
 }
 
 const ConnectTabTrigger = ({ value }: ConnectTabTriggerProps) => {

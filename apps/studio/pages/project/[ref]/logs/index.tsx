@@ -1,40 +1,32 @@
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 
-import { useParams } from 'common'
-import { useUnifiedLogsPreview } from 'components/interfaces/App/FeaturePreview/FeaturePreviewContext'
-import { UnifiedLogs } from 'components/interfaces/UnifiedLogs/UnifiedLogs'
+import { LOCAL_STORAGE_KEYS, useParams } from 'common'
 import DefaultLayout from 'components/layouts/DefaultLayout'
-import ProjectLayout from 'components/layouts/ProjectLayout/ProjectLayout'
-import { NextPageWithLayout } from 'types'
+import LogsLayout from 'components/layouts/LogsLayout/LogsLayout'
+import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
+import type { NextPageWithLayout } from 'types'
 
 export const LogPage: NextPageWithLayout = () => {
   const router = useRouter()
   const { ref } = useParams()
 
-  const { isEnabled: isUnifiedLogsEnabled } = useUnifiedLogsPreview()
+  const [lastVisitedLogsPage] = useLocalStorageQuery(
+    LOCAL_STORAGE_KEYS.LAST_VISITED_LOGS_PAGE,
+    'explorer'
+  )
 
   useEffect(() => {
-    if (!isUnifiedLogsEnabled && ref) {
-      router.replace(`/project/${ref}/logs/explorer`)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isUnifiedLogsEnabled, ref])
-
-  if (isUnifiedLogsEnabled) {
-    return (
-      <DefaultLayout>
-        <ProjectLayout>
-          <UnifiedLogs />
-        </ProjectLayout>
-      </DefaultLayout>
-    )
-  }
+    router.replace(`/project/${ref}/logs/${lastVisitedLogsPage}`)
+  }, [router, lastVisitedLogsPage, ref])
 
   return null
 }
 
-// Don't use getLayout since we're handling layouts conditionally within the component
-LogPage.getLayout = (page) => page
+LogPage.getLayout = (page) => (
+  <DefaultLayout>
+    <LogsLayout>{page}</LogsLayout>
+  </DefaultLayout>
+)
 
 export default LogPage

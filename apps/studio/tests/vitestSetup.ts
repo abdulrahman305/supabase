@@ -4,14 +4,22 @@ import { createDynamicRouteParser } from 'next-router-mock/dist/dynamic-routes'
 import { afterAll, afterEach, beforeAll, vi } from 'vitest'
 import { routerMock } from './lib/route-mock'
 import { mswServer } from './lib/msw'
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
-import timezone from 'dayjs/plugin/timezone'
-import relativeTime from 'dayjs/plugin/relativeTime'
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
-dayjs.extend(relativeTime)
+mswServer.listen({ onUnhandledRequest: 'error' })
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // deprecated
+    removeListener: vi.fn(), // deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
 
 // Uncomment this if HTML in errors are being annoying.
 //
@@ -24,7 +32,6 @@ dayjs.extend(relativeTime)
 // })
 
 beforeAll(() => {
-  mswServer.listen({ onUnhandledRequest: `error` })
   vi.mock('next/router', () => require('next-router-mock'))
   vi.mock('next/navigation', async () => {
     const actual = await vi.importActual('next/navigation')
@@ -45,23 +52,13 @@ beforeAll(() => {
 
   vi.mock('next/compat/router', () => require('next-router-mock'))
 
-  // Mock the useParams hook from common module globally
-  vi.mock('common', async (importOriginal: any) => {
-    const actual = await importOriginal()
-    return {
-      ...(typeof actual === 'object' ? actual : {}),
-      useParams: () => ({ ref: 'default' }),
-    }
-  })
-
   routerMock.useParser(createDynamicRouteParser(['/projects/[ref]']))
 })
 
-afterEach(() => {
-  mswServer.resetHandlers()
-  cleanup()
-})
+afterAll(() => mswServer.close())
 
-afterAll(() => {
-  mswServer.close()
+afterEach(() => mswServer.resetHandlers())
+
+afterEach(() => {
+  cleanup()
 })

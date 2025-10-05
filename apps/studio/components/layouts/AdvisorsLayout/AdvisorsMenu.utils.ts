@@ -38,7 +38,7 @@ export const generateAdvisorsMenu = (
             title: 'Configuration',
             items: [
               {
-                name: 'Settings',
+                name: 'Advisor Rules',
                 key: 'rules',
                 url: `/project/${ref}/advisors/rules/security`,
                 items: [],

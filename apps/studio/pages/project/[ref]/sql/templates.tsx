@@ -2,6 +2,7 @@ import { useParams } from 'next/navigation'
 import { useRouter } from 'next/router'
 import { useEffect } from 'react'
 
+import { useIsSQLEditorTabsEnabled } from 'components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import SQLTemplates from 'components/interfaces/SQLEditor/SQLTemplates/SQLTemplates'
 import DefaultLayout from 'components/layouts/DefaultLayout'
 import { EditorBaseLayout } from 'components/layouts/editors/EditorBaseLayout'
@@ -15,20 +16,25 @@ const SqlTemplates: NextPageWithLayout = () => {
   const { ref } = useParams<{ ref: string }>()
   const tabs = useTabsStateSnapshot()
 
-  useEffect(() => {
-    if (!router.isReady) return
+  const isSqlEditorTabsEnabled = useIsSQLEditorTabsEnabled()
 
-    const tabId = createTabId('sql', { id: 'templates' })
-    tabs.addTab({
-      id: tabId,
-      type: 'sql',
-      label: 'Templates',
-      metadata: {
-        sqlId: 'templates',
-        name: 'templates',
-      },
-    })
-  }, [router.isReady, ref])
+  useEffect(() => {
+    if (isSqlEditorTabsEnabled) {
+      if (!router.isReady) return
+
+      const tabId = createTabId('sql', { id: 'templates' })
+
+      tabs.addTab({
+        id: tabId,
+        type: 'sql',
+        label: 'Templates',
+        metadata: {
+          sqlId: 'templates',
+          name: 'templates',
+        },
+      })
+    }
+  }, [router.isReady, isSqlEditorTabsEnabled, ref])
 
   return <SQLTemplates />
 }

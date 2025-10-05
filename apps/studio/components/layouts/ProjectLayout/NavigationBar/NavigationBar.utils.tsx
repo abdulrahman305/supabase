@@ -19,7 +19,12 @@ import {
 } from 'icons'
 import { IS_PLATFORM, PROJECT_STATUS } from 'lib/constants'
 
-export const generateToolRoutes = (ref?: string, project?: Project, features?: {}): Route[] => {
+export const generateToolRoutes = (
+  ref?: string,
+  project?: Project,
+  features?: { sqlEditorTabs: boolean }
+): Route[] => {
+  const { sqlEditorTabs } = features ?? {}
   const isProjectBuilding = project?.status === PROJECT_STATUS.COMING_UP
   const buildingUrl = `/project/${ref}`
 
@@ -37,22 +42,15 @@ export const generateToolRoutes = (ref?: string, project?: Project, features?: {
       icon: <SqlEditor size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
       link: !IS_PLATFORM
         ? `/project/${ref}/sql/1`
-        : ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/sql`),
+        : ref &&
+          (isProjectBuilding ? buildingUrl : `/project/${ref}/sql${!!sqlEditorTabs ? '' : '/new'}`),
     },
   ]
 }
-
 export const generateProductRoutes = (
   ref?: string,
   project?: Project,
-  features?: {
-    auth?: boolean
-    edgeFunctions?: boolean
-    storage?: boolean
-    realtime?: boolean
-    authOverviewPage?: boolean
-    isStorageV2?: boolean
-  }
+  features?: { auth?: boolean; edgeFunctions?: boolean; storage?: boolean; realtime?: boolean }
 ): Route[] => {
   const isProjectActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
   const isProjectBuilding = project?.status === PROJECT_STATUS.COMING_UP
@@ -62,8 +60,6 @@ export const generateProductRoutes = (
   const edgeFunctionsEnabled = features?.edgeFunctions ?? true
   const storageEnabled = features?.storage ?? true
   const realtimeEnabled = features?.realtime ?? true
-  const authOverviewPageEnabled = features?.authOverviewPage ?? false
-  const isStorageV2 = features?.isStorageV2 ?? false
 
   const databaseMenu = generateDatabaseMenu(project)
   const authMenu = generateAuthMenu(ref as string)
@@ -88,13 +84,7 @@ export const generateProductRoutes = (
             key: 'auth',
             label: 'Authentication',
             icon: <Auth size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
-            link:
-              ref &&
-              (isProjectBuilding
-                ? buildingUrl
-                : authOverviewPageEnabled
-                  ? `/project/${ref}/auth/overview`
-                  : `/project/${ref}/auth/users`),
+            link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/auth/users`),
             items: authMenu,
           },
         ]
@@ -105,15 +95,11 @@ export const generateProductRoutes = (
             key: 'storage',
             label: 'Storage',
             icon: <Storage size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
-            link:
-              ref &&
-              (isProjectBuilding
-                ? buildingUrl
-                : `/project/${ref}/storage/${isStorageV2 ? 'files' : 'buckets'}`),
+            link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/storage/buckets`),
           },
         ]
       : []),
-    ...(edgeFunctionsEnabled
+    ...(IS_PLATFORM && edgeFunctionsEnabled
       ? [
           {
             key: 'functions',
@@ -136,17 +122,9 @@ export const generateProductRoutes = (
   ]
 }
 
-export const generateOtherRoutes = (
-  ref?: string,
-  project?: Project,
-  features?: { unifiedLogs?: boolean; showReports?: boolean }
-): Route[] => {
+export const generateOtherRoutes = (ref?: string, project?: Project): Route[] => {
   const isProjectBuilding = project?.status === PROJECT_STATUS.COMING_UP
   const buildingUrl = `/project/${ref}`
-
-  const { unifiedLogs, showReports } = features ?? {}
-  const unifiedLogsEnabled = unifiedLogs ?? false
-  const reportsEnabled = showReports ?? true
 
   return [
     {
@@ -155,7 +133,7 @@ export const generateOtherRoutes = (
       icon: <Lightbulb size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
       link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/advisors/security`),
     },
-    ...(IS_PLATFORM && reportsEnabled
+    ...(IS_PLATFORM
       ? [
           {
             key: 'reports',
@@ -169,13 +147,7 @@ export const generateOtherRoutes = (
       key: 'logs',
       label: 'Logs',
       icon: <List size={ICON_SIZE} strokeWidth={ICON_STROKE_WIDTH} />,
-      link:
-        ref &&
-        (isProjectBuilding
-          ? buildingUrl
-          : unifiedLogsEnabled
-            ? `/project/${ref}/logs`
-            : `/project/${ref}/logs/explorer`),
+      link: ref && (isProjectBuilding ? buildingUrl : `/project/${ref}/logs`),
     },
     {
       key: 'api',

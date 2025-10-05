@@ -2,6 +2,7 @@ import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { Download } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { Button } from 'ui'
 
 import {
   ScaffoldSection,
@@ -10,18 +11,13 @@ import {
 } from 'components/layouts/Scaffold'
 import NoPermission from 'components/ui/NoPermission'
 import { getDocument } from 'data/documents/document-query'
-import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { Button } from 'ui'
-import ShimmeringLoader from 'ui-patterns/ShimmeringLoader'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 
-export const SecurityQuestionnaire = () => {
-  const { data: organization } = useSelectedOrganizationQuery()
+const SecurityQuestionnaire = () => {
+  const organization = useSelectedOrganization()
   const slug = organization?.slug
-
-  const { mutate: sendEvent } = useSendEventMutation()
-  const { can: canReadSubscriptions, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
+  const canReadSubscriptions = useCheckPermissions(
     PermissionAction.BILLING_READ,
     'stripe.subscriptions'
   )
@@ -53,11 +49,7 @@ export const SecurityQuestionnaire = () => {
           </div>
         </ScaffoldSectionDetail>
         <ScaffoldSectionContent>
-          {isLoadingPermissions ? (
-            <div className="flex items-center justify-center h-full">
-              <ShimmeringLoader className="w-24" />
-            </div>
-          ) : !canReadSubscriptions ? (
+          {!canReadSubscriptions ? (
             <NoPermission resourceText="access our security questionnaire" />
           ) : (
             <>
@@ -73,11 +65,6 @@ export const SecurityQuestionnaire = () => {
                     type="default"
                     icon={<Download />}
                     onClick={() => {
-                      sendEvent({
-                        action: 'document_view_button_clicked',
-                        properties: { documentName: 'Standard Security Questionnaire' },
-                        groups: { organization: organization?.slug ?? 'Unknown' },
-                      })
                       if (slug) fetchQuestionnaire(slug)
                     }}
                   >
@@ -92,3 +79,5 @@ export const SecurityQuestionnaire = () => {
     </>
   )
 }
+
+export default SecurityQuestionnaire

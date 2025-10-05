@@ -5,34 +5,37 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
-import { useIsProjectActive } from 'components/layouts/ProjectLayout/ProjectContext'
+import {
+  useIsProjectActive,
+  useProjectContext,
+} from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useProjectPauseMutation } from 'data/projects/project-pause-mutation'
 import { setProjectStatus } from 'data/projects/projects-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useIsAwsK8sCloudProvider, useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useIsOrioleDbInAwsRevamped } from 'hooks/misc/useSelectedProject'
 import { PROJECT_STATUS } from 'lib/constants'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 
 const PauseProjectButton = () => {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const { project } = useProjectContext()
+  const organization = useSelectedOrganization()
   const isProjectActive = useIsProjectActive()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const projectRef = project?.ref ?? ''
   const isPaused = project?.status === PROJECT_STATUS.INACTIVE
-  const { can: canPauseProject } = useAsyncCheckPermissions(
+  const canPauseProject = useCheckPermissions(
     PermissionAction.INFRA_EXECUTE,
     'queue_jobs.projects.pause'
   )
 
-  const isAwsK8s = useIsAwsK8sCloudProvider()
+  const isOrioleDBInAwsNew = useIsOrioleDbInAwsRevamped()
   const isFreePlan = organization?.plan.id === 'free'
-  const isPaidAndNotAwsK8s = !isFreePlan && !isAwsK8s
+  const isPaidAndNotAwsNew = !isFreePlan && !isOrioleDBInAwsNew
 
   const { mutate: pauseProject, isLoading: isPausing } = useProjectPauseMutation({
     onSuccess: (_, variables) => {
@@ -50,7 +53,7 @@ const PauseProjectButton = () => {
   }
 
   const buttonDisabled =
-    isPaidAndNotAwsK8s || project === undefined || isPaused || !canPauseProject || !isProjectActive
+    isPaidAndNotAwsNew || project === undefined || isPaused || !canPauseProject || !isProjectActive
 
   return (
     <>
@@ -69,7 +72,7 @@ const PauseProjectButton = () => {
                 ? 'You need additional permissions to pause this project'
                 : !isProjectActive
                   ? 'Unable to pause project as project is not active'
-                  : isPaidAndNotAwsK8s
+                  : isPaidAndNotAwsNew
                     ? 'Projects on a paid plan will always be running'
                     : undefined,
           },

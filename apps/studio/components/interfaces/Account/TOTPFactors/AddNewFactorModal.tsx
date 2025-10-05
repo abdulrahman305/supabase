@@ -18,7 +18,7 @@ interface AddNewFactorModalProps {
   onClose: () => void
 }
 
-export const AddNewFactorModal = ({ visible, onClose }: AddNewFactorModalProps) => {
+const AddNewFactorModal = ({ visible, onClose }: AddNewFactorModalProps) => {
   // Generate a name with a number between 0 and 1000
   const [name, setName] = useState(`App ${Math.floor(Math.random() * 1000)}`)
   const { data, mutate: enroll, isLoading: isEnrolling, reset } = useMfaEnrollMutation()
@@ -216,3 +216,5 @@ const SecondStep = ({
     </ConfirmationModal>
   )
 }
+
+export default AddNewFactorModal

@@ -1,9 +1,8 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
+import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 
-import { executeSql, type ExecuteSqlError } from 'data/sql/execute-sql-query'
-import { COUNT_ESTIMATE_SQL, THRESHOLD_COUNT } from 'data/table-rows/table-rows-count-query'
+import { executeSql, ExecuteSqlError } from 'data/sql/execute-sql-query'
 import { authKeys } from './keys'
-import { type Filter } from './users-infinite-query'
+import { Filter } from './users-infinite-query'
 
 type UsersCountVariables = {
   projectRef?: string
@@ -11,25 +10,21 @@ type UsersCountVariables = {
   keywords?: string
   filter?: Filter
   providers?: string[]
-  forceExactCount?: boolean
 }
 
 const getUsersCountSql = ({
   filter,
   keywords,
   providers,
-  forceExactCount = false,
 }: {
   filter?: Filter
   keywords?: string
   providers?: string[]
-  forceExactCount?: boolean
 }) => {
   const hasValidKeywords = keywords && keywords !== ''
 
   const conditions: string[] = []
   const baseQueryCount = `select count(*) from auth.users`
-  const baseQuerySelect = `select * from auth.users`
 
   if (hasValidKeywords) {
     // [Joshen] Escape single quotes properly
@@ -62,50 +57,15 @@ const getUsersCountSql = ({
   }
 
   const combinedConditions = conditions.map((x) => `(${x})`).join(' and ')
-  const whereClause = conditions.length > 0 ? ` where ${combinedConditions}` : ''
 
-  if (forceExactCount) {
-    return `select (${baseQueryCount}${whereClause}), false as is_estimate;`
-  } else {
-    const selectBaseSql = `${baseQuerySelect}${whereClause}`
-    const countBaseSql = `${baseQueryCount}${whereClause}`
-
-    const escapedSelectSql = selectBaseSql.replaceAll("'", "''")
-
-    const sql = `
-${COUNT_ESTIMATE_SQL}
-
-with approximation as (
-    select reltuples as estimate
-    from pg_class
-    where oid = 'auth.users'::regclass
-)
-select 
-  case 
-    when estimate = -1 then (select pg_temp.count_estimate('${escapedSelectSql}'))::int
-    when estimate > ${THRESHOLD_COUNT} then ${conditions.length > 0 ? `(select pg_temp.count_estimate('${escapedSelectSql}'))::int` : 'estimate::int'}
-    else (${countBaseSql})
-  end as count,
-  estimate = -1 or estimate > ${THRESHOLD_COUNT} as is_estimate
-from approximation;
-`.trim()
-
-    return sql
-  }
+  return `${baseQueryCount}${conditions.length > 0 ? ` where ${combinedConditions}` : ''};`
 }
 
 export async function getUsersCount(
-  {
-    projectRef,
-    connectionString,
-    keywords,
-    filter,
-    providers,
-    forceExactCount,
-  }: UsersCountVariables,
+  { projectRef, connectionString, keywords, filter, providers }: UsersCountVariables,
   signal?: AbortSignal
 ) {
-  const sql = getUsersCountSql({ filter, keywords, providers, forceExactCount })
+  const sql = getUsersCountSql({ filter, keywords, providers })
 
   const { result } = await executeSql(
     {
@@ -118,51 +78,25 @@ export async function getUsersCount(
   )
 
   const count = result?.[0]?.count
-  const isEstimate = result?.[0]?.is_estimate
 
   if (typeof count !== 'number') {
     throw new Error('Error fetching users count')
   }
 
-  return {
-    count,
-    is_estimate: isEstimate ?? true,
-  }
+  return count
 }
 
 export type UsersCountData = Awaited<ReturnType<typeof getUsersCount>>
 export type UsersCountError = ExecuteSqlError
 
 export const useUsersCountQuery = <TData = UsersCountData>(
-  {
-    projectRef,
-    connectionString,
-    keywords,
-    filter,
-    providers,
-    forceExactCount,
-  }: UsersCountVariables,
+  { projectRef, connectionString, keywords, filter, providers }: UsersCountVariables,
   { enabled = true, ...options }: UseQueryOptions<UsersCountData, UsersCountError, TData> = {}
 ) =>
   useQuery<UsersCountData, UsersCountError, TData>(
-    authKeys.usersCount(projectRef, {
-      keywords,
-      filter,
-      providers,
-      forceExactCount,
-    }),
+    authKeys.usersCount(projectRef, { keywords, filter, providers }),
     ({ signal }) =>
-      getUsersCount(
-        {
-          projectRef,
-          connectionString,
-          keywords,
-          filter,
-          providers,
-          forceExactCount,
-        },
-        signal
-      ),
+      getUsersCount({ projectRef, connectionString, keywords, filter, providers }, signal),
     {
       enabled: enabled && typeof projectRef !== 'undefined',
       ...options,

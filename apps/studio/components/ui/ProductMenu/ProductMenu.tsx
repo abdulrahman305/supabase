@@ -10,7 +10,7 @@ interface ProductMenuProps {
 
 const ProductMenu = ({ page, menu }: ProductMenuProps) => {
   return (
-    <div className="flex flex-col space-y-8">
+    <div className="flex flex-col space-y-8 overflow-y-auto">
       <Menu type="pills">
         {menu.map((group, idx) => (
           <div key={group.key || group.title}>

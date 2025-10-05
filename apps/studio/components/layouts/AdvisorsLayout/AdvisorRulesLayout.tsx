@@ -11,8 +11,8 @@ export const AdvisorRulesLayout = ({ children }: PropsWithChildren<{}>) => {
     <DefaultLayout>
       <AdvisorsLayout>
         <PageLayout
-          title="Advisor Settings"
-          subtitle="Disable specific advisor categories or rules"
+          title="Advisor Rules"
+          subtitle="Disable specific advisor categories or rules, or assign them to members for resolution"
           navigationItems={[
             {
               label: 'Security',

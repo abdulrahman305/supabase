@@ -36,7 +36,7 @@ interface GroupProps {
 }
 
 /**
- * @deprecated Use `import { Checkbox_shadcn_ } from "ui"` instead
+ * @deprecated Use ./Checkbox_shadcn_ instead
  */
 function Group({
   id,

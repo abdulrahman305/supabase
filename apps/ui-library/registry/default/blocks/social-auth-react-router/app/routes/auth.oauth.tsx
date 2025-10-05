@@ -4,8 +4,7 @@ import { type LoaderFunctionArgs, redirect } from 'react-router'
 export async function loader({ request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const _next = requestUrl.searchParams.get('next')
-  const next = _next?.startsWith('/') ? _next : '/'
+  const next = requestUrl.searchParams.get('next') || '/'
   if (code) {
     const { supabase, headers } = createClient(request)
 

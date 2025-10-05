@@ -16,23 +16,23 @@ import { useOrganizationCustomerProfileQuery } from 'data/organizations/organiza
 import { useOrganizationCustomerProfileUpdateMutation } from 'data/organizations/organization-customer-profile-update-mutation'
 import { useOrganizationTaxIdQuery } from 'data/organizations/organization-tax-id-query'
 import { useOrganizationTaxIdUpdateMutation } from 'data/organizations/organization-tax-id-update-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { Button, Card, CardFooter, Form_Shadcn_ as Form } from 'ui'
 import {
-  BillingCustomerDataForm,
-  type BillingCustomerDataFormValues,
-} from './BillingCustomerDataForm'
+  useAsyncCheckProjectPermissions,
+  useCheckPermissions,
+} from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { Button, Card, CardFooter, Form_Shadcn_ as Form } from 'ui'
+import { BillingCustomerDataForm } from './BillingCustomerDataForm'
 import { TAX_IDS } from './TaxID.constants'
 import { useBillingCustomerDataForm } from './useBillingCustomerDataForm'
 
 export const BillingCustomerData = () => {
   const { slug } = useParams()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
 
-  const { can: canReadBillingCustomerData, isSuccess: isPermissionsLoaded } =
-    useAsyncCheckPermissions(PermissionAction.BILLING_READ, 'stripe.customer')
-  const { can: canUpdateBillingCustomerData } = useAsyncCheckPermissions(
+  const { isSuccess: isPermissionsLoaded, can: canReadBillingCustomerData } =
+    useAsyncCheckProjectPermissions(PermissionAction.BILLING_READ, 'stripe.customer')
+  const canUpdateBillingCustomerData = useCheckPermissions(
     PermissionAction.BILLING_WRITE,
     'stripe.customer'
   )
@@ -51,14 +51,9 @@ export const BillingCustomerData = () => {
     isSuccess: loadedTaxId,
   } = useOrganizationTaxIdQuery({ slug })
 
-  const initialCustomerData = useMemo<Partial<BillingCustomerDataFormValues>>(
+  const initialCustomerData = useMemo(
     () => ({
-      city: customerProfile?.address?.city ?? undefined,
-      country: customerProfile?.address?.country,
-      line1: customerProfile?.address?.line1,
-      line2: customerProfile?.address?.line2 ?? undefined,
-      postal_code: customerProfile?.address?.postal_code ?? undefined,
-      state: customerProfile?.address?.state ?? undefined,
+      ...customerProfile?.address,
       billing_name: customerProfile?.billing_name,
       tax_id_type: taxId?.type,
       tax_id_value: taxId?.value,
@@ -108,10 +103,7 @@ export const BillingCustomerData = () => {
         <div className="sticky space-y-2 top-12 pr-3">
           <p className="text-foreground text-base m-0">Billing Address &amp; Tax ID</p>
           <p className="text-sm text-foreground-light m-0">
-            Changes will be reflected in every upcoming invoice, past invoices are not affected
-          </p>
-          <p className="text-sm text-foreground-light m-0">
-            A Tax ID is only required for registered businesses.
+            This will be reflected in every upcoming invoice, past invoices are not affected
           </p>
         </div>
       </ScaffoldSectionDetail>
@@ -119,7 +111,7 @@ export const BillingCustomerData = () => {
         {selectedOrganization?.managed_by !== undefined &&
         selectedOrganization?.managed_by !== 'supabase' ? (
           <PartnerManagedResource
-            managedBy={selectedOrganization?.managed_by}
+            partner={selectedOrganization?.managed_by}
             resource="Billing Addresses"
             cta={{
               installationId: selectedOrganization?.partner_id,

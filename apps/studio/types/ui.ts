@@ -1,5 +1,4 @@
 import type { PostgresColumn } from '@supabase/postgres-meta'
-import { ProjectLogStatsVariables } from 'data/analytics/project-log-stats-query'
 import { PlanId } from 'data/subscriptions/types'
 
 export interface Notification {
@@ -18,7 +17,7 @@ interface NotificationMetadata {
 }
 
 export interface ChartIntervals {
-  key: Exclude<ProjectLogStatsVariables['interval'], undefined>
+  key: 'minutely' | 'hourly' | 'daily' | '5min' | '15min' | '1hr' | '1day' | '7day'
   label: string
   startValue: number
   startUnit: 'minute' | 'hour' | 'day'

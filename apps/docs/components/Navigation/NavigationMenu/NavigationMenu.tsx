@@ -1,9 +1,9 @@
 import { memo } from 'react'
 
 import type { NavMenuSection } from '../Navigation.types'
-import { useCloseMenuOnRouteChange } from './NavigationMenu.utils'
 import NavigationMenuGuideList from './NavigationMenuGuideList'
 import NavigationMenuRefList from './NavigationMenuRefList'
+import { useCloseMenuOnRouteChange } from './NavigationMenu.utils'
 
 enum MenuId {
   GettingStarted = 'gettingstarted',
@@ -251,8 +251,6 @@ function getMenuById(id: MenuId) {
 }
 
 function getMenuElement(menu: Menu | undefined, props?: any) {
-  if (!menu) return null
-
   const menuType = menu?.type
   switch (menuType) {
     case 'guide':
@@ -262,7 +260,7 @@ function getMenuElement(menu: Menu | undefined, props?: any) {
         <NavigationMenuRefList
           id={menu.id}
           basePath={menu.path}
-          commonSectionsFile={menu.commonSectionsFile || ''}
+          commonSectionsFile={menu.commonSectionsFile}
         />
       )
     default:
@@ -285,5 +283,5 @@ const NavigationMenu = ({
   return getMenuElement(menu, { additionalNavItems })
 }
 
-export { getMenuById, MenuId }
+export { MenuId, getMenuById }
 export default memo(NavigationMenu)

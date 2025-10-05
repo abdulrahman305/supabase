@@ -7,17 +7,17 @@ import { toast } from 'sonner'
 
 import { useParams } from 'common'
 import { subscriptionHasHipaaAddon } from 'components/interfaces/Billing/Subscription/Subscription.utils'
-import { UpgradePlanButton } from 'components/ui/UpgradePlanButton'
 import { useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
+import { useReadReplicasQuery } from 'data/read-replicas/replicas-query'
 import { useOrgSubscriptionQuery } from 'data/subscriptions/org-subscription-query'
 import { useProjectAddonRemoveMutation } from 'data/subscriptions/project-addon-remove-mutation'
 import { useProjectAddonUpdateMutation } from 'data/subscriptions/project-addon-update-mutation'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
 import type { AddonVariantId } from 'data/subscriptions/types'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { BASE_PATH, DOCS_URL } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
+import { BASE_PATH } from 'lib/constants'
 import { formatCurrency } from 'lib/helpers'
 import { useAddonsPagePanel } from 'state/addons-page'
 import {
@@ -29,6 +29,7 @@ import {
   CriticalIcon,
   Radio,
   SidePanel,
+  WarningIcon,
   cn,
 } from 'ui'
 
@@ -55,17 +56,14 @@ const PITR_CATEGORY_OPTIONS: {
 const PITRSidePanel = () => {
   const { ref: projectRef } = useParams()
   const { resolvedTheme } = useTheme()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: organization } = useSelectedOrganizationQuery()
+  const project = useSelectedProject()
+  const organization = useSelectedOrganization()
   const { data: projectSettings } = useProjectSettingsV2Query({ projectRef })
 
   const [selectedCategory, setSelectedCategory] = useState<'on' | 'off'>('off')
   const [selectedOption, setSelectedOption] = useState<string>('pitr_0')
 
-  const { can: canUpdatePitr } = useAsyncCheckPermissions(
-    PermissionAction.BILLING_WRITE,
-    'stripe.subscriptions'
-  )
+  const canUpdatePitr = useCheckPermissions(PermissionAction.BILLING_WRITE, 'stripe.subscriptions')
   const isBranchingEnabled =
     project?.is_branch_enabled === true || project?.parent_project_ref !== undefined
 
@@ -168,7 +166,7 @@ const PITRSidePanel = () => {
           <h4>Point in Time Recovery</h4>
           <Button asChild type="default" icon={<ExternalLink strokeWidth={1.5} />}>
             <Link
-              href={`${DOCS_URL}/guides/platform/backups#point-in-time-recovery`}
+              href="https://supabase.com/docs/guides/platform/backups#point-in-time-recovery"
               target="_blank"
               rel="noreferrer"
             >
@@ -272,7 +270,15 @@ const PITRSidePanel = () => {
                   variant="info"
                   className="mb-4"
                   title="Changing your Point-In-Time-Recovery is only available on the Pro Plan"
-                  actions={<UpgradePlanButton source="pitrSidePanel" plan="Pro" />}
+                  actions={
+                    <Button asChild type="default">
+                      <Link
+                        href={`/org/${organization?.slug}/billing?panel=subscriptionPlan&source=pitrSidePanel`}
+                      >
+                        View available plans
+                      </Link>
+                    </Button>
+                  }
                 >
                   Upgrade your plan to change PITR for your project
                 </Alert>

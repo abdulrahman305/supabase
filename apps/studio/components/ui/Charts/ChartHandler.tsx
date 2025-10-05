@@ -33,7 +33,6 @@ interface ChartHandlerProps {
   isLoading?: boolean
   format?: string
   highlightedValue?: string | number
-  syncId?: string
 }
 
 /**
@@ -60,8 +59,6 @@ const ChartHandler = ({
   isLoading,
   format,
   highlightedValue,
-  syncId,
-  ...otherProps
 }: PropsWithChildren<ChartHandlerProps>) => {
   const router = useRouter()
   const { ref } = router.query
@@ -171,6 +168,7 @@ const ChartHandler = ({
       </div>
       {chartStyle === 'bar' ? (
         <BarChart
+          YAxisProps={{ width: 1 }}
           data={(chartData?.data ?? []) as any}
           format={format || chartData?.format}
           xAxisKey={'period_start'}
@@ -178,8 +176,6 @@ const ChartHandler = ({
           highlightedValue={_highlightedValue}
           title={label}
           customDateFormat={customDateFormat}
-          syncId={syncId}
-          {...otherProps}
         />
       ) : (
         <AreaChart
@@ -190,8 +186,6 @@ const ChartHandler = ({
           highlightedValue={_highlightedValue}
           title={label}
           customDateFormat={customDateFormat}
-          syncId={syncId}
-          {...otherProps}
         />
       )}
     </div>

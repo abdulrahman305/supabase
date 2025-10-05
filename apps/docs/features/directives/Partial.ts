@@ -65,7 +65,6 @@ function toFilePath(node: MdxJsxFlowElement) {
   if (typeof path !== 'string' || !isMdFile(path)) {
     throw new Error('Invalid $Partial path: path must end with .mdx or .md')
   }
-
   const filePath = join(PARTIALS_DIRECTORY, path)
   if (!filePath.startsWith(PARTIALS_DIRECTORY)) {
     throw new Error(`Invalid $Partial path: Path must be inside ${PARTIALS_DIRECTORY}`)

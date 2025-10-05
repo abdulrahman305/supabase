@@ -18,8 +18,11 @@ import { FormSection, FormSectionContent } from 'components/ui/Forms/FormSection
 import NoPermission from 'components/ui/NoPermission'
 import { useOrganizationCustomerProfileQuery } from 'data/organizations/organization-customer-profile-query'
 import { useOrganizationUpdateMutation } from 'data/organizations/organization-update-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import {
+  useAsyncCheckProjectPermissions,
+  useCheckPermissions,
+} from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { FormMessage_Shadcn_, Input_Shadcn_ } from 'ui'
 import { FormItemLayout } from 'ui-patterns/form/FormItemLayout/FormItemLayout'
 import { InfoTooltip } from 'ui-patterns/info-tooltip'
@@ -38,18 +41,13 @@ const formSchema = z.object({
 
 const BillingEmail = () => {
   const { slug } = useParams()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
 
   const { name, billing_email } = selectedOrganization ?? {}
 
-  const { can: canReadBillingEmail, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
-    PermissionAction.BILLING_READ,
-    'stripe.subscriptions'
-  )
-  const { can: canUpdateOrganization } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'organizations'
-  )
+  const canUpdateOrganization = useCheckPermissions(PermissionAction.UPDATE, 'organizations')
+  const { isSuccess: isPermissionsLoaded, can: canReadBillingEmail } =
+    useAsyncCheckProjectPermissions(PermissionAction.BILLING_READ, 'stripe.subscriptions')
 
   const { data: billingCustomer, isLoading: loadingBillingCustomer } =
     useOrganizationCustomerProfileQuery({ slug }, { enabled: canReadBillingEmail })
@@ -93,7 +91,7 @@ const BillingEmail = () => {
   useEffect(() => {
     if (billingCustomer) {
       form.reset({
-        billingEmail: billing_email ?? '',
+        billingEmail: billing_email,
         additionalBillingEmails: billingCustomer.additional_emails ?? [],
       })
     }

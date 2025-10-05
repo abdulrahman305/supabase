@@ -19,18 +19,17 @@ import {
 } from 'ui'
 
 import { CommandGroup } from '@ui/components/shadcn/ui/command'
+import { CriticalIcon, WarningIcon } from 'ui'
 import { useOrganizationsQuery } from 'data/organizations/organizations-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
 import { useNotificationsStateSnapshot } from 'state/notifications'
-import { CriticalIcon, WarningIcon } from 'ui'
 
 export const NotificationsFilter = ({ activeTab }: { activeTab: 'inbox' | 'archived' }) => {
   const [open, setOpen] = useState(false)
   const snap = useNotificationsStateSnapshot()
 
   const { data: organizations } = useOrganizationsQuery()
-  const { data } = useProjectsQuery()
-  const projects = data?.projects ?? []
+  const { data: projects } = useProjectsQuery()
 
   return (
     <Popover_Shadcn_ modal={true} open={open} onOpenChange={setOpen}>

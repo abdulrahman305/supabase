@@ -27,7 +27,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLButtonElement>, 'size'> {
 }
 
 /**
- * @deprecated Use `import { Switch } from "ui"` instead
+ * @deprecated Use ./Switch instead
  */
 function Toggle({
   disabled,

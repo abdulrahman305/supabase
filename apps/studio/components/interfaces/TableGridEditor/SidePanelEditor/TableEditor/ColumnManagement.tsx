@@ -13,8 +13,7 @@ import { useParams } from 'common'
 import InformationBox from 'components/ui/InformationBox'
 import type { EnumeratedType } from 'data/enumerated-types/enumerated-types-query'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { DOCS_URL } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import {
   AlertDescription_Shadcn_,
   AlertTitle_Shadcn_,
@@ -59,7 +58,7 @@ const ColumnManagement = ({
   onUpdateFkRelations,
 }: ColumnManagementProps) => {
   const { ref: projectRef } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
 
   const [open, setOpen] = useState(false)
   const [selectedColumn, setSelectedColumn] = useState<ColumnField>()
@@ -145,7 +144,7 @@ const ColumnManagement = ({
           <div className="flex items-center gap-x-2">
             <Button asChild type="default" icon={<ExternalLink size={12} strokeWidth={2} />}>
               <a
-                href={`${DOCS_URL}/guides/database/tables#data-types`}
+                href="https://supabase.com/docs/guides/database/tables#data-types"
                 target="_blank"
                 rel="noreferrer"
               >

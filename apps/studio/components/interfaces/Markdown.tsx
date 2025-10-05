@@ -1,4 +1,4 @@
-import { InlineLink } from 'components/ui/InlineLink'
+import Link from 'next/link'
 import { ReactMarkdown, ReactMarkdownOptions } from 'react-markdown/lib/react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -16,7 +16,17 @@ const Markdown = ({ className, content = '', extLinks = false, ...props }: Props
       remarkPlugins={[remarkGfm]}
       components={{
         h3: ({ children }) => <h3 className="mb-1">{children}</h3>,
-        a: ({ href, children }) => <InlineLink href={href ?? '/'}>{children}</InlineLink>,
+        a: ({ href, children }) => {
+          if (extLinks) {
+            return (
+              <a href={href} target="_blank" rel="noreferrer noopener">
+                {children}
+              </a>
+            )
+          } else {
+            return <Link href={href ?? '/'}>{children}</Link>
+          }
+        },
       }}
       {...props}
       className={cn('prose text-sm', className)}

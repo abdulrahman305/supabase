@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       throw new UserError('Missing request data')
     }
 
-    const { query, useAlternateSearchIndex } = requestData
+    const { query } = requestData
 
     if (!query) {
       throw new UserError('Missing query in request data')
@@ -76,11 +76,7 @@ Deno.serve(async (req) => {
     }
 
     const [{ embedding }] = embeddingResponse.data.data
-
-    const searchFunction = useAlternateSearchIndex
-      ? 'docs_search_embeddings_nimbus'
-      : 'docs_search_embeddings'
-    const { error: matchError, data: pages } = await supabaseClient.rpc(searchFunction, {
+    const { error: matchError, data: pages } = await supabaseClient.rpc('docs_search_embeddings', {
       embedding,
       match_threshold: 0.78,
     })

@@ -1,6 +1,6 @@
 import CardButton from 'components/ui/CardButton'
 
-export const ShimmeringCard = () => {
+const ShimmeringCard = () => {
   return (
     <CardButton
       className="h-44 !px-0 pt-5 pb-0"
@@ -13,3 +13,5 @@ export const ShimmeringCard = () => {
     />
   )
 }
+
+export default ShimmeringCard

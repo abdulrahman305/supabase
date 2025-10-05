@@ -20,33 +20,23 @@ export type FDWCreateVariables = {
   formState: {
     [k: string]: string
   }
-  // If mode is skip, the wrapper will skip the last step, binding the schema/tables to foreign data. This could be done later.
-  mode: 'tables' | 'schema' | 'skip'
   tables: any[]
-  sourceSchema: string
-  targetSchema: string
 }
 
 export function getCreateFDWSql({
   wrapperMeta,
   formState,
-  mode,
   tables,
-  sourceSchema,
-  targetSchema,
-}: Pick<
-  FDWCreateVariables,
-  'wrapperMeta' | 'formState' | 'tables' | 'mode' | 'sourceSchema' | 'targetSchema'
->) {
+}: Pick<FDWCreateVariables, 'wrapperMeta' | 'formState' | 'tables'>) {
   const newSchemasSql = tables
     .filter((table) => table.is_new_schema)
     .map((table) => /* SQL */ `create schema if not exists ${table.schema_name};`)
     .join('\n')
 
   const createWrapperSql = /* SQL */ `
-    create foreign data wrapper "${formState.wrapper_name}"
-    handler "${wrapperMeta.handlerName}"
-    validator "${wrapperMeta.validatorName}";
+    create foreign data wrapper ${formState.wrapper_name}
+    handler ${wrapperMeta.handlerName}
+    validator ${wrapperMeta.validatorName};
   `
 
   const encryptedOptions = wrapperMeta.server.options.filter((option) => option.encrypted)
@@ -113,14 +103,10 @@ export function getCreateFDWSql({
 
   const createEncryptedKeysSql = createEncryptedKeysSqlArray.join('\n')
 
-  const encryptedOptionsSqlArray = encryptedOptions
-    .filter((option) => formState[option.name])
-    .map((option) => `${option.name} ''%s''`)
-  const unencryptedOptionsSqlArray = unencryptedOptions
-    .filter((option) => formState[option.name])
-    // wrap all option names in double quotes to handle dots
-    // wrap all options values in single quotes, replace single quotes with 4 single quotes to escape them in SQL past the execute format
-    .map((option) => `"${option.name}" ''${formState[option.name].replace(/'/g, `''''`)}''`)
+  const encryptedOptionsSqlArray = encryptedOptions.map((option) => `${option.name} ''%s''`)
+  const unencryptedOptionsSqlArray = unencryptedOptions.map(
+    (option) => `${option.name} ''${formState[option.name]}''`
+  )
   const optionsSqlArray = [...encryptedOptionsSqlArray, ...unencryptedOptionsSqlArray].join(',')
 
   const createServerSql = /* SQL */ `
@@ -172,11 +158,12 @@ export function getCreateFDWSql({
         .join('\n')}
     
       execute format(
-        E'create server "${formState.server_name}" foreign data wrapper "${formState.wrapper_name}" options (${optionsSqlArray});',
-        ${encryptedOptions
-          .filter((option) => formState[option.name])
-          .map((option) => `v_${option.name}`)
-          .join(',\n')}
+        E'create server ${formState.server_name}\\n'
+        '   foreign data wrapper ${formState.wrapper_name}\\n'
+        '   options (\\n'
+        '     ${optionsSqlArray}\\n'
+        '   );',
+        ${encryptedOptions.map((option) => `v_${option.name}`).join(',\n')}
       );
     end $$;
   `
@@ -208,10 +195,6 @@ export function getCreateFDWSql({
     })
     .join('\n\n')
 
-  const importForeignSchemaSql = /* SQL */ `
-  import foreign schema "${sourceSchema}" from server ${formState.server_name} into ${targetSchema} options (strict 'true');
-`
-
   const sql = /* SQL */ `
     ${newSchemasSql}
 
@@ -221,21 +204,25 @@ export function getCreateFDWSql({
 
     ${createServerSql}
 
-    ${mode === 'tables' ? createTablesSql : ''}
-
-    ${mode === 'schema' ? importForeignSchemaSql : ''}
+    ${createTablesSql}
   `
 
   return sql
 }
 
-export async function createFDW({ projectRef, connectionString, ...rest }: FDWCreateVariables) {
-  const sql = wrapWithTransaction(getCreateFDWSql(rest))
+export async function createFDW({
+  projectRef,
+  connectionString,
+  wrapperMeta,
+  formState,
+  tables,
+}: FDWCreateVariables) {
+  const sql = wrapWithTransaction(getCreateFDWSql({ wrapperMeta, formState, tables }))
   const { result } = await executeSql({ projectRef, connectionString, sql })
   return result
 }
 
-export type FDWCreateData = Awaited<ReturnType<typeof createFDW>>
+type FDWCreateData = Awaited<ReturnType<typeof createFDW>>
 
 export const useFDWCreateMutation = ({
   onSuccess,

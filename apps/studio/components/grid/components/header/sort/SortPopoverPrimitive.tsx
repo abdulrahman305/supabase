@@ -74,6 +74,7 @@ export const SortPopoverPrimitive = ({
   const columns = useMemo(() => {
     if (!snap?.table?.columns) return []
     return snap.table.columns.filter((x) => {
+      if (x.dataType === 'json' || x.dataType === 'jsonb') return false
       const found = localSorts.find((y) => y.column == x.name)
       return !found
     })
@@ -81,18 +82,7 @@ export const SortPopoverPrimitive = ({
 
   // Format the columns for the dropdown
   const dropdownOptions = useMemo(() => {
-    return (
-      columns?.map((x) => ({
-        value: x.name,
-        label: x.name,
-        postLabel: x.dataType,
-        disabled: x.dataType === 'json' || x.dataType === 'jsonb',
-        tooltip:
-          x.dataType === 'json' || x.dataType === 'jsonb'
-            ? 'Sorting on JSON-based columns is currently not supported'
-            : '',
-      })) || []
-    )
+    return columns?.map((x) => ({ value: x.name, label: x.name })) || []
   }, [columns])
 
   // Add a new sort
@@ -195,7 +185,7 @@ export const SortPopoverPrimitive = ({
       ))}
       {localSorts.length === 0 && (
         <div className="space-y-1 px-3">
-          <h5 className="text-xs text-foreground-light">No sorts applied to this view</h5>
+          <h5 className="text-sm text-foreground-light">No sorts applied to this view</h5>
           <p className="text-xs text-foreground-lighter">Add a column below to sort the view</p>
         </div>
       )}
@@ -211,7 +201,7 @@ export const SortPopoverPrimitive = ({
           >
             <Button
               asChild
-              type="dashed"
+              type="text"
               iconRight={<ChevronDown size="14" className="text-foreground-light" />}
               className="sb-grid-dropdown__item-trigger"
               data-testid="table-editor-pick-column-to-sort-button"

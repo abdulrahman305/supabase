@@ -31,7 +31,7 @@ const Row = ({
   </div>
 )
 
-export const GetStartedHero = () => {
+const GetStartedHero = () => {
   return (
     <div className="w-full max-w-[500px] h-full pb-10 lg:pb-0 relative pointer-events-none">
       <div
@@ -105,3 +105,5 @@ export const GetStartedHero = () => {
     </div>
   )
 }
+
+export default GetStartedHero

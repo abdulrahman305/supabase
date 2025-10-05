@@ -25,7 +25,7 @@ import Supabase
 
 let supabase = SupabaseClient(
   supabaseURL: URL(string: "${projectKeys.apiUrl ?? 'your-project-url'}")!,
-  supabaseKey: "${projectKeys.publishableKey ?? '<prefer publishable key for native apps instead of anon key>'}"
+  supabaseKey: "${projectKeys.anonKey ?? 'your-anon-key'}"
 )
         `}
         </SimpleCodeBlock>

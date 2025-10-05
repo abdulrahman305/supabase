@@ -17,8 +17,7 @@
     "tailwindcss-radix": "^2.0.0"
   },
   "devDependencies": {
-    "tailwindcss": "catalog:",
-    "tailwindcss-animate": "^1.0.6",
-    "typescript": "catalog:"
+    "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.6"
   }
 }

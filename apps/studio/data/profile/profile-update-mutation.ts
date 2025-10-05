@@ -8,23 +8,11 @@ import { profileKeys } from './keys'
 export type ProfileUpdateVariables = {
   firstName: string
   lastName: string
-  username: string
-  primaryEmail: string
 }
 
-export async function updateProfile({
-  firstName,
-  lastName,
-  username,
-  primaryEmail,
-}: ProfileUpdateVariables) {
+export async function updateProfile({ firstName, lastName }: ProfileUpdateVariables) {
   const { data, error } = await patch('/platform/profile', {
-    body: {
-      first_name: firstName,
-      last_name: lastName,
-      username: username,
-      primary_email: primaryEmail,
-    },
+    body: { first_name: firstName, last_name: lastName },
   })
 
   if (error) handleError(error)

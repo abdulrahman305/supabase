@@ -2,9 +2,12 @@ import type { ProductMenuGroup } from 'components/ui/ProductMenu/ProductMenu.typ
 import type { Project } from 'data/projects/project-detail-query'
 import { IS_PLATFORM } from 'lib/constants'
 
-export const generateRealtimeMenu = (project: Project): ProductMenuGroup[] => {
+export const generateRealtimeMenu = (
+  project: Project,
+  flags?: { enableRealtimeSettings: boolean }
+): ProductMenuGroup[] => {
   const ref = project?.ref ?? 'default'
-  const showRealtimeSettings = IS_PLATFORM
+  const { enableRealtimeSettings } = flags || {}
 
   return [
     {
@@ -27,7 +30,7 @@ export const generateRealtimeMenu = (project: Project): ProductMenuGroup[] => {
           url: `/project/${ref}/realtime/policies`,
           items: [],
         },
-        ...(showRealtimeSettings
+        ...(IS_PLATFORM && enableRealtimeSettings
           ? [
               {
                 name: 'Settings',

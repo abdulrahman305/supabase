@@ -4,8 +4,10 @@
 	import { invalidate } from '$app/navigation'
 	import { onMount } from 'svelte'
 
-	let { data, children } = $props()
-	let { supabase, session } = $derived(data)
+	export let data
+
+	let { supabase, session } = data
+	$: ({ supabase, session } = data)
 
 	onMount(() => {
 		const { data } = supabase.auth.onAuthStateChange((event, _session) => {
@@ -23,5 +25,5 @@
 </svelte:head>
 
 <div class="container" style="padding: 50px 0 100px 0">
-	{@render children()}
+	<slot />
 </div>

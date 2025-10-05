@@ -15,8 +15,7 @@ import { useUserSendMagicLinkMutation } from 'data/auth/user-send-magic-link-mut
 import { useUserSendOTPMutation } from 'data/auth/user-send-otp-mutation'
 import { useUserUpdateMutation } from 'data/auth/user-update-mutation'
 import { User } from 'data/auth/users-infinite-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { BASE_PATH } from 'lib/constants'
 import { timeout } from 'lib/helpers'
 import { Button, cn, Separator } from 'ui'
@@ -26,7 +25,7 @@ import { PROVIDERS_SCHEMAS } from '../AuthProvidersFormValidation'
 import { BanUserModal } from './BanUserModal'
 import { DeleteUserModal } from './DeleteUserModal'
 import { UserHeader } from './UserHeader'
-import { PANEL_PADDING } from './Users.constants'
+import { PANEL_PADDING } from './UserPanel'
 import { providerIconMap } from './Users.utils'
 
 const DATE_FORMAT = 'DD MMM, YYYY HH:mm'
@@ -46,10 +45,6 @@ export const UserOverview = ({ user, onDeleteSuccess }: UserOverviewProps) => {
   const isPhoneAuth = user.phone !== null
   const isBanned = user.banned_until !== null
 
-  const { authenticationSignInProviders } = useIsFeatureEnabled([
-    'authentication:sign_in_providers',
-  ])
-
   const providers = ((user.raw_app_meta_data?.providers as string[]) ?? []).map(
     (provider: string) => {
       return {
@@ -64,21 +59,12 @@ export const UserOverview = ({ user, onDeleteSuccess }: UserOverviewProps) => {
     }
   )
 
-  const { can: canUpdateUser } = useAsyncCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
-  const { can: canSendMagicLink } = useAsyncCheckPermissions(
-    PermissionAction.AUTH_EXECUTE,
-    'send_magic_link'
-  )
-  const { can: canSendRecovery } = useAsyncCheckPermissions(
-    PermissionAction.AUTH_EXECUTE,
-    'send_recovery'
-  )
-  const { can: canSendOtp } = useAsyncCheckPermissions(PermissionAction.AUTH_EXECUTE, 'send_otp')
-  const { can: canRemoveUser } = useAsyncCheckPermissions(
-    PermissionAction.TENANT_SQL_DELETE,
-    'auth.users'
-  )
-  const { can: canRemoveMFAFactors } = useAsyncCheckPermissions(
+  const canUpdateUser = useCheckPermissions(PermissionAction.AUTH_EXECUTE, '*')
+  const canSendMagicLink = useCheckPermissions(PermissionAction.AUTH_EXECUTE, 'send_magic_link')
+  const canSendRecovery = useCheckPermissions(PermissionAction.AUTH_EXECUTE, 'send_recovery')
+  const canSendOtp = useCheckPermissions(PermissionAction.AUTH_EXECUTE, 'send_otp')
+  const canRemoveUser = useCheckPermissions(PermissionAction.TENANT_SQL_DELETE, 'auth.users')
+  const canRemoveMFAFactors = useCheckPermissions(
     PermissionAction.TENANT_SQL_DELETE,
     'auth.mfa_factors'
   )
@@ -240,15 +226,13 @@ export const UserOverview = ({ user, onDeleteSuccess }: UserOverviewProps) => {
                     Signed in with a {providerName} account via{' '}
                     {providerName === 'SAML' ? 'SSO' : 'OAuth'}
                   </p>
-                  {authenticationSignInProviders && (
-                    <Button asChild type="default" className="mt-2">
-                      <Link
-                        href={`/project/${projectRef}/auth/providers?provider=${provider.name === 'SAML' ? 'SAML 2.0' : provider.name}`}
-                      >
-                        Configure {providerName} provider
-                      </Link>
-                    </Button>
-                  )}
+                  <Button asChild type="default" className="mt-2">
+                    <Link
+                      href={`/project/${projectRef}/auth/providers?provider=${provider.name === 'SAML' ? 'SAML 2.0' : provider.name}`}
+                    >
+                      Configure {providerName} provider
+                    </Link>
+                  </Button>
                 </div>
                 {isActive ? (
                   <div className="flex items-center gap-1 rounded-full border border-brand-400 bg-brand-200 py-1 px-1 text-xs text-brand">

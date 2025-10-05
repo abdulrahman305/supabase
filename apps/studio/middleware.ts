@@ -7,26 +7,20 @@ export const config = {
 
 // [Joshen] Return 404 for all next.js API endpoints EXCEPT the ones we use in hosted:
 const HOSTED_SUPPORTED_API_URLS = [
-  '/ai/sql/generate-v4',
-  '/ai/code/complete',
-  '/ai/sql/cron-v2',
-  '/ai/sql/title-v2',
+  '/ai/sql/generate-v3',
+  '/ai/edge-function/complete',
   '/ai/onboarding/design',
-  '/ai/feedback/classify',
-  '/ai/docs',
+  '/ai/sql/complete',
+  '/ai/sql/title',
+  '/ai/sql/cron',
   '/get-ip-address',
   '/get-utc-time',
-  '/get-deployment-commit',
-  '/check-cname',
   '/edge-functions/test',
   '/edge-functions/body',
 ]
 
 export function middleware(request: NextRequest) {
-  if (
-    IS_PLATFORM &&
-    !HOSTED_SUPPORTED_API_URLS.some((url) => request.nextUrl.pathname.endsWith(url))
-  ) {
+  if (IS_PLATFORM && !HOSTED_SUPPORTED_API_URLS.some((url) => request.url.endsWith(url))) {
     return Response.json(
       { success: false, message: 'Endpoint not supported on hosted' },
       { status: 404 }

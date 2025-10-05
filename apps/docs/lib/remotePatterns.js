@@ -1,4 +1,4 @@
-export default [
+module.exports = [
   {
     protocol: 'https',
     hostname: 'avatars.githubusercontent.com',

@@ -25,15 +25,17 @@ export const ColumnRenderer: Column<LogData, unknown>[] = [
           <div
             className={cn(
               'flex justify-center items-center min-w-[24px]',
-              isErrorLog(data.row) ? 'text-warning' : 'text-green-900'
+              isErrorLog(data.row) ? 'text-warning-600' : 'text-green-900'
             )}
           >
             {ICONS[type]}
           </div>
-          <span className={cn('font-mono', isErrorLog(data.row) ? '!text-warning' : '')}>
+          <span className={cn('font-mono', isErrorLog(data.row) ? '!text-warning-600' : '')}>
             {new Date(data.row.timestamp).toISOString()}
           </span>
-          <span className={cn('truncate font-mono', isErrorLog(data.row) ? '!text-warning' : '')}>
+          <span
+            className={cn('truncate font-mono', isErrorLog(data.row) ? '!text-warning-600' : '')}
+          >
             {JSON.stringify(data.row.metadata)}
           </span>
         </RowLayout>

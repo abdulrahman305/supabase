@@ -1,18 +1,12 @@
-import { ExternalLink } from 'lucide-react'
-
 import {
   ScaffoldSection,
   ScaffoldSectionContent,
   ScaffoldSectionDetail,
 } from 'components/layouts/Scaffold'
-import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { ExternalLink } from 'lucide-react'
 import { Button } from 'ui'
 
-export const HIPAA = () => {
-  const { data: organization } = useSelectedOrganizationQuery()
-  const { mutate: sendEvent } = useSendEventMutation()
-
+const HIPAA = () => {
   return (
     <>
       <ScaffoldSection>
@@ -35,24 +29,16 @@ export const HIPAA = () => {
         </ScaffoldSectionDetail>
         <ScaffoldSectionContent>
           <div className="flex items-center justify-center h-full">
-            <Button asChild type="default" iconRight={<ExternalLink />}>
-              <a
-                href="https://forms.supabase.com/hipaa2"
-                target="_blank"
-                rel="noreferrer noopener"
-                onClick={() =>
-                  sendEvent({
-                    action: 'hipaa_request_button_clicked',
-                    groups: { organization: organization?.slug ?? 'Unknown' },
-                  })
-                }
-              >
+            <a href="https://forms.supabase.com/hipaa2" target="_blank" rel="noreferrer noopener">
+              <Button type="default" iconRight={<ExternalLink />}>
                 Request HIPAA
-              </a>
-            </Button>
+              </Button>
+            </a>
           </div>
         </ScaffoldSectionContent>
       </ScaffoldSection>
     </>
   )
 }
+
+export default HIPAA

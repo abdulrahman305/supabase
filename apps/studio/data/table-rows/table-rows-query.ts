@@ -35,9 +35,7 @@ export interface GetTableRowsArgs {
 const getDefaultOrderByColumns = (table: SupaTable) => {
   const primaryKeyColumns = table.columns.filter((col) => col?.isPrimaryKey).map((col) => col.name)
   if (primaryKeyColumns.length === 0) {
-    const eligibleColumnsForSorting = table.columns.filter((x) => !x.dataType.includes('json'))
-    if (eligibleColumnsForSorting.length > 0) return [eligibleColumnsForSorting[0]?.name]
-    else return []
+    return [table.columns[0]?.name]
   } else {
     return primaryKeyColumns
   }
@@ -56,8 +54,7 @@ export async function executeWithRetry<T>(
     try {
       return await fn()
     } catch (error: any) {
-      // Our custom ResponseError's use 'code' instead of 'status'
-      if ((error?.status ?? error?.code) === 429 && attempt < maxRetries) {
+      if (error?.status === 429 && attempt < maxRetries) {
         // Get retry delay from headers or use exponential backoff (1s, then 2s, then 4s)
         const retryAfter = error.headers?.get('retry-after')
         const delayMs = retryAfter ? parseInt(retryAfter) * 1000 : baseDelay * Math.pow(2, attempt)
@@ -70,15 +67,35 @@ export async function executeWithRetry<T>(
   throw new Error('Max retries reached without success')
 }
 
-export const getAllTableRowsSql = ({
+// TODO: fetchAllTableRows is used for CSV export, but since it doesn't actually truncate anything, (compare to getTableRows)
+// this is not suitable and will cause crashes on the pg-meta side given big tables
+// (either when the number of rows exceeds Blob size or if the columns in the rows are too large).
+// We should handle those errors gracefully, maybe adding a hint to the user about how to extract
+// the CSV to their machine via a direct command line connection (e.g., pg_dump), which will be much more
+// reliable for large data extraction.
+export const fetchAllTableRows = async ({
+  projectRef,
+  connectionString,
   table,
   filters = [],
   sorts = [],
+  roleImpersonationState,
+  progressCallback,
 }: {
+  projectRef: string
+  connectionString?: string | null
   table: SupaTable
   filters?: Filter[]
   sorts?: Sort[]
+  roleImpersonationState?: RoleImpersonationState
+  progressCallback?: (value: number) => void
 }) => {
+  if (IS_PLATFORM && !connectionString) {
+    console.error('Connection string is required')
+    return []
+  }
+
+  const rows: any[] = []
   const query = new Query()
 
   const arrayBasedColumns = table.columns
@@ -111,40 +128,6 @@ export const getAllTableRowsSql = ({
       queryChains = queryChains.order(sort.table, sort.column, sort.ascending, sort.nullsFirst)
     })
   }
-
-  return queryChains
-}
-
-// TODO: fetchAllTableRows is used for CSV export, but since it doesn't actually truncate anything, (compare to getTableRows)
-// this is not suitable and will cause crashes on the pg-meta side given big tables
-// (either when the number of rows exceeds Blob size or if the columns in the rows are too large).
-// We should handle those errors gracefully, maybe adding a hint to the user about how to extract
-// the CSV to their machine via a direct command line connection (e.g., pg_dump), which will be much more
-// reliable for large data extraction.
-export const fetchAllTableRows = async ({
-  projectRef,
-  connectionString,
-  table,
-  filters = [],
-  sorts = [],
-  roleImpersonationState,
-  progressCallback,
-}: {
-  projectRef: string
-  connectionString?: string | null
-  table: SupaTable
-  filters?: Filter[]
-  sorts?: Sort[]
-  roleImpersonationState?: RoleImpersonationState
-  progressCallback?: (value: number) => void
-}) => {
-  if (IS_PLATFORM && !connectionString) {
-    console.error('Connection string is required')
-    return []
-  }
-
-  const rows: any[] = []
-  const queryChains = getAllTableRowsSql({ table, sorts, filters })
 
   const rowsPerPage = 500
   const THROTTLE_DELAY = 500
@@ -239,7 +222,9 @@ export async function getTableRows(
 
     return { rows }
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : 'Unknown error')
+    throw new Error(
+      `Error fetching table rows: ${error instanceof Error ? error.message : 'Unknown error'}`
+    )
   }
 }
 

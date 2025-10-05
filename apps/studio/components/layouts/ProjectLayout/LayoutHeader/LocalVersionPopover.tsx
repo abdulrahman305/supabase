@@ -3,7 +3,6 @@ import dayjs from 'dayjs'
 import { DocsButton } from 'components/ui/DocsButton'
 import { InlineLink } from 'components/ui/InlineLink'
 import { useCLIReleaseVersionQuery } from 'data/misc/cli-release-version-query'
-import { DOCS_URL } from 'lib/constants'
 import {
   Badge,
   Button,
@@ -135,9 +134,7 @@ export const LocalVersionPopover = () => {
                   <p className="text-sm">
                     Supabase CLI releases follows a two-week schedule, with stable updates available
                     through the{' '}
-                    <InlineLink
-                      href={`${DOCS_URL}/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux#updating-the-supabase-cli`}
-                    >
+                    <InlineLink href="https://supabase.com/docs/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux#updating-the-supabase-cli">
                       CLI
                     </InlineLink>
                     .
@@ -160,7 +157,7 @@ export const LocalVersionPopover = () => {
                     </p>
                   }
                   <DocsButton
-                    href={`${DOCS_URL}/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux#using-beta-version`}
+                    href="https://supabase.com/docs/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux#using-beta-version"
                     className="!no-underline mt-2"
                   />
                 </Admonition>
@@ -171,7 +168,7 @@ export const LocalVersionPopover = () => {
             <a
               target="_blank"
               rel="noreferrer noopener"
-              href={`${DOCS_URL}/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux`}
+              href="https://supabase.com/docs/guides/local-development/cli/getting-started?queryGroups=platform&platform=linux"
             >
               CLI Docs
             </a>

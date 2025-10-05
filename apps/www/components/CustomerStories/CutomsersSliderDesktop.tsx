@@ -1,7 +1,5 @@
-'use client'
-
 import React from 'react'
-import { range } from 'lib/helpers'
+import { range } from 'lodash'
 import { cn } from 'ui'
 
 import { CompositionCol } from '.'

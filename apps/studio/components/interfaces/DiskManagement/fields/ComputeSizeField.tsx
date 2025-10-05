@@ -3,14 +3,13 @@ import { useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { DocsButton } from 'components/ui/DocsButton'
 import { InlineLink } from 'components/ui/InlineLink'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { getCloudProviderArchitecture } from 'lib/cloudprovider-utils'
-import { DOCS_URL, InstanceSpecs } from 'lib/constants'
+import { InstanceSpecs } from 'lib/constants'
 import Link from 'next/link'
 import {
   cn,
@@ -53,13 +52,10 @@ type ComputeSizeFieldProps = {
 
 export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
   const { ref } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
-  const { data: project, isLoading: isProjectLoading } = useSelectedProjectQuery()
+  const org = useSelectedOrganization()
+  const { control, formState, setValue, trigger } = form
 
-  const showComputePrice = useIsFeatureEnabled('project_addons:show_compute_price')
-
-  const { computeSize, storageType } = form.watch()
-
+  const { project, isLoading: isProjectLoading } = useProjectContext()
   const {
     data: addons,
     isLoading: isAddonsLoading,
@@ -67,8 +63,6 @@ export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
   } = useProjectAddonsQuery({ projectRef: ref })
 
   const isLoading = isProjectLoading || isAddonsLoading
-
-  const { control, formState, setValue, trigger } = form
 
   const availableAddons = useMemo(() => {
     return addons?.available_addons ?? []
@@ -116,7 +110,7 @@ export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
         >
           <FormItemLayout
             layout="horizontal"
-            label="Compute size"
+            label={'Compute size'}
             id={field.name}
             className="gap-5"
             labelOptional={
@@ -130,7 +124,7 @@ export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
                   }
                   beforePrice={Number(computeSizePrice.oldPrice)}
                   afterPrice={Number(computeSizePrice.newPrice)}
-                  free={showUpgradeBadge && computeSize === 'ci_micro' ? true : false}
+                  free={showUpgradeBadge && form.watch('computeSize') === 'ci_micro' ? true : false}
                 />
                 <p className="text-foreground-lighter">
                   Hardware resources allocated to your Postgres database
@@ -139,7 +133,7 @@ export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
                 <div className="mt-3">
                   <DocsButton
                     abbrev={false}
-                    href={`${DOCS_URL}/guides/platform/compute-and-disk`}
+                    href="https://supabase.com/docs/guides/platform/compute-and-disk"
                   />
                 </div>
 
@@ -224,23 +218,21 @@ export function ComputeSizeField({ form, disabled }: ComputeSizeFieldProps) {
                                           <Lock size={14} />
                                         </div>
                                       ) : (
-                                        showComputePrice && (
-                                          <>
-                                            <span
-                                              className="text-foreground text-sm font-semibold"
-                                              translate="no"
-                                            >
-                                              ${price}
-                                            </span>
-                                            <span className="text-foreground-light translate-y-[1px]">
-                                              {' '}
-                                              /{' '}
-                                              {compute.price_interval === 'monthly'
-                                                ? 'month'
-                                                : 'hour'}
-                                            </span>
-                                          </>
-                                        )
+                                        <>
+                                          <span
+                                            className="text-foreground text-sm font-semibold"
+                                            translate="no"
+                                          >
+                                            ${price}
+                                          </span>
+                                          <span className="text-foreground-light translate-y-[1px]">
+                                            {' '}
+                                            /{' '}
+                                            {compute.price_interval === 'monthly'
+                                              ? 'month'
+                                              : 'hour'}
+                                          </span>
+                                        </>
                                       )}
                                     </div>
                                   </div>

@@ -9,7 +9,7 @@ export interface CollapsibleProps extends RadixCollapsible.CollapsibleProps {
 }
 
 /**
- * @deprecated Use `import { Collapsible_shadcn_ } from "ui"` instead
+ * @deprecated Use ./Collapsible_shadcn_ instead
  */
 export const Collapsible = ({
   open = undefined,

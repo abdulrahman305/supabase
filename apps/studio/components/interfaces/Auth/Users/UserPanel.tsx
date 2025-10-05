@@ -1,3 +1,4 @@
+import { SimpleCodeBlock } from 'ui'
 import { User } from 'data/auth/users-infinite-query'
 import { X } from 'lucide-react'
 import { useState } from 'react'
@@ -7,20 +8,20 @@ import {
   Input_Shadcn_,
   ResizableHandle,
   ResizablePanel,
-  SimpleCodeBlock,
   Tabs_Shadcn_,
   TabsContent_Shadcn_,
   TabsList_Shadcn_,
   TabsTrigger_Shadcn_,
 } from 'ui'
-import { UserLogs } from './UserLogs'
 import { UserOverview } from './UserOverview'
-import { PANEL_PADDING } from './Users.constants'
+import { UserLogs } from './UserLogs'
 
 interface UserPanelProps {
   selectedUser?: User
   onClose: () => void
 }
+
+export const PANEL_PADDING = 'px-5 py-5'
 
 export const UserPanel = ({ selectedUser, onClose }: UserPanelProps) => {
   const [view, setView] = useState<'overview' | 'raw' | 'logs'>('overview')

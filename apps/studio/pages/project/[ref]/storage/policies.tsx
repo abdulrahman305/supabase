@@ -1,25 +1,19 @@
-import { StoragePolicies } from 'components/interfaces/Storage/StoragePolicies/StoragePolicies'
-import DefaultLayout from 'components/layouts/DefaultLayout'
-import { PageLayout } from 'components/layouts/PageLayout/PageLayout'
-import { ScaffoldContainer } from 'components/layouts/Scaffold'
 import StorageLayout from 'components/layouts/StorageLayout/StorageLayout'
+import DefaultLayout from 'components/layouts/DefaultLayout'
+import { StoragePolicies } from 'components/to-be-cleaned/Storage'
 import type { NextPageWithLayout } from 'types'
 
 const StoragePoliciesPage: NextPageWithLayout = () => {
-  return <StoragePolicies />
+  return (
+    <div className="storage-container flex flex-grow p-4">
+      <StoragePolicies />
+    </div>
+  )
 }
 
 StoragePoliciesPage.getLayout = (page) => (
   <DefaultLayout>
-    <StorageLayout title="Policies">
-      <PageLayout
-        title="Storage policies"
-        subtitle="Safeguard your files with policies that define the operations allowed for your users at the
-        bucket level."
-      >
-        <ScaffoldContainer>{page}</ScaffoldContainer>
-      </PageLayout>
-    </StorageLayout>
+    <StorageLayout title="Policies">{page}</StorageLayout>
   </DefaultLayout>
 )
 

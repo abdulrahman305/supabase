@@ -1,7 +1,6 @@
 import { AlertOctagon, Lock, ShieldOff } from 'lucide-react'
 
 import { DocsButton } from 'components/ui/DocsButton'
-import { DOCS_URL } from 'lib/constants'
 import { Alert } from 'ui'
 
 export default function RLSDisableModalContent() {
@@ -47,7 +46,7 @@ export default function RLSDisableModalContent() {
       <DocsButton
         abbrev={false}
         className="w-min mt-3"
-        href={`${DOCS_URL}/guides/auth/row-level-security`}
+        href="https://supabase.com/docs/guides/auth/row-level-security"
       />
     </div>
   )

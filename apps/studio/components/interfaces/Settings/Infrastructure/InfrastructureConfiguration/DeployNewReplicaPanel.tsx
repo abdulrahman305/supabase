@@ -24,9 +24,9 @@ import {
   useReadReplicasQuery,
 } from 'data/read-replicas/replicas-query'
 import { useProjectAddonsQuery } from 'data/subscriptions/project-addons-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useIsAwsK8sCloudProvider, useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { AWS_REGIONS_DEFAULT, BASE_PATH, DOCS_URL } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
+import { AWS_REGIONS_DEFAULT, BASE_PATH } from 'lib/constants'
 import { formatCurrency } from 'lib/helpers'
 import type { AWS_REGIONS_KEYS } from 'shared-data'
 import { AWS_REGIONS } from 'shared-data'
@@ -67,8 +67,8 @@ const DeployNewReplicaPanel = ({
   onClose,
 }: DeployNewReplicaPanelProps) => {
   const { ref: projectRef } = useParams()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: org } = useSelectedOrganizationQuery()
+  const project = useSelectedProject()
+  const org = useSelectedOrganization()
 
   const { data } = useReadReplicasQuery({ projectRef })
   const { data: addons, isSuccess } = useProjectAddonsQuery({ projectRef })
@@ -85,7 +85,6 @@ const DeployNewReplicaPanel = ({
     (x) => x.organization_id === project?.organization_id
   )
   const hasOverdueInvoices = overdueInvoices.length > 0 && isNotOnTeamOrEnterprisePlan
-  const isAwsK8s = useIsAwsK8sCloudProvider()
 
   // Opting for useState temporarily as Listbox doesn't seem to work with react-hook-form yet
   const [defaultRegion] = Object.entries(AWS_REGIONS).find(
@@ -183,7 +182,6 @@ const DeployNewReplicaPanel = ({
     isWalgEnabled &&
     currentComputeAddon !== undefined &&
     !hasOverdueInvoices &&
-    !isAwsK8s &&
     !isProWithSpendCapEnabled
 
   const computeAddons =
@@ -259,21 +257,8 @@ const DeployNewReplicaPanel = ({
               <DocsButton
                 abbrev={false}
                 className="mt-3"
-                href={`${DOCS_URL}/guides/platform/read-replicas#prerequisites`}
+                href="https://supabase.com/docs/guides/platform/read-replicas#prerequisites"
               />
-            </AlertDescription_Shadcn_>
-          </Alert_Shadcn_>
-        ) : isAwsK8s ? (
-          <Alert_Shadcn_>
-            <WarningIcon />
-            <AlertTitle_Shadcn_>
-              Read replicas are not supported for AWS (Revamped) projects
-            </AlertTitle_Shadcn_>
-            <AlertDescription_Shadcn_>
-              <span>
-                Projects provisioned by other cloud providers currently will not be able to use read
-                replicas
-              </span>
             </AlertDescription_Shadcn_>
           </Alert_Shadcn_>
         ) : currentPgVersion < 15 ? (
@@ -322,7 +307,7 @@ const DeployNewReplicaPanel = ({
                 </Button>
                 <DocsButton
                   abbrev={false}
-                  href={`${DOCS_URL}/guides/platform/read-replicas#prerequisites`}
+                  href="https://supabase.com/docs/guides/platform/read-replicas#prerequisites"
                 />
               </div>
             </AlertDescription_Shadcn_>
@@ -363,7 +348,7 @@ const DeployNewReplicaPanel = ({
                 </Button>
                 <DocsButton
                   abbrev={false}
-                  href={`${DOCS_URL}/guides/platform/read-replicas#how-are-read-replicas-made`}
+                  href="https://supabase.com/docs/guides/platform/read-replicas#how-are-read-replicas-made"
                 />
               </AlertDescription_Shadcn_>
             )}
@@ -443,14 +428,11 @@ const DeployNewReplicaPanel = ({
                   <img
                     alt="region icon"
                     className="w-5 rounded-sm"
-                    src={`${BASE_PATH}/img/regions/${region.region}.svg`}
+                    src={`${BASE_PATH}/img/regions/${region.key}.svg`}
                   />
                 )}
               >
-                <p className="flex items-center gap-x-2">
-                  <span>{region.name}</span>
-                  <span className="text-xs text-foreground-lighter font-mono">{region.region}</span>
-                </p>
+                {region.name}
               </Listbox.Option>
             ))}
           </Listbox>
@@ -544,7 +526,7 @@ const DeployNewReplicaPanel = ({
             <p className="text-foreground-light text-sm">
               Read more about{' '}
               <Link
-                href={`${DOCS_URL}/guides/platform/manage-your-usage/read-replicas`}
+                href="https://supabase.com/docs/guides/platform/manage-your-usage/read-replicas"
                 target="_blank"
                 rel="noreferrer"
                 className="underline hover:text-foreground transition"

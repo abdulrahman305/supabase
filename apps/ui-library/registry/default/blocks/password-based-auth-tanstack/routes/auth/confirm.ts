@@ -27,8 +27,7 @@ const confirmFn = createServerFn({ method: 'GET' })
     const searchParams = ctx.data
     const token_hash = searchParams['token_hash'] as string
     const type = searchParams['type'] as EmailOtpType | null
-    const _next = searchParams['next'] as string
-    const next = _next?.startsWith('/') ? _next : '/'
+    const next = (searchParams['next'] ?? '/') as string
 
     if (token_hash && type) {
       const supabase = createClient()

@@ -4,8 +4,7 @@ import { Dispatch, SetStateAction, useState } from 'react'
 
 import { useParams } from 'common'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { DOCS_URL } from 'lib/constants'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import {
   Badge,
   Button,
@@ -35,7 +34,7 @@ export const RealtimeFilterPopover = ({ config, onChangeConfig }: RealtimeFilter
   const [tempConfig, setTempConfig] = useState(config)
 
   const { ref } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
   const { mutate: sendEvent } = useSendEventMutation()
 
   const onOpen = (v: boolean) => {
@@ -70,7 +69,7 @@ export const RealtimeFilterPopover = ({ config, onChangeConfig }: RealtimeFilter
             )}
           </Button>
         </PopoverTrigger_Shadcn_>
-        <PopoverContent_Shadcn_ className="p-0 w-[365px]" align="start" portal={true}>
+        <PopoverContent_Shadcn_ className="p-0 w-[365px]" align="start">
           <div className="border-b border-overlay text-xs px-4 py-3 text-foreground">
             Listen to event types
           </div>
@@ -181,7 +180,7 @@ export const RealtimeFilterPopover = ({ config, onChangeConfig }: RealtimeFilter
                     className="underline"
                     target="_blank"
                     rel="noreferrer"
-                    href={`${DOCS_URL}/guides/realtime/postgres-changes#available-filters`}
+                    href="https://supabase.com/docs/guides/realtime/postgres-changes#available-filters"
                   >
                     our docs
                   </Link>

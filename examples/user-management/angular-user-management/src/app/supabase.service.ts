@@ -7,7 +7,8 @@ import {
   SupabaseClient,
   User,
 } from '@supabase/supabase-js';
-import { environment } from '../environments/environment';
+import { environment } from 'src/environments/environment';
+import { Database } from 'src/schema';
 
 export interface Profile {
   id?: string;
@@ -20,11 +21,11 @@ export interface Profile {
   providedIn: 'root',
 })
 export class SupabaseService {
-  private supabase: SupabaseClient;
+  private supabase: SupabaseClient<Database>;
   _session: AuthSession | null = null;
 
   constructor() {
-    this.supabase = createClient(
+    this.supabase = createClient<Database>(
       environment.supabaseUrl,
       environment.supabaseKey
     );

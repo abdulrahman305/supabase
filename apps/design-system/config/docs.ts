@@ -38,13 +38,13 @@ export const docsConfig: DocsConfig = {
           items: [],
         },
         {
-          title: 'Tailwind Classes',
-          href: '/docs/tailwind-classes',
+          title: 'Color usage',
+          href: '/docs/color-usage',
           items: [],
         },
         {
-          title: 'Color Usage',
-          href: '/docs/color-usage',
+          title: 'Tailwind classes',
+          href: '/docs/tailwind-classes',
           items: [],
         },
         {
@@ -387,6 +387,11 @@ export const docsConfig: DocsConfig = {
         {
           title: 'Textarea',
           href: '/docs/components/textarea',
+          items: [],
+        },
+        {
+          title: 'Toast',
+          href: '/docs/components/toast',
           items: [],
         },
         {

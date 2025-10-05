@@ -1,5 +1,5 @@
 import { ChevronDown, Database, Plus, RefreshCw, X } from 'lucide-react'
-import { ComponentProps, useEffect, useState } from 'react'
+import { ComponentProps, useState } from 'react'
 import SVG from 'react-inlinesvg'
 
 import { useParams } from 'common'
@@ -16,30 +16,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   Input,
+  Popover,
   Select,
   cn,
 } from 'ui'
 import { DatePickerValue, LogsDatePicker } from '../Settings/Logs/Logs.DatePickers'
 import { REPORTS_DATEPICKER_HELPERS } from './Reports.constants'
 import type { ReportFilterItem } from './Reports.types'
-import { Popover, PopoverContent, PopoverTrigger } from '@ui/components/shadcn/ui/popover'
-import { Network } from 'lucide-react'
 
 interface ReportFilterBarProps {
   filters: ReportFilterItem[]
   isLoading: boolean
   onAddFilter: (filter: ReportFilterItem) => void
   onRemoveFilters: (filters: ReportFilterItem[]) => void
-  onRefresh?: () => void
-  onDatepickerChange?: ComponentProps<typeof LogsDatePicker>['onSubmit']
+  onRefresh: () => void
+  onDatepickerChange: ComponentProps<typeof LogsDatePicker>['onSubmit']
   datepickerTo?: string
   datepickerFrom?: string
   datepickerHelpers: typeof REPORTS_DATEPICKER_HELPERS
-  initialDatePickerValue?: DatePickerValue
-  className?: string
-  selectedProduct?: string
-  showDatabaseSelector?: boolean
-  hideDatepicker?: boolean
 }
 
 const PRODUCT_FILTERS = [
@@ -47,7 +41,8 @@ const PRODUCT_FILTERS = [
     key: 'rest',
     filterKey: 'request.path',
     filterValue: '/rest',
-    label: 'Data API (PostgREST)',
+    label: 'REST',
+    description: 'Requests made to PostgREST',
     icon: Database,
   },
   {
@@ -55,6 +50,7 @@ const PRODUCT_FILTERS = [
     filterKey: 'request.path',
     filterValue: '/auth',
     label: 'Auth',
+    description: 'Auth and authorization requests',
     icon: Auth,
   },
   {
@@ -62,6 +58,7 @@ const PRODUCT_FILTERS = [
     filterKey: 'request.path',
     filterValue: '/storage',
     label: 'Storage',
+    description: 'Storage asset requests',
     icon: Storage,
   },
   {
@@ -69,13 +66,15 @@ const PRODUCT_FILTERS = [
     filterKey: 'request.path',
     filterValue: '/realtime',
     label: 'Realtime',
+    description: 'Realtime connection requests',
     icon: Realtime,
   },
   {
     key: 'graphql',
     filterKey: 'request.path',
     filterValue: '/graphql',
-    label: 'GraphQL (pg_graphql)',
+    label: 'GraphQL',
+    description: 'Requests made to pg_graphql',
     icon: null,
   },
 ]
@@ -85,14 +84,9 @@ const ReportFilterBar = ({
   isLoading = false,
   onAddFilter,
   onDatepickerChange,
-  hideDatepicker = false,
   onRemoveFilters,
   onRefresh,
   datepickerHelpers,
-  initialDatePickerValue,
-  className,
-  selectedProduct,
-  showDatabaseSelector = true,
 }: ReportFilterBarProps) => {
   const { ref } = useParams()
   const { data: loadBalancers } = useLoadBalancersQuery({ projectRef: ref })
@@ -111,20 +105,20 @@ const ReportFilterBar = ({
   >(null)
   const [addFilterValues, setAddFilterValues] = useState<ReportFilterItem>({
     key: filterKeys[0],
-    compare: 'is',
+    compare: 'matches',
     value: '',
   })
 
   const resetFilterValues = () => {
     setAddFilterValues({
       key: filterKeys[0],
-      compare: 'is',
+      compare: 'matches',
       value: '',
     })
   }
 
   const handleDatepickerChange = (vals: DatePickerValue) => {
-    onDatepickerChange && onDatepickerChange(vals)
+    onDatepickerChange(vals)
     setSelectedRange(vals)
   }
 
@@ -150,103 +144,86 @@ const ReportFilterBar = ({
     setCurrentProductFilter(nextProductFilter)
   }
 
-  useEffect(() => {
-    if (selectedProduct) {
-      handleProductFilterChange(PRODUCT_FILTERS.find((p) => p.key === selectedProduct) ?? null)
-    }
-  }, [])
-
-  const getInitialDatePickerValue = () => {
-    if (initialDatePickerValue) {
-      return initialDatePickerValue
-    }
-    const defaultHelper = datepickerHelpers.find((h) => h.default) || datepickerHelpers[0]
-    return {
-      to: defaultHelper.calcTo(),
-      from: defaultHelper.calcFrom(),
-      isHelper: true,
-      text: defaultHelper.text,
-    }
-  }
-
-  const [selectedRange, setSelectedRange] = useState<DatePickerValue>(getInitialDatePickerValue())
+  const defaultHelper = datepickerHelpers[0]
+  const [selectedRange, setSelectedRange] = useState<DatePickerValue>({
+    to: defaultHelper.calcTo(),
+    from: defaultHelper.calcFrom(),
+    isHelper: true,
+    text: defaultHelper.text,
+  })
 
   return (
-    <div className={cn('flex items-center justify-between', className)}>
+    <div className="flex items-center justify-between">
       <div className="flex flex-row justify-start items-center flex-wrap gap-2">
-        {onRefresh && (
-          <ButtonTooltip
-            type="default"
-            disabled={isLoading}
-            icon={<RefreshCw className={isLoading ? 'animate-spin' : ''} />}
-            className="w-7"
-            tooltip={{ content: { side: 'bottom', text: 'Refresh report' } }}
-            onClick={() => onRefresh()}
-          />
-        )}
-        {!hideDatepicker && (
-          <LogsDatePicker
-            onSubmit={handleDatepickerChange}
-            value={selectedRange}
-            helpers={datepickerHelpers}
-          />
-        )}
-        {!selectedProduct && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="default"
-                className="inline-flex flex-row gap-2"
-                iconRight={<ChevronDown size={14} />}
-              >
-                <span>
-                  {currentProductFilter === null ? 'All Requests' : currentProductFilter.label}
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom" align="start">
-              <DropdownMenuItem onClick={() => handleProductFilterChange(null)}>
-                <Network size={14} strokeWidth={1.5} className="mr-2" />
-                All Requests
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {PRODUCT_FILTERS.map((productFilter) => {
-                const Icon = productFilter.icon
+        <ButtonTooltip
+          type="default"
+          disabled={isLoading}
+          icon={<RefreshCw className={isLoading ? 'animate-spin' : ''} />}
+          className="w-7"
+          tooltip={{ content: { side: 'bottom', text: 'Refresh report' } }}
+          onClick={() => onRefresh()}
+        />
+        <LogsDatePicker
+          onSubmit={handleDatepickerChange}
+          value={selectedRange}
+          helpers={datepickerHelpers}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="default"
+              className="inline-flex flex-row gap-2"
+              iconRight={<ChevronDown size={14} />}
+            >
+              <span>
+                {currentProductFilter === null ? 'All Requests' : currentProductFilter.label}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="bottom" align="start">
+            <DropdownMenuItem onClick={() => handleProductFilterChange(null)}>
+              <p>All Requests</p>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {PRODUCT_FILTERS.map((productFilter) => {
+              const Icon = productFilter.icon
 
-                return (
-                  <DropdownMenuItem
-                    key={productFilter.key}
-                    className="space-x-2"
-                    disabled={productFilter.key === currentProductFilter?.key}
-                    onClick={() => handleProductFilterChange(productFilter)}
-                  >
-                    {productFilter.key === 'graphql' ? (
-                      <SVG
-                        src={`${BASE_PATH}/img/graphql.svg`}
-                        className="w-[14px] h-[14px] mr-2"
-                        preProcessor={(code) =>
-                          code.replace(/svg/, 'svg class="m-auto text-color-inherit"')
-                        }
-                      />
-                    ) : Icon !== null ? (
-                      <Icon size={14} strokeWidth={1.5} className="mr-2" />
-                    ) : null}
-                    <div className="flex flex-col">
-                      <p
-                        className={cn(
-                          productFilter.key === currentProductFilter?.key ? 'font-bold' : '',
-                          'inline-block'
-                        )}
-                      >
-                        {productFilter.label}
-                      </p>
-                    </div>
-                  </DropdownMenuItem>
-                )
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+              return (
+                <DropdownMenuItem
+                  key={productFilter.key}
+                  className="space-x-2"
+                  disabled={productFilter.key === currentProductFilter?.key}
+                  onClick={() => handleProductFilterChange(productFilter)}
+                >
+                  {productFilter.key === 'graphql' ? (
+                    <SVG
+                      src={`${BASE_PATH}/img/graphql.svg`}
+                      className="w-[20px] h-[20px] mr-2"
+                      preProcessor={(code) =>
+                        code.replace(/svg/, 'svg class="m-auto text-color-inherit"')
+                      }
+                    />
+                  ) : Icon !== null ? (
+                    <Icon size={20} strokeWidth={1.5} className="mr-2" />
+                  ) : null}
+                  <div className="flex flex-col">
+                    <p
+                      className={cn(
+                        productFilter.key === currentProductFilter?.key ? 'font-bold' : '',
+                        'inline-block'
+                      )}
+                    >
+                      {productFilter.label}
+                    </p>
+                    <p className=" text-left text-foreground-light inline-block w-[180px]">
+                      {productFilter.description}
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
         {filters
           .filter(
             (filter) =>
@@ -256,11 +233,9 @@ const ReportFilterBar = ({
           .map((filter) => (
             <div
               key={`${filter.key}-${filter.compare}-${filter.value}`}
-              className="text-xs rounded-md font-mono bg-surface-300 px-2 h-[26px] flex flex-row justify-center gap-1 items-center"
+              className="text-xs rounded border border-foreground-lighter bg-surface-300 px-2 h-7 flex flex-row justify-center gap-1 items-center"
             >
-              <span className="">{filter.key}</span>
-              <span className="text-foreground-lighter">{filter.compare}</span>
-              <span className="">{filter.value}</span>
+              {filter.key} {filter.compare} {filter.value}
               <Button
                 type="text"
                 size="tiny"
@@ -272,23 +247,29 @@ const ReportFilterBar = ({
               </Button>
             </div>
           ))}
-        <Popover open={showAdder} onOpenChange={(openValue) => setShowAdder(openValue)}>
-          <PopoverTrigger>
-            <Button
-              asChild
-              type="default"
-              size="tiny"
-              icon={<Plus className={`text-foreground-light `} />}
-            >
-              <span>Add filter</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align={filters.length > 0 ? 'end' : 'start'}
-            portal={true}
-            className="p-0 w-60"
-          >
-            <div className="flex flex-col gap-3 p-3">
+        <Popover
+          align="end"
+          header={
+            <div className="flex justify-between items-center py-1">
+              <h5 className="text-sm text-foreground">Add Filter</h5>
+
+              <Button
+                type="primary"
+                size="tiny"
+                onClick={() => {
+                  onAddFilter(addFilterValues)
+                  setShowAdder(false)
+                  resetFilterValues()
+                }}
+              >
+                Save
+              </Button>
+            </div>
+          }
+          open={showAdder}
+          onOpenChange={(openValue) => setShowAdder(openValue)}
+          overlay={
+            <div className="px-3 py-3 flex flex-col gap-2">
               <Select
                 size="tiny"
                 value={addFilterValues.key}
@@ -296,7 +277,6 @@ const ReportFilterBar = ({
                   setAddFilterValues((prev) => ({ ...prev, key: e.target.value }))
                 }}
                 label="Attribute Filter"
-                className="gap-[2px]"
               >
                 {filterKeys.map((key) => (
                   <Select.Option key={key} value={key}>
@@ -314,9 +294,8 @@ const ReportFilterBar = ({
                   }))
                 }}
                 label="Comparison"
-                className="gap-[2px]"
               >
-                {['is', 'matches'].map((value) => (
+                {['matches', 'is'].map((value) => (
                   <Select.Option key={value} value={value}>
                     {value}
                   </Select.Option>
@@ -325,7 +304,6 @@ const ReportFilterBar = ({
               <Input
                 size="tiny"
                 label="Value"
-                className="gap-[2px]"
                 placeholder={
                   addFilterValues.compare === 'matches'
                     ? 'Provide a regex expression'
@@ -336,35 +314,26 @@ const ReportFilterBar = ({
                 }}
               />
             </div>
-
-            <div className="flex items-center justify-end gap-2 border-t border-default p-2">
-              <Button
-                type="primary"
-                size="tiny"
-                onClick={() => {
-                  onAddFilter(addFilterValues)
-                  setShowAdder(false)
-                  resetFilterValues()
-                }}
-              >
-                Add filter
-              </Button>
-            </div>
-          </PopoverContent>
+          }
+          showClose
+        >
+          <Button
+            asChild
+            type="default"
+            size="tiny"
+            icon={<Plus className={`text-foreground-light `} />}
+          >
+            <span>Add filter</span>
+          </Button>
         </Popover>
       </div>
 
-      {showDatabaseSelector && (
-        <DatabaseSelector
-          additionalOptions={
-            (loadBalancers ?? []).length > 0
-              ? [{ id: `${ref}-all`, name: 'API Load Balancer' }]
-              : []
-          }
-        />
-      )}
+      <DatabaseSelector
+        additionalOptions={
+          (loadBalancers ?? []).length > 0 ? [{ id: `${ref}-all`, name: 'API Load Balancer' }] : []
+        }
+      />
     </div>
   )
 }
-
 export default ReportFilterBar

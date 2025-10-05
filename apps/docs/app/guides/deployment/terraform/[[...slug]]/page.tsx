@@ -1,9 +1,10 @@
 import matter from 'gray-matter'
+import { type SerializeOptions } from 'next-mdx-remote/dist/types'
 import { notFound } from 'next/navigation'
 import rehypeSlug from 'rehype-slug'
 
-import { GuideTemplate, newEditLink } from '~/features/docs/GuidesMdx.template'
 import { genGuideMeta, removeRedundantH1 } from '~/features/docs/GuidesMdx.utils'
+import { GuideTemplate, newEditLink } from '~/features/docs/GuidesMdx.template'
 import { fetchRevalidatePerDay } from '~/features/helpers.fetch'
 import { isValidGuideFrontmatter } from '~/lib/docs'
 import { UrlTransformFunction, linkTransform } from '~/lib/mdx/plugins/rehypeLinkTransform'
@@ -16,9 +17,8 @@ import {
   terraformDocsOrg,
   terraformDocsRepo,
 } from '../terraformConstants'
-import { SerializeOptions } from '~/types/next-mdx-remote-serialize'
-import { IS_PROD } from 'common'
-import { getEmptyArray } from '~/features/helpers.fn'
+
+export const dynamicParams = false
 
 // Each external docs page is mapped to a local page
 const pageMap = [
@@ -142,10 +142,8 @@ const getContent = async ({ slug }: Params) => {
   }
 }
 
-const generateStaticParams = IS_PROD
-  ? async () => pageMap.map(({ slug }) => ({ slug: slug ? [slug] : [] }))
-  : getEmptyArray
+const generateStaticParams = async () => pageMap.map(({ slug }) => ({ slug: slug ? [slug] : [] }))
 const generateMetadata = genGuideMeta(getContent)
 
 export default TerraformDocs
-export { generateMetadata, generateStaticParams }
+export { generateStaticParams, generateMetadata }

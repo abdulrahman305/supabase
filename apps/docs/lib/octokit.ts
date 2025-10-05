@@ -10,16 +10,13 @@ let octokitInstance: Octokit
 
 export function octokit() {
   if (!octokitInstance) {
-    const privateKey = process.env.DOCS_GITHUB_APP_PRIVATE_KEY
-    if (!privateKey) {
-      throw new Error('DOCS_GITHUB_APP_PRIVATE_KEY environment variable is required')
-    }
-
     // https://github.com/gr2m/universal-github-app-jwt?tab=readme-ov-file#converting-pkcs1-to-pkcs8
-    const privateKeyPkcs8 = crypto.createPrivateKey(privateKey).export({
-      type: 'pkcs8',
-      format: 'pem',
-    })
+    const privateKeyPkcs8 = crypto
+      .createPrivateKey(process.env.DOCS_GITHUB_APP_PRIVATE_KEY)
+      .export({
+        type: 'pkcs8',
+        format: 'pem',
+      })
 
     octokitInstance = new Octokit({
       authStrategy: createAppAuth,
@@ -81,7 +78,6 @@ async function getGitHubFileContents({
   } catch (err) {
     console.error('Error fetching GitHub file: %o', err)
     onError?.(err)
-    return ''
   }
 }
 
@@ -97,10 +93,10 @@ export async function getGitHubFileContentsImmutableOnly({
   branch: string
   path: string
   options: {
-    onError: (error: unknown) => void
-    fetch: (url: string) => Promise<Response>
+    onError: (err?: unknown) => void
+    fetch?: (info: RequestInfo, init?: RequestInit) => Promise<Response>
   }
-}): Promise<string> {
+}) {
   const isImmutableCommit = await checkForImmutableCommit({
     org,
     repo,
@@ -110,14 +106,13 @@ export async function getGitHubFileContentsImmutableOnly({
     throw Error('The commit is not an immutable commit SHA. Tags and branch names are not allowed.')
   }
 
-  const result = await getGitHubFileContents({
+  return getGitHubFileContents({
     org,
     repo,
     branch,
     path,
     options: { onError, fetch },
   })
-  return result || ''
 }
 
 async function checkForImmutableCommit({

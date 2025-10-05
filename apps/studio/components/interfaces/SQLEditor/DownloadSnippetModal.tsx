@@ -5,7 +5,6 @@ import { useState } from 'react'
 
 import type { ModalProps } from '@ui/components/Modal/Modal'
 import TwoOptionToggle from 'components/ui/TwoOptionToggle'
-import { DOCS_URL } from 'lib/constants'
 import { useSqlEditorV2StateSnapshot } from 'state/sql-editor-v2'
 import { Button, CodeBlock, Modal, Tabs } from 'ui'
 import { Markdown } from '../Markdown'
@@ -105,7 +104,7 @@ const DownloadSnippetModal = ({ id, ...props }: DownloadSnippetModalProps) => {
           <div className="flex justify-between items-center gap-x-2">
             <Button asChild type="default" icon={<ExternalLink strokeWidth={1.5} />}>
               <Link
-                href={`${DOCS_URL}/guides/deployment/database-migrations`}
+                href="https://supabase.com/docs/guides/deployment/database-migrations"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -115,7 +114,7 @@ const DownloadSnippetModal = ({ id, ...props }: DownloadSnippetModalProps) => {
 
             <Button asChild type="default" icon={<ExternalLink strokeWidth={1.5} />}>
               <Link
-                href={`${DOCS_URL}/guides/cli/local-development`}
+                href="https://supabase.com/docs/guides/cli/local-development"
                 target="_blank"
                 rel="noreferrer"
               >

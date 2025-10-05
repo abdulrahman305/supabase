@@ -2,29 +2,21 @@ import Link from 'next/link'
 
 import { ComputeUsageMetric, PricingMetric } from 'data/analytics/org-daily-stats-query'
 import type { OrgUsageResponse } from 'data/usage/org-usage-query'
-import { DOCS_URL } from 'lib/constants'
 import { formatCurrency } from 'lib/helpers'
-import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
-import { HoverCard, HoverCardContent, HoverCardTrigger } from 'ui'
 import { formatUsage } from '../helpers'
 import { Metric } from './BillingBreakdown.constants'
+import { ChevronRight } from 'lucide-react'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from 'ui'
 
 export interface ComputeMetricProps {
   slug?: string
   metric: Metric
   usage: OrgUsageResponse
   relativeToSubscription: boolean
-  className?: string
 }
 
-export const ComputeMetric = ({
-  slug,
-  metric,
-  usage,
-  relativeToSubscription,
-  className,
-}: ComputeMetricProps) => {
+const ComputeMetric = ({ slug, metric, usage, relativeToSubscription }: ComputeMetricProps) => {
   const usageMeta = usage.usages.find((x) => x.metric === metric.key)
 
   const usageLabel = useMemo(() => {
@@ -45,8 +37,8 @@ export const ComputeMetric = ({
 
   return (
     <HoverCard openDelay={50} closeDelay={200}>
-      <HoverCardTrigger asChild>
-        <div className={className}>
+      <HoverCardTrigger>
+        <div>
           <Link href={`/org/${slug}/usage#${metric.anchor}`}>
             <div className="group flex items-center space-x-2">
               <p className="text-sm text-foreground-light group-hover:text-foreground transition cursor-pointer">
@@ -63,7 +55,7 @@ export const ComputeMetric = ({
           ) : null}
         </div>
       </HoverCardTrigger>
-      <HoverCardContent side="bottom" align="end" className="w-[500px]" animate="slide-in">
+      <HoverCardContent side="bottom" align="center" className="w-[500px]" animate="slide-in">
         <div className="text-sm text-foreground space-y-2">
           <p className="font-medium" translate="no">
             {usageMeta?.unit_price_desc}
@@ -75,7 +67,7 @@ export const ComputeMetric = ({
                 Each Preview branch is a separate environment with all Supabase services (Database,
                 Auth, Storage, etc.).{' '}
                 <Link
-                  href={`${DOCS_URL}/guides/platform/manage-your-usage/branching`}
+                  href="https://supabase.com/docs/guides/platform/manage-your-usage/branching"
                   target="_blank"
                   className="transition text-brand hover:text-brand-600 underline"
                 >
@@ -88,7 +80,7 @@ export const ComputeMetric = ({
                 active, it incurs compute costs based on the compute size of your project. Paused
                 projects do not incur compute costs.{' '}
                 <Link
-                  href={`${DOCS_URL}/guides/platform/manage-your-usage/compute`}
+                  href="https://supabase.com/docs/guides/platform/manage-your-usage/compute"
                   target="_blank"
                   className="transition text-brand hover:text-brand-600 underline"
                 >
@@ -134,3 +126,5 @@ export const ComputeMetric = ({
     </HoverCard>
   )
 }
+
+export default ComputeMetric

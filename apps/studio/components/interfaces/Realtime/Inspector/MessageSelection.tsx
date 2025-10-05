@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { useParams } from 'common'
 import CopyButton from 'components/ui/CopyButton'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { Button, cn } from 'ui'
 import type { LogData } from './Messages.types'
 import { SelectedRealtimeMessagePanel } from './SelectedRealtimeMessagePanel'
@@ -20,7 +20,7 @@ const MessageSelection = ({ log, onClose }: MessageSelectionProps) => {
   }, [log])
 
   const { ref } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
   const { mutate: sendEvent } = useSendEventMutation()
 
   return (

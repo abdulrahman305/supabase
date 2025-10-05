@@ -19,15 +19,11 @@ const WHITELIST_ERRORS = [
   'already exists in your organization.',
 ]
 
-type CreateProjectBody = components['schemas']['CreateProjectBody']
-type CloudProvider = CreateProjectBody['cloud_provider']
-
 export type ProjectCreateVariables = {
   name: string
-  organizationSlug: string
+  organizationId: number
   dbPass: string
-  dbRegion?: string
-  regionSelection?: CreateProjectBody['region_selection']
+  dbRegion: string
   dbSql?: string
   dbPricingTierId?: string
   cloudProvider?: string
@@ -42,10 +38,9 @@ export type ProjectCreateVariables = {
 
 export async function createProject({
   name,
-  organizationSlug,
+  organizationId,
   dbPass,
   dbRegion,
-  regionSelection,
   dbSql,
   cloudProvider = PROVIDERS.AWS.id,
   authSiteUrl,
@@ -56,13 +51,12 @@ export async function createProject({
   postgresEngine,
   releaseChannel,
 }: ProjectCreateVariables) {
-  const body: CreateProjectBody = {
-    cloud_provider: cloudProvider as CloudProvider,
-    organization_slug: organizationSlug,
+  const body: components['schemas']['CreateProjectBody'] = {
+    cloud_provider: cloudProvider,
+    org_id: organizationId,
     name,
     db_pass: dbPass,
     db_region: dbRegion,
-    region_selection: regionSelection,
     db_sql: dbSql,
     auth_site_url: authSiteUrl,
     ...(customSupabaseRequest !== undefined && {

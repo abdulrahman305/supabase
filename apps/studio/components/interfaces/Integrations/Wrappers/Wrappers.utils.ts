@@ -12,7 +12,7 @@ export const makeValidateRequired = (options: { name: string; required: boolean 
   )
   const requiredArrayOptions = Array.from(requiredArrayOptionsSet)
 
-  return (values: Record<string, any>) => {
+  return (values: any) => {
     const errors = Object.fromEntries(
       Object.entries(values)
         .flatMap(([key, value]) =>
@@ -50,7 +50,7 @@ export const makeValidateRequired = (options: { name: string; required: boolean 
   }
 }
 
-export interface FormattedWrapperTable {
+interface FormattedWrapperTable {
   index: number
   columns: { name: string }[]
   is_new_schema: boolean
@@ -109,7 +109,7 @@ export const formatWrapperTables = (
   })
 }
 
-export const convertKVStringArrayToJson = (values: string[]): Record<string, string> => {
+export const convertKVStringArrayToJson = (values: string[]) => {
   return Object.fromEntries(values.map((value) => value.split('=')))
 }
 

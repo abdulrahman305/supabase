@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 import { useParams } from 'common'
 import { useUserInviteMutation } from 'data/auth/user-invite-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { Button, Form, Input, Modal } from 'ui'
 
 export type InviteUserModalProps = {
@@ -22,10 +22,7 @@ const InviteUserModal = ({ visible, setVisible }: InviteUserModalProps) => {
       setVisible(false)
     },
   })
-  const { can: canInviteUsers } = useAsyncCheckPermissions(
-    PermissionAction.AUTH_EXECUTE,
-    'invite_user'
-  )
+  const canInviteUsers = useCheckPermissions(PermissionAction.AUTH_EXECUTE, 'invite_user')
 
   const validate = (values: any) => {
     const errors: any = {}

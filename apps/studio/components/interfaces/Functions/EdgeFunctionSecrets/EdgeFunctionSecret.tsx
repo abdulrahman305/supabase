@@ -1,10 +1,10 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { Trash } from 'lucide-react'
 
+import Table from 'components/to-be-cleaned/Table'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import type { ProjectSecret } from 'data/secrets/secrets-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { TableCell, TableRow } from 'ui'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { TimestampInfo } from 'ui-patterns'
 
 interface EdgeFunctionSecretProps {
@@ -13,37 +13,34 @@ interface EdgeFunctionSecretProps {
 }
 
 const EdgeFunctionSecret = ({ secret, onSelectDelete }: EdgeFunctionSecretProps) => {
-  const { can: canUpdateSecrets } = useAsyncCheckPermissions(PermissionAction.SECRETS_WRITE, '*')
+  const canUpdateSecrets = useCheckPermissions(PermissionAction.SECRETS_WRITE, '*')
   // [Joshen] Following API's validation:
   // https://github.com/supabase/infrastructure/blob/develop/api/src/routes/v1/projects/ref/secrets/secrets.controller.ts#L106
   const isReservedSecret = !!secret.name.match(/^(SUPABASE_).*/)
 
   return (
-    <TableRow>
-      <TableCell>
+    <Table.tr>
+      <Table.td>
         <p className="truncate py-2">{secret.name}</p>
-      </TableCell>
-      <TableCell>
-        <p
-          className="font-mono text-sm max-w-96 truncate text-foreground-light"
-          title={secret.value}
-        >
+      </Table.td>
+      <Table.td>
+        <p className="font-mono text-sm max-w-96 truncate" title={secret.value}>
           {secret.value}
         </p>
-      </TableCell>
-      <TableCell>
+      </Table.td>
+      <Table.td>
         {!!secret.updated_at ? (
           <TimestampInfo
             displayAs="utc"
             utcTimestamp={secret.updated_at}
             labelFormat="DD MMM YYYY HH:mm:ss (ZZ)"
-            className="!text-sm text-foreground-light"
+            className="!text-sm"
           />
         ) : (
           '-'
         )}
-      </TableCell>
-      <TableCell>
+      </Table.td>
+      <Table.td>
         <div className="flex items-center justify-end">
           <ButtonTooltip
             type="text"
@@ -63,8 +60,8 @@ const EdgeFunctionSecret = ({ secret, onSelectDelete }: EdgeFunctionSecretProps)
             }}
           />
         </div>
-      </TableCell>
-    </TableRow>
+      </Table.td>
+    </Table.tr>
   )
 }
 

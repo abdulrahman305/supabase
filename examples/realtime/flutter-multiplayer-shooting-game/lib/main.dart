@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 void main() async {
   await Supabase.initialize(
     url: 'supabaseUrl',
-    anonKey: 'supabasePublishableKey',
+    anonKey: 'supabaseAnonKey',
     realtimeClientOptions: const RealtimeClientOptions(eventsPerSecond: 40),
   );
   runApp(const MyApp());

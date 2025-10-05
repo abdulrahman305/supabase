@@ -8,9 +8,8 @@ import { useBackupDownloadMutation } from 'data/database/backup-download-mutatio
 import { useProjectPauseStatusQuery } from 'data/projects/project-pause-status-query'
 import { useStorageArchiveCreateMutation } from 'data/storage/storage-archive-create-mutation'
 import { useStorageArchiveQuery } from 'data/storage/storage-archive-query'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
 import { Database, Storage } from 'icons'
-import { DOCS_URL, PROJECT_STATUS } from 'lib/constants'
+import { PROJECT_STATUS } from 'lib/constants'
 import {
   Alert_Shadcn_,
   AlertDescription_Shadcn_,
@@ -22,10 +21,11 @@ import {
   DropdownMenuTrigger,
   WarningIcon,
 } from 'ui'
+import { useProjectContext } from '../ProjectContext'
 
 export const PauseDisabledState = () => {
   const { ref } = useParams()
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const [toastId, setToastId] = useState<string | number>()
   const [refetchInterval, setRefetchInterval] = useState<number | false>(false)
 
@@ -127,7 +127,7 @@ export const PauseDisabledState = () => {
         and cannot be restored through the dashboard. However, your data remains intact and can be
         downloaded as a backup.
       </AlertDescription_Shadcn_>
-      <AlertDescription_Shadcn_ className="gap-x-2 mt-3">
+      <AlertDescription_Shadcn_ className="flex items-center gap-x-2 mt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button type="default" icon={<Download />} iconRight={<ChevronDown />}>
@@ -160,22 +160,13 @@ export const PauseDisabledState = () => {
             </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button asChild type="default" icon={<ExternalLink />} className="my-3">
+        <Button asChild type="default" icon={<ExternalLink />}>
           <a
             target="_blank"
             rel="noreferrer"
-            href={`${DOCS_URL}/guides/platform/migrating-within-supabase/dashboard-restore`}
+            href="https://supabase.com/docs/guides/platform/migrating-and-upgrading-projects#time-limits"
           >
-            Restore backup to a new Supabase project guide
-          </a>
-        </Button>
-        <Button asChild type="default" icon={<ExternalLink />} className="mb-3">
-          <a
-            target="_blank"
-            rel="noreferrer"
-            href={`${DOCS_URL}/guides/local-development/restoring-downloaded-backup`}
-          >
-            Restore backup on your local machine guide
+            More information
           </a>
         </Button>
       </AlertDescription_Shadcn_>

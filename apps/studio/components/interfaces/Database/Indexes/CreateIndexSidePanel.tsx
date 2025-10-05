@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import CodeEditor from 'components/ui/CodeEditor/CodeEditor'
 import { DocsButton } from 'components/ui/DocsButton'
 import ShimmeringLoader from 'components/ui/ShimmeringLoader'
@@ -10,8 +11,7 @@ import { useDatabaseIndexCreateMutation } from 'data/database-indexes/index-crea
 import { useSchemasQuery } from 'data/database/schemas-query'
 import { useTableColumnsQuery } from 'data/database/table-columns-query'
 import { useEntityTypesQuery } from 'data/entity-types/entity-types-infinite-query'
-import { useIsOrioleDb, useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { DOCS_URL } from 'lib/constants'
+import { useIsOrioleDb } from 'hooks/misc/useSelectedProject'
 import {
   Button,
   CommandEmpty_Shadcn_,
@@ -45,7 +45,7 @@ interface CreateIndexSidePanelProps {
 }
 
 const CreateIndexSidePanel = ({ visible, onClose }: CreateIndexSidePanelProps) => {
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const isOrioleDb = useIsOrioleDb()
 
   const [selectedSchema, setSelectedSchema] = useState('public')
@@ -380,7 +380,7 @@ CREATE INDEX ON "${selectedSchema}"."${selectedEntity}" USING ${selectedIndexTyp
                   description="More index types may be supported when OrioleDB is no longer in preview"
                 >
                   {/* [Joshen Oriole] Hook up proper docs URL */}
-                  <DocsButton className="mt-2" abbrev={false} href={`${DOCS_URL}`} />
+                  <DocsButton className="mt-2" abbrev={false} href="https://supabase.com/docs" />
                 </Admonition>
               )}
             </SidePanel.Content>

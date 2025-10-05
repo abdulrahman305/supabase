@@ -6,8 +6,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url)
   const token_hash = requestUrl.searchParams.get('token_hash')
   const type = requestUrl.searchParams.get('type') as EmailOtpType | null
-  const _next = requestUrl.searchParams.get('next')
-  const next = _next?.startsWith('/') ? _next : '/'
+  const next = requestUrl.searchParams.get('next') || '/'
 
   if (token_hash && type) {
     const { supabase, headers } = createClient(request)

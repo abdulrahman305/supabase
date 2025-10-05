@@ -1,6 +1,7 @@
 import Image from 'next/image'
 
 import { BASE_PATH } from 'lib/constants'
+import { Admonition } from 'ui-patterns'
 
 export const InlineEditorPreview = () => {
   return (

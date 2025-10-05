@@ -7,7 +7,6 @@ interface InlineLinkProps {
   className?: string
   target?: string
   rel?: string
-  onClick?: () => void
 }
 
 export const InlineLinkClassName =

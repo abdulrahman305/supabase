@@ -1,84 +1,59 @@
-import { Filter, Grid, List, Loader2, Plus, Search, X } from 'lucide-react'
+import { Filter, Search } from 'lucide-react'
 import Link from 'next/link'
 
-import { useDebounce } from '@uidotdev/usehooks'
-import { LOCAL_STORAGE_KEYS, useParams } from 'common'
-import { useOrgProjectsInfiniteQuery } from 'data/projects/projects-infinite-query'
+import { useParams } from 'common'
 import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
-import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
 import { PROJECT_STATUS } from 'lib/constants'
-import { parseAsArrayOf, parseAsString, useQueryState } from 'nuqs'
 import {
   Button,
   Checkbox_Shadcn_,
+  Input,
   Label_Shadcn_,
   PopoverContent_Shadcn_,
   PopoverTrigger_Shadcn_,
   Popover_Shadcn_,
-  ToggleGroup,
-  ToggleGroupItem,
 } from 'ui'
-import { Input } from 'ui-patterns/DataInputs/Input'
 
 interface HomePageActionsProps {
-  slug?: string
+  search: string
+  filterStatus: string[]
   hideNewProject?: boolean
-  showViewToggle?: boolean
+  setSearch: (value: string) => void
+  setFilterStatus: (value: string[]) => void
 }
 
-export const HomePageActions = ({
-  slug: _slug,
+const HomePageActions = ({
+  search,
+  filterStatus,
   hideNewProject = false,
-  showViewToggle = false,
+  setSearch,
+  setFilterStatus,
 }: HomePageActionsProps) => {
-  const { slug: urlSlug } = useParams()
+  const { slug } = useParams()
   const projectCreationEnabled = useIsFeatureEnabled('projects:create')
 
-  const slug = _slug ?? urlSlug
-  const [search, setSearch] = useQueryState('search', parseAsString.withDefault(''))
-  const debouncedSearch = useDebounce(search, 500)
-  const [filterStatus, setFilterStatus] = useQueryState(
-    'status',
-    parseAsArrayOf(parseAsString, ',').withDefault([])
-  )
-  const [viewMode, setViewMode] = useLocalStorageQuery(LOCAL_STORAGE_KEYS.PROJECTS_VIEW, 'grid')
-
-  const { isFetching: isFetchingProjects } = useOrgProjectsInfiniteQuery(
-    {
-      slug,
-      search: search.length === 0 ? search : debouncedSearch,
-      statuses: filterStatus,
-    },
-    { keepPreviousData: true }
-  )
-
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-2 md:gap-3 md:flex-row">
+      {projectCreationEnabled && !hideNewProject && (
+        <Button asChild type="primary">
+          <Link href={`/new/${slug}`}>New project</Link>
+        </Button>
+      )}
+
       <div className="flex items-center gap-2">
         <Input
-          placeholder="Search for a project"
-          icon={<Search size={12} />}
           size="tiny"
-          className="w-32 md:w-64 pl-8 [&>div>div>div>input]:!pl-7 [&>div>div>div>div]:!pl-2"
+          placeholder="Search for a project"
+          icon={<Search size={16} />}
+          className="w-full flex-1 md:w-64 [&>div>div>div>input]:!pl-7 [&>div>div>div>div]:!pl-2"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          actions={[
-            search && (
-              <Button
-                size="tiny"
-                type="text"
-                icon={<X />}
-                onClick={() => setSearch('')}
-                className="p-0 h-5 w-5"
-              />
-            ),
-          ]}
         />
 
         <Popover_Shadcn_>
           <PopoverTrigger_Shadcn_ asChild>
             <Button
-              type={filterStatus.length === 0 ? 'dashed' : 'secondary'}
+              type={filterStatus.length !== 2 ? 'secondary' : 'dashed'}
               className="h-[26px] w-[26px]"
               icon={<Filter />}
             />
@@ -96,12 +71,10 @@ export const HomePageActions = ({
                       <Checkbox_Shadcn_
                         id={key}
                         name={key}
-                        checked={filterStatus.length === 0 || filterStatus.includes(key)}
+                        checked={filterStatus.includes(key)}
                         onCheckedChange={() => {
                           if (filterStatus.includes(key)) {
                             setFilterStatus(filterStatus.filter((y) => y !== key))
-                          } else if (filterStatus.length === 1) {
-                            setFilterStatus([])
                           } else {
                             setFilterStatus(filterStatus.concat([key]))
                           }
@@ -125,33 +98,8 @@ export const HomePageActions = ({
             </div>
           </PopoverContent_Shadcn_>
         </Popover_Shadcn_>
-
-        {isFetchingProjects && <Loader2 className="animate-spin" size={14} />}
-      </div>
-
-      <div className="flex items-center gap-2">
-        {showViewToggle && viewMode && setViewMode && (
-          <ToggleGroup
-            type="single"
-            size="sm"
-            value={viewMode}
-            onValueChange={(value) => value && setViewMode(value as 'grid' | 'table')}
-          >
-            <ToggleGroupItem value="grid" size="sm" className="h-[26px] w-[26px] p-0">
-              <Grid size={14} strokeWidth={1.5} />
-            </ToggleGroupItem>
-            <ToggleGroupItem value="table" size="sm" className="h-[26px] w-[26px] p-0">
-              <List size={14} strokeWidth={1.5} />
-            </ToggleGroupItem>
-          </ToggleGroup>
-        )}
-
-        {projectCreationEnabled && !hideNewProject && (
-          <Button asChild icon={<Plus />} type="primary" size="tiny">
-            <Link href={`/new/${slug}`}>New project</Link>
-          </Button>
-        )}
       </div>
     </div>
   )
 }
+export default HomePageActions

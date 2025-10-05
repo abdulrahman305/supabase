@@ -1,8 +1,8 @@
-import { PostgresTable } from '@supabase/postgres-meta'
 import { useState } from 'react'
+import { PostgresTable } from '@supabase/postgres-meta'
 
 import { useParams } from 'common'
-import { TableList } from 'components/interfaces/Database/Tables/TableList'
+import { TableList } from 'components/interfaces/Database'
 import { SidePanelEditor } from 'components/interfaces/TableGridEditor'
 import DeleteConfirmationDialogs from 'components/interfaces/TableGridEditor/DeleteConfirmationDialogs'
 import DatabaseLayout from 'components/layouts/DatabaseLayout/DatabaseLayout'

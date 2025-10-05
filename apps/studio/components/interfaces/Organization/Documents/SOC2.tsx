@@ -11,19 +11,15 @@ import {
 } from 'components/layouts/Scaffold'
 import NoPermission from 'components/ui/NoPermission'
 import { getDocument } from 'data/documents/document-query'
-import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { Button } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
-import ShimmeringLoader from 'ui-patterns/ShimmeringLoader'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 
-export const SOC2 = () => {
-  const { data: organization } = useSelectedOrganizationQuery()
+const SOC2 = () => {
+  const organization = useSelectedOrganization()
   const slug = organization?.slug
-
-  const { mutate: sendEvent } = useSendEventMutation()
-  const { can: canReadSubscriptions, isLoading: isLoadingPermissions } = useAsyncCheckPermissions(
+  const canReadSubscriptions = useCheckPermissions(
     PermissionAction.BILLING_READ,
     'stripe.subscriptions'
   )
@@ -53,11 +49,7 @@ export const SOC2 = () => {
         </div>
       </ScaffoldSectionDetail>
       <ScaffoldSectionContent>
-        {isLoadingPermissions ? (
-          <div className="flex items-center justify-center h-full">
-            <ShimmeringLoader className="w-24" />
-          </div>
-        ) : !canReadSubscriptions ? (
+        {!canReadSubscriptions ? (
           <NoPermission resourceText="access our SOC2 Type 2 report" />
         ) : (
           <div className="flex items-center justify-center h-full">
@@ -66,18 +58,7 @@ export const SOC2 = () => {
                 <Button type="default">Upgrade to Team</Button>
               </Link>
             ) : (
-              <Button
-                type="default"
-                icon={<Download />}
-                onClick={() => {
-                  sendEvent({
-                    action: 'document_view_button_clicked',
-                    properties: { documentName: 'SOC2' },
-                    groups: { organization: organization?.slug ?? 'Unknown' },
-                  })
-                  setIsOpen(true)
-                }}
-              >
+              <Button type="default" icon={<Download />} onClick={() => setIsOpen(true)}>
                 Download SOC2 Type 2 Report
               </Button>
             )}
@@ -130,3 +111,5 @@ export const SOC2 = () => {
     </ScaffoldSection>
   )
 }
+
+export default SOC2

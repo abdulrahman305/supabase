@@ -13,7 +13,7 @@ import {
   useDatabaseFunctionsQuery,
   type DatabaseFunction,
 } from 'data/database-functions/database-functions-query'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { ChevronDown, HelpCircle, Terminal } from 'lucide-react'
 
 export interface ChooseFunctionFormProps {
@@ -23,7 +23,7 @@ export interface ChooseFunctionFormProps {
 }
 
 const ChooseFunctionForm = ({ visible, onChange, setVisible }: ChooseFunctionFormProps) => {
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
 
   const { data = [] } = useDatabaseFunctionsQuery({
     projectRef: project?.ref,

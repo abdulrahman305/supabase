@@ -41,7 +41,7 @@ export interface Props extends Omit<React.InputHTMLAttributes<HTMLSelectElement>
 export const ColLayout = (props: any) => <div>{props.children}</div>
 
 /**
- * @deprecated Use `import { Select_shadcn_ } from "ui"` instead
+ * @deprecated Use ./Select_shadcn_ instead
  */
 function Select({
   autoComplete,

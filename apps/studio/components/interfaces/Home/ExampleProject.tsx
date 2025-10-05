@@ -4,41 +4,22 @@ import Link from 'next/link'
 
 import { useParams } from 'common'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { BASE_PATH } from 'lib/constants'
-import { cn } from 'ui'
 
 interface ExampleProjectProps {
+  framework: string
   title: string
   description: string
   url: string
-  framework?: string
-  iconUrl?: string
 }
 
-export const ExampleProject = ({
-  framework,
-  title,
-  description,
-  url,
-  iconUrl,
-}: ExampleProjectProps) => {
+const ExampleProject = ({ framework, title, description, url }: ExampleProjectProps) => {
   const { resolvedTheme } = useTheme()
   const { ref: projectRef } = useParams()
-  const { data: org } = useSelectedOrganizationQuery()
+  const org = useSelectedOrganization()
 
   const { mutate: sendEvent } = useSendEventMutation()
-  const iconImgSrc = iconUrl
-    ? iconUrl
-    : !!framework
-      ? `${BASE_PATH}/img/libraries/${framework.toLowerCase()}${
-          ['expo', 'nextjs'].includes(framework.toLowerCase())
-            ? resolvedTheme?.includes('dark')
-              ? '-dark'
-              : ''
-            : ''
-        }-icon.svg`
-      : ''
 
   return (
     <Link
@@ -54,17 +35,23 @@ export const ExampleProject = ({
       }
     >
       <div
-        className={cn(
+        className={[
           'group relative',
           'border bg-surface-100 border-overlay',
           'flex h-32 flex-row rounded-md p-4 hover:bg-overlay-hover',
-          'transition duration-150 ease-in-out'
-        )}
+          'transition duration-150 ease-in-out',
+        ].join(' ')}
       >
         <div className="mr-4 flex flex-col">
           <img
             className="transition-all group-hover:scale-110"
-            src={iconImgSrc}
+            src={`${BASE_PATH}/img/libraries/${framework.toLowerCase()}${
+              ['expo', 'nextjs'].includes(framework.toLowerCase())
+                ? resolvedTheme?.includes('dark')
+                  ? '-dark'
+                  : ''
+                : ''
+            }-icon.svg`}
             alt={`${framework} logo`}
             width={26}
             height={26}
@@ -75,11 +62,16 @@ export const ExampleProject = ({
           <p className="text-sm text-foreground-light">{description}</p>
         </div>
         <div
-          className={cn(
-            'absolute right-4 top-3',
-            'text-foreground-lighter transition-all duration-200',
-            'group-hover:right-3 group-hover:text-foreground'
-          )}
+          className="
+          absolute
+          right-4
+          top-3
+          text-foreground-lighter
+          transition-all
+          duration-200
+          group-hover:right-3
+          group-hover:text-foreground
+        "
         >
           <ChevronRight />
         </div>
@@ -87,3 +79,5 @@ export const ExampleProject = ({
     </Link>
   )
 }
+
+export default ExampleProject

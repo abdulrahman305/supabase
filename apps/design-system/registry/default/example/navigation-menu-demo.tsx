@@ -104,12 +104,11 @@ export default function NavigationMenuDemo() {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuLink
-              href="/docs"
-              className={buttonVariants({ type: 'text', size: 'small' })}
-            >
-              Documentation
-            </NavigationMenuLink>
+            <Link href="/docs" legacyBehavior passHref>
+              <NavigationMenuLink className={buttonVariants({ type: 'text', size: 'small' })}>
+                Documentation
+              </NavigationMenuLink>
+            </Link>
           </NavigationMenuItem>
         </NavigationMenuList>
       </NavigationMenu>

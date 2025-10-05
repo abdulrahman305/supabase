@@ -7,7 +7,5 @@ export const formatEstimatedCount = (value: number) => {
 
   const unit = i > 4 ? 'T' : sizes[i]
 
-  const formattedValue = value / Math.pow(k, i > 4 ? 4 : i)
-
-  return unit === '' ? `${formattedValue}` : `${formattedValue.toFixed(1)}${unit}`
+  return `${(value / Math.pow(k, i > 4 ? 4 : i)).toFixed(1)}${unit}`
 }

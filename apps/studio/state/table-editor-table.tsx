@@ -61,8 +61,8 @@ export const createTableEditorTableState = ({
       const gridColumns = getInitialGridColumns(
         getGridColumns(supaTable, {
           tableId: table.id,
-          editable: state.editable,
-          onAddColumn: state.editable ? onAddColumn : undefined,
+          editable,
+          onAddColumn: editable ? onAddColumn : undefined,
           onExpandJSONEditor,
           onExpandTextEditor,
         }),
@@ -141,21 +141,6 @@ export const createTableEditorTableState = ({
     },
 
     editable,
-    setEditable: (editable: boolean) => {
-      state.editable = editable
-
-      // When changing the editable flag, all grid columns need to be recreated for the editable flag to be propagated.
-      state.gridColumns = getInitialGridColumns(
-        getGridColumns(state.table, {
-          tableId: table.id,
-          editable,
-          onAddColumn: editable ? onAddColumn : undefined,
-          onExpandJSONEditor,
-          onExpandTextEditor,
-        }),
-        { gridColumns: state.gridColumns }
-      )
-    },
   })
 
   return state
@@ -217,12 +202,6 @@ export const TableEditorTableStateContextProvider = ({
       state.updateTable(table)
     }
   }, [table])
-
-  useEffect(() => {
-    if (state.editable !== props.editable) {
-      state.setEditable(props.editable ?? true)
-    }
-  }, [props.editable, state])
 
   return (
     <TableEditorTableStateContext.Provider value={state}>

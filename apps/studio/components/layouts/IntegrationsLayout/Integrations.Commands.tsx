@@ -5,19 +5,12 @@ import {
   IntegrationDefinition,
   INTEGRATIONS,
 } from 'components/interfaces/Integrations/Landing/Integrations.constants'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
 import type { CommandOptions } from 'ui-patterns/CommandMenu'
 import { useRegisterCommands } from 'ui-patterns/CommandMenu'
 
 export function useIntegrationsGotoCommands(options?: CommandOptions) {
   let { ref } = useParams()
   ref ||= '_'
-
-  const { integrationsWrappers } = useIsFeatureEnabled(['integrations:wrappers'])
-
-  const allIntegrations = integrationsWrappers
-    ? INTEGRATIONS
-    : INTEGRATIONS.filter((x) => !x.id.endsWith('_wrapper'))
 
   const getName = (integration: IntegrationDefinition) => {
     switch (integration.id) {
@@ -34,7 +27,7 @@ export function useIntegrationsGotoCommands(options?: CommandOptions) {
 
   useRegisterCommands(
     COMMAND_MENU_SECTIONS.NAVIGATE,
-    allIntegrations.map((x) => {
+    INTEGRATIONS.map((x) => {
       return {
         id: `nav-integrations-${x.id}`,
         name: x.name,
@@ -48,7 +41,7 @@ export function useIntegrationsGotoCommands(options?: CommandOptions) {
 
   useRegisterCommands(
     COMMAND_MENU_SECTIONS.INTEGRATIONS,
-    allIntegrations.map((x) => {
+    INTEGRATIONS.map((x) => {
       return {
         id: `manage-${x.id}`,
         name: getName(x),

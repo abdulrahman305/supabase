@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { toast } from 'sonner'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { useDatabaseQueueDeleteMutation } from 'data/database-queues/database-queues-delete-mutation'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
 import TextConfirmModal from 'ui-patterns/Dialogs/TextConfirmModal'
 
 interface DeleteQueueProps {
@@ -11,9 +11,9 @@ interface DeleteQueueProps {
   onClose: () => void
 }
 
-export const DeleteQueue = ({ queueName, visible, onClose }: DeleteQueueProps) => {
+const DeleteQueue = ({ queueName, visible, onClose }: DeleteQueueProps) => {
+  const { project } = useProjectContext()
   const router = useRouter()
-  const { data: project } = useSelectedProjectQuery()
 
   const { mutate: deleteDatabaseQueue, isLoading } = useDatabaseQueueDeleteMutation({
     onSuccess: () => {
@@ -58,3 +58,5 @@ export const DeleteQueue = ({ queueName, visible, onClose }: DeleteQueueProps) =
     />
   )
 }
+
+export default DeleteQueue

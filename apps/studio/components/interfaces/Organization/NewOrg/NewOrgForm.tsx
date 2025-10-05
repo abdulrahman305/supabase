@@ -1,34 +1,31 @@
-import { Elements } from '@stripe/react-stripe-js'
-import type { PaymentIntentResult, PaymentMethod, StripeElementsOptions } from '@stripe/stripe-js'
+import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
+import type { PaymentMethod } from '@stripe/stripe-js'
+import { useQueryClient } from '@tanstack/react-query'
 import _ from 'lodash'
-import { ExternalLink, HelpCircle } from 'lucide-react'
+import { Edit2, ExternalLink, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { parseAsString, useQueryStates } from 'nuqs'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { loadStripe } from '@stripe/stripe-js'
 import { LOCAL_STORAGE_KEYS } from 'common'
-import { getStripeElementsAppearanceOptions } from 'components/interfaces/Billing/Payment/Payment.utils'
-import { PaymentConfirmation } from 'components/interfaces/Billing/Payment/PaymentConfirmation'
 import SpendCapModal from 'components/interfaces/Billing/SpendCapModal'
-import { InlineLink } from 'components/ui/InlineLink'
 import Panel from 'components/ui/Panel'
 import { useOrganizationCreateMutation } from 'data/organizations/organization-create-mutation'
-import { useOrganizationsQuery } from 'data/organizations/organizations-query'
-import type { CustomerAddress, CustomerTaxId } from 'data/organizations/types'
+import {
+  invalidateOrganizationsQuery,
+  useOrganizationsQuery,
+} from 'data/organizations/organizations-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
-import { SetupIntentResponse } from 'data/stripe/setup-intent-mutation'
-import { useConfirmPendingSubscriptionCreateMutation } from 'data/subscriptions/org-subscription-confirm-pending-create'
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
 import { useLocalStorageQuery } from 'hooks/misc/useLocalStorage'
-import { PRICING_TIER_LABELS_ORG, STRIPE_PUBLIC_KEY } from 'lib/constants'
+import { BASE_PATH, PRICING_TIER_LABELS_ORG } from 'lib/constants'
+import { getURL } from 'lib/helpers'
 import { useProfile } from 'lib/profile'
-import { useTheme } from 'next-themes'
 import {
   Button,
+  Input,
   Input_Shadcn_,
   Label_Shadcn_,
   Select_Shadcn_,
@@ -42,10 +39,8 @@ import {
   TooltipTrigger,
 } from 'ui'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
-import {
-  NewPaymentMethodElement,
-  type PaymentMethodElementRef,
-} from '../../Billing/Payment/PaymentMethods/NewPaymentMethodElement'
+import { BillingCustomerDataNewOrgDialog } from '../BillingSettings/BillingCustomerData/BillingCustomerDataNewOrgDialog'
+import { FormCustomerData } from '../BillingSettings/BillingCustomerData/useBillingCustomerDataForm'
 
 const ORG_KIND_TYPES = {
   PERSONAL: 'Personal',
@@ -68,17 +63,13 @@ const ORG_SIZE_DEFAULT = '1'
 
 interface NewOrgFormProps {
   onPaymentMethodReset: () => void
-  setupIntent?: SetupIntentResponse
-  onPlanSelected: (plan: string) => void
 }
-
-const plans = ['FREE', 'PRO', 'TEAM'] as const
 
 const formSchema = z.object({
   plan: z
     .string()
     .transform((val) => val.toUpperCase())
-    .pipe(z.enum(plans)),
+    .pipe(z.enum(['FREE', 'PRO', 'TEAM', 'ENTERPRISE'] as const)),
   name: z.string().min(1),
   kind: z
     .string()
@@ -92,23 +83,18 @@ const formSchema = z.object({
 
 type FormState = z.infer<typeof formSchema>
 
-const stripePromise = loadStripe(STRIPE_PUBLIC_KEY)
-
-const newMandatoryAddressInput = true
-
 /**
  * No org selected yet, create a new one
  * [Joshen] Need to refactor to use Form_Shadcn here
  */
-const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOrgFormProps) => {
+const NewOrgForm = ({ onPaymentMethodReset }: NewOrgFormProps) => {
   const router = useRouter()
   const user = useProfile()
-  const { resolvedTheme } = useTheme()
-
-  const isBillingEnabled = useIsFeatureEnabled('billing:all')
-
   const { data: organizations, isSuccess } = useOrganizationsQuery()
-  const { data } = useProjectsQuery()
+  const { data: projects } = useProjectsQuery()
+  const stripe = useStripe()
+  const elements = useElements()
+  const queryClient = useQueryClient()
 
   const [lastVisitedOrganization] = useLocalStorageQuery(
     LOCAL_STORAGE_KEYS.LAST_VISITED_ORGANIZATION,
@@ -118,21 +104,13 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
   const freeOrgs = (organizations || []).filter((it) => it.plan.id === 'free')
 
   const projectsByOrg = useMemo(() => {
-    return _.groupBy(data?.projects ?? [], 'organization_slug')
-  }, [data])
+    return _.groupBy(projects || [], 'organization_slug')
+  }, [projects])
 
   const [isOrgCreationConfirmationModalVisible, setIsOrgCreationConfirmationModalVisible] =
     useState(false)
 
-  const stripeOptionsPaymentMethod: StripeElementsOptions = useMemo(
-    () =>
-      ({
-        clientSecret: setupIntent ? setupIntent.client_secret! : '',
-        appearance: getStripeElementsAppearanceOptions(resolvedTheme),
-        paymentMethodCreation: 'manual',
-      }) as const,
-    [setupIntent, resolvedTheme]
-  )
+  const [customerData, setCustomerData] = useState<FormCustomerData | null>(null)
 
   const [formState, setFormState] = useState<FormState>({
     plan: 'FREE',
@@ -158,11 +136,7 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
 
     if (typeof name === 'string') updateForm('name', name)
     if (typeof kind === 'string') updateForm('kind', kind)
-    if (typeof plan === 'string' && plans.includes(plan.toUpperCase() as (typeof plans)[number])) {
-      const uppercasedPlan = plan.toUpperCase() as (typeof plans)[number]
-      updateForm('plan', uppercasedPlan)
-      onPlanSelected(uppercasedPlan)
-    }
+    if (typeof plan === 'string') updateForm('plan', plan)
     if (typeof size === 'string') updateForm('size', size)
     if (typeof spend_cap === 'string') updateForm('spend_cap', spend_cap === 'true')
   }, [router.isReady])
@@ -177,88 +151,36 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
   const [newOrgLoading, setNewOrgLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>()
 
-  const [paymentConfirmationLoading, setPaymentConfirmationLoading] = useState(false)
   const [showSpendCapHelperModal, setShowSpendCapHelperModal] = useState(false)
-  const [paymentIntentSecret, setPaymentIntentSecret] = useState<string | null>(null)
 
   const { mutate: createOrganization } = useOrganizationCreateMutation({
     onSuccess: async (org) => {
-      if ('pending_payment_intent_secret' in org && org.pending_payment_intent_secret) {
-        setPaymentIntentSecret(org.pending_payment_intent_secret)
+      await invalidateOrganizationsQuery(queryClient)
+      const prefilledProjectName = user.profile?.username
+        ? user.profile.username + `'s Project`
+        : 'My Project'
+
+      if (searchParams.returnTo && searchParams.auth_id) {
+        router.push(`${searchParams.returnTo}?auth_id=${searchParams.auth_id}`, undefined, {
+          shallow: false,
+        })
       } else {
-        onOrganizationCreated(org as { slug: string })
+        router.push(`/new/${org.slug}?projectName=${prefilledProjectName}`)
       }
     },
     onError: (data) => {
-      toast.error(data.message, { duration: 10_000 })
+      toast.error(`Failed to create organization: ${data.message}`)
       resetPaymentMethod()
       setNewOrgLoading(false)
     },
   })
-
-  const { mutate: confirmPendingSubscriptionChange } = useConfirmPendingSubscriptionCreateMutation({
-    onSuccess: (data) => {
-      if (data && 'slug' in data) {
-        onOrganizationCreated({ slug: data.slug })
-      }
-    },
-  })
-
-  const paymentIntentConfirmed = async (paymentIntentConfirmation: PaymentIntentResult) => {
-    // Reset payment intent secret to ensure another attempt works as expected
-    setPaymentIntentSecret('')
-
-    if (paymentIntentConfirmation.paymentIntent?.status === 'succeeded') {
-      await confirmPendingSubscriptionChange({
-        payment_intent_id: paymentIntentConfirmation.paymentIntent.id,
-        name: formState.name,
-        kind: formState.kind,
-        size: formState.size,
-      })
-    } else {
-      // If the payment intent is not successful, we reset the payment method and show an error
-      toast.error(`Could not confirm payment. Please try again or use a different card.`, {
-        duration: 10_000,
-      })
-      resetPaymentMethod()
-      setNewOrgLoading(false)
-    }
-  }
-
-  const onOrganizationCreated = (org: { slug: string }) => {
-    const prefilledProjectName = user.profile?.username
-      ? user.profile.username + `'s Project`
-      : 'My Project'
-
-    if (searchParams.returnTo && searchParams.auth_id) {
-      router.push(`${searchParams.returnTo}?auth_id=${searchParams.auth_id}`, undefined, {
-        shallow: false,
-      })
-    } else {
-      router.push(`/new/${org.slug}?projectName=${prefilledProjectName}`)
-    }
-  }
 
   function validateOrgName(name: any) {
     const value = name ? name.trim() : ''
     return value.length >= 1
   }
 
-  const stripeOptionsConfirm = useMemo(() => {
-    return {
-      clientSecret: paymentIntentSecret,
-      appearance: getStripeElementsAppearanceOptions(resolvedTheme),
-    } as StripeElementsOptions
-  }, [paymentIntentSecret, resolvedTheme])
-
-  async function createOrg(
-    paymentMethodId?: string,
-    customerData?: {
-      address: CustomerAddress | null
-      billing_name: string | null
-      tax_id: CustomerTaxId | null
-    }
-  ) {
+  async function createOrg(paymentMethodId?: string) {
     const dbTier = formState.plan === 'PRO' && !formState.spend_cap ? 'PAYG' : formState.plan
 
     createOrganization({
@@ -268,36 +190,45 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
         | 'tier_payg'
         | 'tier_pro'
         | 'tier_free'
-        | 'tier_team',
+        | 'tier_team'
+        | 'tier_enterprise',
       ...(formState.kind == 'COMPANY' ? { size: formState.size } : {}),
       payment_method: paymentMethodId,
       billing_name: dbTier === 'FREE' ? undefined : customerData?.billing_name,
-      address: dbTier === 'FREE' ? null : customerData?.address,
+      address: dbTier === 'FREE' ? undefined : customerData?.address,
       tax_id: dbTier === 'FREE' ? undefined : customerData?.tax_id ?? undefined,
     })
   }
 
-  const paymentRef = useRef<PaymentMethodElementRef | null>(null)
-
   const handleSubmit = async () => {
+    if (!stripe || !elements) {
+      return console.error('Stripe.js has not loaded')
+    }
+
     setNewOrgLoading(true)
 
     if (formState.plan === 'FREE') {
       await createOrg()
     } else if (!paymentMethod) {
-      const result = await paymentRef.current?.createPaymentMethod()
-      if (result) {
-        setPaymentMethod(result.paymentMethod)
-        const customerData = {
-          address: result.address,
-          billing_name: result.customerName,
-          tax_id: result.taxId,
-        }
+      const { error, setupIntent } = await stripe.confirmSetup({
+        elements,
+        redirect: 'if_required',
+        confirmParams: {
+          return_url: `${getURL()}/new`,
+          expand: ['payment_method'],
+        },
+      })
 
-        createOrg(result.paymentMethod.id, customerData)
-      } else {
+      if (error || !setupIntent.payment_method) {
+        toast.error(error?.message ?? ' Failed to save card details')
         setNewOrgLoading(false)
+        return
       }
+
+      const paymentMethodFromSetup = setupIntent.payment_method as PaymentMethod
+
+      setPaymentMethod(paymentMethodFromSetup)
+      createOrg(paymentMethodFromSetup.id)
     } else {
       createOrg(paymentMethod.id)
     }
@@ -337,7 +268,7 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
           <div key="panel-footer" className="flex w-full items-center justify-between">
             <Button
               type="default"
-              disabled={newOrgLoading || paymentConfirmationLoading}
+              disabled={newOrgLoading}
               onClick={() => {
                 if (!!lastVisitedOrganization) router.push(`/org/${lastVisitedOrganization}`)
                 else router.push('/organizations')
@@ -360,7 +291,6 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
             </div>
           </div>
         }
-        className="overflow-visible"
       >
         <Panel.Content>
           <p className="text-sm">This is your organization within Supabase.</p>
@@ -465,57 +395,52 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
           </Panel.Content>
         )}
 
-        {isBillingEnabled && (
-          <Panel.Content>
-            <div className="grid grid-cols-3">
-              <div className="flex flex-col gap-2">
-                <Label_Shadcn_ htmlFor="plan" className=" text-sm">
-                  Plan
+        <Panel.Content>
+          <div className="grid grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <Label_Shadcn_ htmlFor="plan" className=" text-sm">
+                Plan
+              </Label_Shadcn_>
+
+              <a
+                href="https://supabase.com/pricing"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="text-sm flex items-center gap-2 opacity-75 hover:opacity-100 transition"
+              >
+                Pricing
+                <ExternalLink size={16} strokeWidth={1.5} />
+              </a>
+            </div>
+            <div className="col-span-2">
+              <Select_Shadcn_
+                value={formState.plan}
+                onValueChange={(value) => updateForm('plan', value)}
+              >
+                <SelectTrigger_Shadcn_ id="plan" className="w-full">
+                  <SelectValue_Shadcn_ />
+                </SelectTrigger_Shadcn_>
+
+                <SelectContent_Shadcn_>
+                  {Object.entries(PRICING_TIER_LABELS_ORG).map(([k, v]) => (
+                    <SelectItem_Shadcn_ key={k} value={k} translate="no">
+                      {v}
+                    </SelectItem_Shadcn_>
+                  ))}
+                </SelectContent_Shadcn_>
+              </Select_Shadcn_>
+
+              <div className="mt-1">
+                <Label_Shadcn_
+                  htmlFor="plan"
+                  className="text-foreground-lighter leading-normal text-sm"
+                >
+                  The Plan applies to your new organization.
                 </Label_Shadcn_>
-
-                <a
-                  href="https://supabase.com/pricing"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-sm flex items-center gap-2 opacity-75 hover:opacity-100 transition"
-                >
-                  Pricing
-                  <ExternalLink size={16} strokeWidth={1.5} />
-                </a>
-              </div>
-              <div className="col-span-2">
-                <Select_Shadcn_
-                  value={formState.plan}
-                  onValueChange={(value) => {
-                    updateForm('plan', value)
-                    onPlanSelected(value)
-                  }}
-                >
-                  <SelectTrigger_Shadcn_ id="plan" className="w-full">
-                    <SelectValue_Shadcn_ />
-                  </SelectTrigger_Shadcn_>
-
-                  <SelectContent_Shadcn_>
-                    {Object.entries(PRICING_TIER_LABELS_ORG).map(([k, v]) => (
-                      <SelectItem_Shadcn_ key={k} value={k} translate="no">
-                        {v}
-                      </SelectItem_Shadcn_>
-                    ))}
-                  </SelectContent_Shadcn_>
-                </Select_Shadcn_>
-
-                <div className="mt-1">
-                  <Label_Shadcn_
-                    htmlFor="plan"
-                    className="text-foreground-lighter leading-normal text-sm"
-                  >
-                    The Plan applies to your new organization.
-                  </Label_Shadcn_>
-                </div>
               </div>
             </div>
-          </Panel.Content>
-        )}
+          </div>
+        </Panel.Content>
 
         {formState.plan === 'PRO' && (
           <>
@@ -555,26 +480,65 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
           </>
         )}
 
-        {setupIntent && formState.plan !== 'FREE' && (
+        {formState.plan !== 'FREE' && (
+          <Panel.Content className="border-b border-panel-border-interior-light dark:border-panel-border-interior-dark">
+            <div className="grid grid-cols-3">
+              <div className="col-span-1 flex space-x-2 text-sm items-center">
+                <Label_Shadcn_ htmlFor="spend-cap" className=" leading-normal">
+                  Billing Address
+                </Label_Shadcn_>
+              </div>
+              <div className="col-span-2">
+                <BillingCustomerDataNewOrgDialog onCustomerDataChange={setCustomerData} />
+              </div>
+            </div>
+          </Panel.Content>
+        )}
+
+        {formState.plan !== 'FREE' && (
           <Panel.Content>
-            <Elements stripe={stripePromise} options={stripeOptionsPaymentMethod}>
-              <Panel.Content>
-                <NewPaymentMethodElement
-                  ref={paymentRef}
-                  email={user.profile?.primary_email}
-                  readOnly={newOrgLoading || paymentConfirmationLoading}
-                />
-              </Panel.Content>
-            </Elements>
+            {paymentMethod?.card !== undefined ? (
+              <div key={paymentMethod.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-8">
+                  <img
+                    alt="Card"
+                    src={`${BASE_PATH}/img/payment-methods/${paymentMethod.card.brand
+                      .replace(' ', '-')
+                      .toLowerCase()}.png`}
+                    width="32"
+                  />
+                  <Input
+                    readOnly
+                    className="w-64"
+                    size="small"
+                    value={`•••• •••• •••• ${paymentMethod.card.last4}`}
+                  />
+                  <p className="text-sm tabular-nums">
+                    Expires: {paymentMethod.card.exp_month}/{paymentMethod.card.exp_year}
+                  </p>
+                </div>
+                <div>
+                  <Button
+                    type="outline"
+                    icon={<Edit2 />}
+                    onClick={() => resetPaymentMethod()}
+                    disabled={newOrgLoading}
+                    className="hover:border-muted"
+                  />
+                </div>
+              </div>
+            ) : (
+              <PaymentElement />
+            )}
           </Panel.Content>
         )}
       </Panel>
 
       <ConfirmationModal
         size="large"
-        loading={newOrgLoading}
+        loading={false}
         visible={isOrgCreationConfirmationModalVisible}
-        title="Confirm organization creation"
+        title={<>Confirm organization creation</>}
         confirmLabel="Create new organization"
         onCancel={() => setIsOrgCreationConfirmationModalVisible(false)}
         onConfirm={async () => {
@@ -585,9 +549,13 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
       >
         <p className="text-sm text-foreground-light">
           Supabase{' '}
-          <InlineLink href="https://supabase.com/docs/guides/platform/billing-on-supabase">
+          <Link
+            className="underline"
+            href="/docs/guides/platform/billing-on-supabase"
+            target="_blank"
+          >
             bills per organization
-          </InlineLink>
+          </Link>
           . If you want to upgrade your existing projects, upgrade your existing organization
           instead.
         </p>
@@ -610,7 +578,7 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
                   </div>
                   <div className="text-foreground-light text-xs">
                     {orgProjects.length <= 2 ? (
-                      <span>{orgProjects.join(' and ')}</span>
+                      <span>{orgProjects.join('and ')}</span>
                     ) : (
                       <div>
                         {orgProjects.slice(0, 2).join(', ')} and{' '}
@@ -637,23 +605,6 @@ const NewOrgForm = ({ onPaymentMethodReset, setupIntent, onPlanSelected }: NewOr
             })}
         </ul>
       </ConfirmationModal>
-
-      {stripePromise && paymentIntentSecret && paymentMethod && (
-        <Elements stripe={stripePromise} options={stripeOptionsConfirm}>
-          <PaymentConfirmation
-            paymentIntentSecret={paymentIntentSecret}
-            onPaymentIntentConfirm={(paymentIntentConfirmation) =>
-              paymentIntentConfirmed(paymentIntentConfirmation)
-            }
-            onLoadingChange={(loading) => setPaymentConfirmationLoading(loading)}
-            onError={(err) => {
-              toast.error(err.message, { duration: 10_000 })
-              setNewOrgLoading(false)
-              resetPaymentMethod()
-            }}
-          />
-        </Elements>
-      )}
     </form>
   )
 }

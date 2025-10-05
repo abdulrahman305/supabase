@@ -1,8 +1,7 @@
 import { QueryKey, useQuery, UseQueryOptions } from '@tanstack/react-query'
 
-import { DEFAULT_PLATFORM_APPLICATION_NAME } from '@supabase/pg-meta/src/constants'
 import { handleError as handleErrorFetchers, post } from 'data/fetchers'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { MB, PROJECT_STATUS } from 'lib/constants'
 import {
   ROLE_IMPERSONATION_NO_RESULTS,
@@ -18,7 +17,6 @@ export type ExecuteSqlVariables = {
   queryKey?: QueryKey
   handleError?: (error: ResponseError) => { result: any }
   isRoleImpersonationEnabled?: boolean
-  isStatementTimeoutDisabled?: boolean
   autoLimit?: number
   contextualInvalidation?: boolean
 }
@@ -31,7 +29,6 @@ export async function executeSql<T = any>(
     queryKey,
     handleError,
     isRoleImpersonationEnabled = false,
-    isStatementTimeoutDisabled = false,
   }: Pick<
     ExecuteSqlVariables,
     | 'projectRef'
@@ -40,14 +37,9 @@ export async function executeSql<T = any>(
     | 'queryKey'
     | 'handleError'
     | 'isRoleImpersonationEnabled'
-    | 'isStatementTimeoutDisabled'
   >,
   signal?: AbortSignal,
-  headersInit?: HeadersInit,
-  fetcherOverride?: (options: {
-    query: string
-    headers?: HeadersInit
-  }) => Promise<{ data: T } | { error: ResponseError }>
+  headersInit?: HeadersInit
 ): Promise<{ result: T }> {
   if (!projectRef) throw new Error('projectRef is required')
 
@@ -60,42 +52,21 @@ export async function executeSql<T = any>(
   let headers = new Headers(headersInit)
   if (connectionString) headers.set('x-connection-encrypted', connectionString)
 
-  let data
-  let error
-
-  if (fetcherOverride) {
-    const result = await fetcherOverride({ query: sql, headers })
-    if ('data' in result) {
-      data = result.data
-    } else {
-      error = result.error
-    }
-  } else {
-    const result = await post('/platform/pg-meta/{ref}/query', {
-      signal,
-      params: {
-        header: {
-          'x-connection-encrypted': connectionString ?? '',
-          'x-pg-application-name': isStatementTimeoutDisabled
-            ? 'supabase/dashboard-query-editor'
-            : DEFAULT_PLATFORM_APPLICATION_NAME,
-        },
-        path: { ref: projectRef },
-        // @ts-expect-error: This is just a client side thing to identify queries better
-        query: {
-          key:
-            queryKey
-              ?.filter((seg) => typeof seg === 'string' || typeof seg === 'number')
-              .join('-') ?? '',
-        },
+  let { data, error } = await post('/platform/pg-meta/{ref}/query', {
+    signal,
+    params: {
+      header: { 'x-connection-encrypted': connectionString ?? '' },
+      path: { ref: projectRef },
+      // @ts-expect-error: This is just a client side thing to identify queries better
+      query: {
+        key:
+          queryKey?.filter((seg) => typeof seg === 'string' || typeof seg === 'number').join('-') ??
+          '',
       },
-      body: { query: sql, disable_statement_timeout: isStatementTimeoutDisabled },
-      headers,
-    })
-
-    data = result.data
-    error = result.error
-  }
+    },
+    body: { query: sql },
+    headers,
+  })
 
   if (error) {
     if (
@@ -159,7 +130,7 @@ export const useExecuteSqlQuery = <TData = ExecuteSqlData>(
   }: ExecuteSqlVariables,
   { enabled = true, ...options }: UseQueryOptions<ExecuteSqlData, ExecuteSqlError, TData> = {}
 ) => {
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
   const isActive = project?.status === PROJECT_STATUS.ACTIVE_HEALTHY
 
   return useQuery<ExecuteSqlData, ExecuteSqlError, TData>(

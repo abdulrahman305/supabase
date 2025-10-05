@@ -1,44 +1,44 @@
-import { useRouter } from 'next/router'
-import { useEffect } from 'react'
-
 import { useParams } from 'common'
+import { useIsSQLEditorTabsEnabled } from 'components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import DefaultLayout from 'components/layouts/DefaultLayout'
 import { EditorBaseLayout } from 'components/layouts/editors/EditorBaseLayout'
 import SQLEditorLayout from 'components/layouts/SQLEditorLayout/SQLEditorLayout'
 import { SQLEditorMenu } from 'components/layouts/SQLEditorLayout/SQLEditorMenu'
-import { useDashboardHistory } from 'hooks/misc/useDashboardHistory'
+import { NewTab } from 'components/layouts/Tabs/NewTab'
+import { useRouter } from 'next/router'
+import { useEffect } from 'react'
+import { useAppStateSnapshot } from 'state/app-state'
 import { useTabsStateSnapshot } from 'state/tabs'
 import type { NextPageWithLayout } from 'types'
 
-const SQLEditorIndexPage: NextPageWithLayout = () => {
+const TableEditorPage: NextPageWithLayout = () => {
   const router = useRouter()
   const { ref: projectRef } = useParams()
   const store = useTabsStateSnapshot()
-
-  const { history, isHistoryLoaded } = useDashboardHistory()
+  const appSnap = useAppStateSnapshot()
+  const isSqlEditorTabsEnabled = useIsSQLEditorTabsEnabled()
 
   useEffect(() => {
-    if (isHistoryLoaded) {
+    if (!isSqlEditorTabsEnabled) {
+      // Redirect to /new if not using tabs
+      router.push(`/project/${projectRef}/sql/new`)
+    } else {
       // Handle redirect to last opened snippet tab, or last snippet tab
-      const lastOpenedTab = history.sql
+      const lastOpenedTab = appSnap.dashboardHistory.sql
       const lastTabId = store.openTabs.find((id) => store.tabsMap[id]?.type === 'sql')
-
       if (lastOpenedTab !== undefined) {
-        router.push(`/project/${projectRef}/sql/${history.sql}`)
+        router.push(`/project/${projectRef}/sql/${appSnap.dashboardHistory.sql}`)
       } else if (lastTabId) {
         const lastTab = store.tabsMap[lastTabId]
         if (lastTab) router.push(`/project/${projectRef}/sql/${lastTab.id.replace('sql-', '')}`)
-      } else {
-        router.push(`/project/${projectRef}/sql/new`)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHistoryLoaded])
+  }, [isSqlEditorTabsEnabled])
 
-  return null
+  return isSqlEditorTabsEnabled ? <NewTab /> : null
 }
 
-SQLEditorIndexPage.getLayout = (page) => (
+TableEditorPage.getLayout = (page) => (
   <DefaultLayout>
     <EditorBaseLayout productMenu={<SQLEditorMenu />} product="SQL Editor">
       <SQLEditorLayout>{page}</SQLEditorLayout>
@@ -46,4 +46,4 @@ SQLEditorIndexPage.getLayout = (page) => (
   </DefaultLayout>
 )
 
-export default SQLEditorIndexPage
+export default TableEditorPage

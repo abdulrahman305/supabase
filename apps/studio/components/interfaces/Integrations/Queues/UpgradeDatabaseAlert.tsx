@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
 import { Button } from 'ui'
 import { Admonition } from 'ui-patterns/admonition'
 
@@ -9,7 +9,7 @@ interface UpgradeDatabaseAlertProps {
 }
 
 export const UpgradeDatabaseAlert = ({ minimumVersion = '15.6' }: UpgradeDatabaseAlertProps) => {
-  const { data: project } = useSelectedProjectQuery()
+  const project = useSelectedProject()
 
   return (
     <Admonition

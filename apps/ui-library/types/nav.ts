@@ -1,4 +1,4 @@
-type supportedFrameworks = 'nextjs' | 'react-router' | 'tanstack' | 'react' | 'vue' | 'nuxtjs'
+type supportedFrameworks = 'nextjs' | 'react-router' | 'tanstack' | 'react'
 export interface NavItem {
   title: string
   href?: string

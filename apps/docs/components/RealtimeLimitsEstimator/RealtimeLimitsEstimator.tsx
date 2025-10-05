@@ -137,11 +137,7 @@ export default function RealtimeLimitsEstimater({}) {
             <Button
               type="text"
               icon={
-                <ChevronDown
-                  size={18}
-                  strokeWidth={2}
-                  className={expandPreview ? 'rotate-180' : undefined}
-                />
+                <ChevronDown size={18} strokeWidth={2} className={expandPreview && 'rotate-180'} />
               }
               className="px-1"
               onClick={() => setExpandPreview(!expandPreview)}

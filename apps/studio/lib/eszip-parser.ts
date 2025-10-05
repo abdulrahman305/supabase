@@ -63,14 +63,8 @@ export async function parseEszip(bytes: Uint8Array) {
       throw loadError
     }
 
-    // Extract version
-    let version = parseInt(await parser.getModuleSource('---SUPABASE-ESZIP-VERSION-ESZIP---'))
-    if (isNaN(version)) {
-      version = 0
-    }
-
     // Extract files from the eszip
-    const files = await extractEszip(parser, specifiers, version >= 2)
+    const files = await extractEszip(parser, specifiers)
 
     // Convert files to the expected format
     const responseFiles = await Promise.all(
@@ -83,17 +77,14 @@ export async function parseEszip(bytes: Uint8Array) {
       })
     )
 
-    return {
-      version,
-      files: responseFiles,
-    }
+    return responseFiles
   } catch (error) {
     console.error('Error in parseEszip:', error)
     throw error
   }
 }
 
-async function extractEszip(parser: any, specifiers: string[], isDeno2: boolean) {
+async function extractEszip(parser: any, specifiers: string[]) {
   const files = []
 
   // First, filter out the specifiers we want to keep
@@ -123,13 +114,9 @@ async function extractEszip(parser: any, specifiers: string[], isDeno2: boolean)
     try {
       // Try to get the module source
       const moduleSource = await parser.getModuleSource(specifier)
-      let qualifiedSpecifier = specifier
 
       // Get the file path
-      if (isDeno2 && !specifier.startsWith('file://')) {
-        qualifiedSpecifier = `file://${specifier}`
-      }
-      const filePath = url2path(qualifiedSpecifier)
+      const filePath = url2path(specifier)
 
       // Create a file object
       const file = new File([moduleSource], filePath)

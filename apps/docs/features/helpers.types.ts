@@ -1,5 +1,7 @@
-export type Json = string | number | boolean | { [key: string]: Json } | Json[]
+type OrPromise<T> = T | Promise<T>
 
-export type OrPromise<T> = T | Promise<T>
+type Json = string | number | boolean | { [key: string]: Json } | Json[]
 
-export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+
+export type { Json, OrPromise, WithRequired }

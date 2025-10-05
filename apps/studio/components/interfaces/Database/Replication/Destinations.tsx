@@ -1,27 +1,19 @@
-import { useQueryClient } from '@tanstack/react-query'
-import { Plus, Search } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-
 import { useParams } from 'common'
 import Table from 'components/to-be-cleaned/Table'
-import { AlertError } from 'components/ui/AlertError'
-import { DocsButton } from 'components/ui/DocsButton'
-import { useReplicationDestinationsQuery } from 'data/replication/destinations-query'
-import { replicationKeys } from 'data/replication/keys'
-import { fetchReplicationPipelineVersion } from 'data/replication/pipeline-version-query'
-import { useReplicationPipelinesQuery } from 'data/replication/pipelines-query'
-import { useReplicationSourcesQuery } from 'data/replication/sources-query'
-import { DOCS_URL } from 'lib/constants'
-import { Button, cn, Input_Shadcn_ } from 'ui'
+import AlertError from 'components/ui/AlertError'
+import { useReplicationSinksQuery } from 'data/replication/sinks-query'
+import { Plus } from 'lucide-react'
+import { Button, cn } from 'ui'
 import { GenericSkeletonLoader } from 'ui-patterns'
-import { DestinationPanel } from './DestinationPanel'
-import { DestinationRow } from './DestinationRow'
-import { EnableReplicationModal } from './EnableReplicationModal'
-import { PIPELINE_ERROR_MESSAGES } from './Pipeline.utils'
+import DestinationRow from './DestinationRow'
+import { useReplicationPipelinesQuery } from 'data/replication/pipelines-query'
+import { useState } from 'react'
+import NewDestinationPanel from './DestinationPanel'
+import { useReplicationSourcesQuery } from 'data/replication/sources-query'
+import { ScaffoldSection, ScaffoldSectionTitle } from 'components/layouts/Scaffold'
 
-export const Destinations = () => {
+const Destinations = () => {
   const [showNewDestinationPanel, setShowNewDestinationPanel] = useState(false)
-  const [filterString, setFilterString] = useState<string>('')
   const { ref: projectRef } = useParams()
 
   const {
@@ -34,16 +26,15 @@ export const Destinations = () => {
     projectRef,
   })
 
-  const sourceId = sourcesData?.sources.find((s) => s.name === projectRef)?.id
-  const replicationNotEnabled = isSourcesSuccess && !sourceId
+  let sourceId = sourcesData?.sources.find((s) => s.name === projectRef)?.id
 
   const {
-    data: destinationsData,
-    error: destinationsError,
-    isLoading: isDestinationsLoading,
-    isError: isDestinationsError,
-    isSuccess: isDestinationsSuccess,
-  } = useReplicationDestinationsQuery({
+    data: sinksData,
+    error: sinksError,
+    isLoading: isSinksLoading,
+    isError: isSinksError,
+    isSuccess: isSinksSuccess,
+  } = useReplicationSinksQuery({
     projectRef,
   })
 
@@ -57,90 +48,27 @@ export const Destinations = () => {
     projectRef,
   })
 
-  const hasDestinations = isDestinationsSuccess && destinationsData.destinations.length > 0
-
-  const filteredDestinations =
-    filterString.length === 0
-      ? destinationsData?.destinations ?? []
-      : (destinationsData?.destinations ?? []).filter((destination) =>
-          destination.name.toLowerCase().includes(filterString.toLowerCase())
-        )
-
-  // Prefetch pipeline version info for all destinations on first load only
-  const queryClient = useQueryClient()
-  const prefetchedRef = useRef(false)
-  useEffect(() => {
-    if (
-      projectRef &&
-      !prefetchedRef.current &&
-      pipelinesData?.pipelines &&
-      pipelinesData.pipelines.length > 0 &&
-      isPipelinesSuccess
-    ) {
-      prefetchedRef.current = true
-      pipelinesData.pipelines.forEach((p) => {
-        if (!p?.id) return
-        queryClient.prefetchQuery({
-          queryKey: replicationKeys.pipelinesVersion(projectRef, p.id),
-          queryFn: ({ signal }) =>
-            fetchReplicationPipelineVersion({ projectRef, pipelineId: p.id }, signal),
-          staleTime: Infinity,
-        })
-      })
-    }
-  }, [projectRef, pipelinesData?.pipelines, isPipelinesSuccess, queryClient])
+  const anySinks = isSinksSuccess && sinksData.sinks.length > 0
 
   return (
     <>
-      <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="relative">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground-lighter"
-                size={14}
-              />
-              <Input_Shadcn_
-                className="pl-9 h-7"
-                placeholder={'Filter destinations'}
-                value={filterString}
-                onChange={(e) => setFilterString(e.target.value)}
-              />
-            </div>
-          </div>
-          {!!sourceId && (
-            <Button type="default" icon={<Plus />} onClick={() => setShowNewDestinationPanel(true)}>
-              Add destination
-            </Button>
-          )}
+      <ScaffoldSection isFullWidth>
+        <div className="flex justify-between items-center mb-4">
+          <ScaffoldSectionTitle>Destinations</ScaffoldSectionTitle>
+          <Button type="default" icon={<Plus />} onClick={() => setShowNewDestinationPanel(true)}>
+            Add destination
+          </Button>
         </div>
-      </div>
+        {(isSourcesLoading || isSinksLoading) && <GenericSkeletonLoader />}
 
-      <div className="w-full overflow-hidden overflow-x-auto">
-        {(isSourcesLoading || isDestinationsLoading) && <GenericSkeletonLoader />}
-
-        {(isSourcesError || isDestinationsError) && (
+        {(isSourcesError || isSinksError) && (
           <AlertError
-            error={sourcesError || destinationsError}
-            subject={PIPELINE_ERROR_MESSAGES.RETRIEVE_DESTINATIONS}
+            error={sourcesError || sinksError}
+            subject="Failed to retrieve destinations"
           />
         )}
 
-        {replicationNotEnabled ? (
-          <div className="border rounded-md p-4 md:p-12 flex flex-col gap-y-4">
-            <div className="flex flex-col gap-y-1">
-              <h3>Run analysis on your data via integrations with Replication</h3>
-              <p className="text-sm text-foreground-light">
-                Enable replication on your project to send data to your first destination
-              </p>
-            </div>
-            <div className="flex gap-x-2">
-              <EnableReplicationModal />
-              {/* [Joshen] Placeholder for when we have documentation */}
-              <DocsButton href={`${DOCS_URL}`} />
-            </div>
-          </div>
-        ) : hasDestinations ? (
+        {anySinks ? (
           <Table
             head={[
               <Table.th key="name">Name</Table.th>,
@@ -149,31 +77,29 @@ export const Destinations = () => {
               <Table.th key="publication">Publication</Table.th>,
               <Table.th key="actions"></Table.th>,
             ]}
-            body={filteredDestinations.map((destination) => {
-              const pipeline = pipelinesData?.pipelines.find(
-                (p) => p.destination_id === destination.id
-              )
+            body={sinksData.sinks.map((sink) => {
+              const pipeline = pipelinesData?.pipelines.find((p) => p.sink_id === sink.id)
               return (
                 <DestinationRow
-                  key={destination.id}
+                  key={sink.id}
                   sourceId={sourceId}
-                  destinationId={destination.id}
-                  destinationName={destination.name}
-                  type={destination.config.big_query ? 'BigQuery' : 'Other'}
+                  sinkId={sink.id}
+                  sinkName={sink.name}
+                  type={sink.config.big_query ? 'BigQuery' : 'Other'}
                   pipeline={pipeline}
                   error={pipelinesError}
                   isLoading={isPipelinesLoading}
                   isError={isPipelinesError}
                   isSuccess={isPipelinesSuccess}
-                />
+                ></DestinationRow>
               )
             })}
-          />
+          ></Table>
         ) : (
           !isSourcesLoading &&
-          !isDestinationsLoading &&
+          !isSinksLoading &&
           !isSourcesError &&
-          !isDestinationsError && (
+          !isSinksError && (
             <div
               className={cn(
                 'w-full',
@@ -181,37 +107,30 @@ export const Destinations = () => {
                 'flex flex-col px-10 rounded-lg justify-center items-center py-8 mt-4'
               )}
             >
-              <h4>Send data to your first destination</h4>
-              <p className="prose text-sm text-center mt-1 max-w-full">
+              <h4 className="text-lg">Send data to your first destination</h4>
+              <p className="prose text-sm text-center mt-2">
                 Use destinations to improve performance or run analysis on your data via
                 integrations like BigQuery
               </p>
               <Button
                 icon={<Plus />}
                 onClick={() => setShowNewDestinationPanel(true)}
-                className="mt-4"
+                className="mt-6"
               >
                 Add destination
               </Button>
             </div>
           )
         )}
-      </div>
+      </ScaffoldSection>
 
-      {!isSourcesLoading &&
-        !isDestinationsLoading &&
-        filteredDestinations.length === 0 &&
-        hasDestinations && (
-          <div className="text-center py-8 text-foreground-light">
-            <p>No destinations match "{filterString}"</p>
-          </div>
-        )}
-
-      <DestinationPanel
+      <NewDestinationPanel
         visible={showNewDestinationPanel}
         sourceId={sourceId}
         onClose={() => setShowNewDestinationPanel(false)}
-      />
+      ></NewDestinationPanel>
     </>
   )
 }
+
+export default Destinations

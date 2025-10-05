@@ -1,26 +1,25 @@
 import { ArrowRight, Check, Minus, User, X } from 'lucide-react'
-import Link from 'next/link'
 
+import Table from 'components/to-be-cleaned/Table'
 import PartnerIcon from 'components/ui/PartnerIcon'
 import { ProfileImage } from 'components/ui/ProfileImage'
 import { useOrganizationRolesV2Query } from 'data/organization-members/organization-roles-query'
 import { OrganizationMember } from 'data/organizations/organization-members-query'
 import { useProjectsQuery } from 'data/projects/projects-query'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { getGitHubProfileImgUrl } from 'lib/github'
 import { useProfile } from 'lib/profile'
+import Link from 'next/link'
 import {
   Badge,
   HoverCardContent_Shadcn_,
   HoverCardTrigger_Shadcn_,
   HoverCard_Shadcn_,
   ScrollArea,
-  TableCell,
-  TableRow,
   cn,
 } from 'ui'
 import ShimmeringLoader from 'ui-patterns/ShimmeringLoader'
-import { isInviteExpired } from '../Organization.utils'
+import { getUserDisplayName, isInviteExpired } from '../Organization.utils'
 import { MemberActions } from './MemberActions'
 
 interface MemberRowProps {
@@ -33,16 +32,16 @@ const MEMBER_ORIGIN_TO_MANAGED_BY = {
 
 export const MemberRow = ({ member }: MemberRowProps) => {
   const { profile } = useProfile()
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+  const selectedOrganization = useSelectedOrganization()
 
-  const { data } = useProjectsQuery()
-  const projects = data?.projects ?? []
+  const { data: projects } = useProjectsQuery()
   const { data: roles, isLoading: isLoadingRoles } = useOrganizationRolesV2Query({
     slug: selectedOrganization?.slug,
   })
 
   const orgProjects = projects?.filter((p) => p.organization_id === selectedOrganization?.id)
   const hasProjectScopedRoles = (roles?.project_scoped_roles ?? []).length > 0
+  const memberIsUser = member.gotrue_id == profile?.gotrue_id
   const isInvitedUser = Boolean(member.invited_id)
   const isEmailUser = member.username === member.primary_email
   const isFlyUser = Boolean(member.primary_email?.endsWith('customer.fly.io'))
@@ -70,11 +69,11 @@ export const MemberRow = ({ member }: MemberRowProps) => {
     }).length > 0
 
   return (
-    <TableRow>
-      <TableCell>
+    <Table.tr>
+      <Table.td>
         <div className="flex items-center gap-x-4">
           <ProfileImage
-            alt={member.primary_email ?? member.username ?? ''}
+            alt={member.username}
             src={profileImageUrl}
             className="border rounded-full w-[32px] h-[32px] md:w-[40px] md:h-[40px]"
             placeholder={
@@ -89,8 +88,12 @@ export const MemberRow = ({ member }: MemberRowProps) => {
             }
           />
           <div className="flex item-center gap-x-2">
-            <p className="text-foreground-light truncate">{member.primary_email}</p>
-            {member.gotrue_id === profile?.gotrue_id && <Badge color="scale">You</Badge>}
+            {isInvitedUser === undefined ? (
+              <p className="text-foreground-light truncate">{member.primary_email}</p>
+            ) : (
+              <p className="text-foreground truncate">{getUserDisplayName(member)}</p>
+            )}
+            {member.primary_email === profile?.primary_email && <Badge color="scale">You</Badge>}
           </div>
 
           {(member.metadata as any)?.origin && (
@@ -105,18 +108,18 @@ export const MemberRow = ({ member }: MemberRowProps) => {
             />
           )}
         </div>
-      </TableCell>
+      </Table.td>
 
-      <TableCell>
+      <Table.td>
         {isInvitedUser && member.invited_at && (
           <Badge variant={isInviteExpired(member.invited_at) ? 'destructive' : 'warning'}>
             {isInviteExpired(member.invited_at) ? 'Expired' : 'Invited'}
           </Badge>
         )}
         {member.is_sso_user && <Badge variant="default">SSO</Badge>}
-      </TableCell>
+      </Table.td>
 
-      <TableCell>
+      <Table.td>
         <div className="flex items-center justify-center">
           {member.mfa_enabled ? (
             <Check className="text-brand" strokeWidth={2} size={20} />
@@ -124,9 +127,9 @@ export const MemberRow = ({ member }: MemberRowProps) => {
             <X className="text-foreground-light" strokeWidth={1.5} size={20} />
           )}
         </div>
-      </TableCell>
+      </Table.td>
 
-      <TableCell className="max-w-64">
+      <Table.td className="max-w-64">
         {isLoadingRoles ? (
           <ShimmeringLoader className="w-32" />
         ) : isObfuscated ? (
@@ -203,11 +206,9 @@ export const MemberRow = ({ member }: MemberRowProps) => {
             )
           })
         )}
-      </TableCell>
+      </Table.td>
 
-      <TableCell>
-        <MemberActions member={member} />
-      </TableCell>
-    </TableRow>
+      <Table.td>{!memberIsUser && <MemberActions member={member} />}</Table.td>
+    </Table.tr>
   )
 }

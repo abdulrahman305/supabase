@@ -9,16 +9,15 @@ import { useParams } from 'common'
 import { useIsAPIDocsSidePanelEnabled } from 'components/interfaces/App/FeaturePreview/FeaturePreviewContext'
 import { EdgeFunctionTesterSheet } from 'components/interfaces/Functions/EdgeFunctionDetails/EdgeFunctionTesterSheet'
 import { PageLayout } from 'components/layouts/PageLayout/PageLayout'
-import { APIDocsButton } from 'components/ui/APIDocsButton'
+import APIDocsButton from 'components/ui/APIDocsButton'
 import { DocsButton } from 'components/ui/DocsButton'
 import NoPermission from 'components/ui/NoPermission'
 import { useEdgeFunctionBodyQuery } from 'data/edge-functions/edge-function-body-query'
 import { useEdgeFunctionQuery } from 'data/edge-functions/edge-function-query'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useAsyncCheckProjectPermissions } from 'hooks/misc/useCheckPermissions'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { withAuth } from 'hooks/misc/withAuth'
-import { DOCS_URL } from 'lib/constants'
 import {
   Button,
   Popover_Shadcn_,
@@ -39,12 +38,12 @@ const EdgeFunctionDetailsLayout = ({
   children,
 }: PropsWithChildren<EdgeFunctionDetailsLayoutProps>) => {
   const router = useRouter()
-  const { data: org } = useSelectedOrganizationQuery()
   const { functionSlug, ref } = useParams()
+  const org = useSelectedOrganization()
   const { mutate: sendEvent } = useSendEventMutation()
 
   const isNewAPIDocsEnabled = useIsAPIDocsSidePanelEnabled()
-  const { isLoading, can: canReadFunctions } = useAsyncCheckPermissions(
+  const { isLoading, can: canReadFunctions } = useAsyncCheckProjectPermissions(
     PermissionAction.FUNCTIONS_READ,
     '*'
   )
@@ -57,23 +56,10 @@ const EdgeFunctionDetailsLayout = ({
     isError,
   } = useEdgeFunctionQuery({ projectRef: ref, slug: functionSlug })
 
-  const { data: functionBody = { version: 0, files: [] }, error: filesError } =
-    useEdgeFunctionBodyQuery(
-      {
-        projectRef: ref,
-        slug: functionSlug,
-      },
-      {
-        retry: false,
-        retryOnMount: true,
-        refetchOnWindowFocus: false,
-        staleTime: Infinity,
-        refetchOnMount: false,
-        refetchOnReconnect: false,
-        refetchInterval: false,
-        refetchIntervalInBackground: false,
-      }
-    )
+  const { data: functionFiles = [], error: filesError } = useEdgeFunctionBodyQuery({
+    projectRef: ref,
+    slug: functionSlug,
+  })
 
   const name = selectedFunction?.name || ''
 
@@ -114,7 +100,7 @@ const EdgeFunctionDetailsLayout = ({
 
     const zipFileWriter = new BlobWriter('application/zip')
     const zipWriter = new ZipWriter(zipFileWriter, { bufferedWrite: true })
-    functionBody.files.forEach((file) => {
+    functionFiles.forEach((file) => {
       const nameSections = file.name.split('/')
       const slugIndex = nameSections.indexOf(functionSlug ?? '')
       const fileName = nameSections.slice(slugIndex + 1).join('/')
@@ -170,7 +156,7 @@ const EdgeFunctionDetailsLayout = ({
                 }
               />
             )}
-            <DocsButton href={`${DOCS_URL}/guides/functions`} />
+            <DocsButton href="https://supabase.com/docs/guides/functions" />
             <Popover_Shadcn_>
               <PopoverTrigger_Shadcn_ asChild>
                 <Button type="default" icon={<Download />}>

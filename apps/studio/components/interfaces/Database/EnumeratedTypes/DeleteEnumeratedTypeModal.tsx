@@ -1,7 +1,6 @@
-import { toast } from 'sonner'
-
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { useEnumeratedTypeDeleteMutation } from 'data/enumerated-types/enumerated-type-delete-mutation'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { toast } from 'sonner'
 import ConfirmationModal from 'ui-patterns/Dialogs/ConfirmationModal'
 
 interface DeleteEnumeratedTypeModalProps {
@@ -15,7 +14,7 @@ const DeleteEnumeratedTypeModal = ({
   selectedEnumeratedType,
   onClose,
 }: DeleteEnumeratedTypeModalProps) => {
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const { mutate: deleteEnumeratedType, isLoading: isDeleting } = useEnumeratedTypeDeleteMutation({
     onSuccess: () => {
       toast.success(`Successfully deleted "${selectedEnumeratedType.name}"`)

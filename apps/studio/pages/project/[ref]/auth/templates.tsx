@@ -1,19 +1,15 @@
 import { PermissionAction } from '@supabase/shared-types/out/constants'
-
-import { EmailTemplates } from 'components/interfaces/Auth/EmailTemplates/EmailTemplates'
+import { EmailTemplates } from 'components/interfaces/Auth'
 import { AuthEmailsLayout } from 'components/layouts/AuthLayout/AuthEmailsLayout'
 import DefaultLayout from 'components/layouts/DefaultLayout'
-import { ScaffoldContainer, ScaffoldSection } from 'components/layouts/Scaffold'
+import { ScaffoldContainer } from 'components/layouts/Scaffold'
 import NoPermission from 'components/ui/NoPermission'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions, usePermissionsLoaded } from 'hooks/misc/useCheckPermissions'
 import type { NextPageWithLayout } from 'types'
-import { GenericSkeletonLoader } from 'ui-patterns'
 
 const TemplatesPage: NextPageWithLayout = () => {
-  const { can: canReadAuthSettings, isSuccess: isPermissionsLoaded } = useAsyncCheckPermissions(
-    PermissionAction.READ,
-    'custom_config_gotrue'
-  )
+  const canReadAuthSettings = useCheckPermissions(PermissionAction.READ, 'custom_config_gotrue')
+  const isPermissionsLoaded = usePermissionsLoaded()
 
   if (isPermissionsLoaded && !canReadAuthSettings) {
     return <NoPermission isFullPage resourceText="access your project's email settings" />
@@ -21,13 +17,7 @@ const TemplatesPage: NextPageWithLayout = () => {
 
   return (
     <ScaffoldContainer>
-      {!isPermissionsLoaded ? (
-        <ScaffoldSection isFullWidth>
-          <GenericSkeletonLoader />
-        </ScaffoldSection>
-      ) : (
-        <EmailTemplates />
-      )}
+      <EmailTemplates />
     </ScaffoldContainer>
   )
 }

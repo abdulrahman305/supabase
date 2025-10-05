@@ -1,8 +1,7 @@
-import { ArrowUpRight } from 'lucide-react'
-
 import type { ProductMenuGroup } from 'components/ui/ProductMenu/ProductMenu.types'
 import type { Project } from 'data/projects/project-detail-query'
 import { IS_PLATFORM } from 'lib/constants'
+import { ArrowUpRight } from 'lucide-react'
 
 export const generateDatabaseMenu = (
   project?: Project,
@@ -11,21 +10,11 @@ export const generateDatabaseMenu = (
     pitrEnabled: boolean
     columnLevelPrivileges: boolean
     enablePgReplicate: boolean
-    showPgReplicate: boolean
-    showRoles: boolean
-    showWrappers: boolean
   }
 ): ProductMenuGroup[] => {
   const ref = project?.ref ?? 'default'
-  const {
-    pgNetExtensionExists,
-    pitrEnabled,
-    columnLevelPrivileges,
-    enablePgReplicate,
-    showPgReplicate,
-    showRoles,
-    showWrappers,
-  } = flags || {}
+  const { pgNetExtensionExists, pitrEnabled, columnLevelPrivileges, enablePgReplicate } =
+    flags || {}
 
   return [
     {
@@ -75,13 +64,12 @@ export const generateDatabaseMenu = (
           url: `/project/${ref}/database/publications`,
           items: [],
         },
-        ...(showPgReplicate
+        ...(enablePgReplicate
           ? [
               {
                 name: 'Replication',
                 key: 'replication',
                 url: `/project/${ref}/database/replication`,
-                label: !enablePgReplicate ? 'Coming soon' : undefined,
                 items: [],
               },
             ]
@@ -89,11 +77,9 @@ export const generateDatabaseMenu = (
       ],
     },
     {
-      title: 'Configuration',
+      title: 'Access Control',
       items: [
-        ...(showRoles
-          ? [{ name: 'Roles', key: 'roles', url: `/project/${ref}/database/roles`, items: [] }]
-          : []),
+        { name: 'Roles', key: 'roles', url: `/project/${ref}/database/roles`, items: [] },
         ...(columnLevelPrivileges
           ? [
               {
@@ -112,7 +98,6 @@ export const generateDatabaseMenu = (
           rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
           items: [],
         },
-        { name: 'Settings', key: 'settings', url: `/project/${ref}/database/settings`, items: [] },
       ],
     },
     {
@@ -136,17 +121,13 @@ export const generateDatabaseMenu = (
           url: `/project/${ref}/database/migrations`,
           items: [],
         },
-        ...(showWrappers
-          ? [
-              {
-                name: 'Wrappers',
-                key: 'wrappers',
-                url: `/project/${ref}/integrations?category=wrapper`,
-                rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
-                items: [],
-              },
-            ]
-          : []),
+        {
+          name: 'Wrappers',
+          key: 'wrappers',
+          url: `/project/${ref}/integrations?category=wrapper`,
+          rightIcon: <ArrowUpRight strokeWidth={1} className="h-4 w-4" />,
+          items: [],
+        },
         ...(!!pgNetExtensionExists
           ? [
               {

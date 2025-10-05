@@ -66,7 +66,6 @@ const MobileHeader = ({
             })
           }
           size="medium"
-          planId={selectedPlan.planId}
         />
       ) : (
         <Button asChild size="medium" type={plan === 'Enterprise' ? 'default' : 'primary'} block>
@@ -416,7 +415,6 @@ const PricingComparisonTable = ({
                               })
                             }
                             size="tiny"
-                            planId={plan.planId}
                           />
                         ) : (
                           <Button

@@ -3,7 +3,7 @@ import { Globe, Trash } from 'lucide-react'
 
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { EmptyListState } from 'components/ui/States'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { Button, Checkbox_Shadcn_ } from 'ui'
 import { ValueContainer } from './ValueContainer'
 
@@ -24,10 +24,7 @@ export const RedirectUrlList = ({
   onSelectRemoveURLs,
   onSelectClearSelection,
 }: RedirectUrlListProps) => {
-  const { can: canUpdateConfig } = useAsyncCheckPermissions(
-    PermissionAction.UPDATE,
-    'custom_config_gotrue'
-  )
+  const canUpdateConfig = useCheckPermissions(PermissionAction.UPDATE, 'custom_config_gotrue')
 
   // [Joshen] One for next time: maybe shift this into a reusable logic since it
   // seems like we can use this in multiple places for future
@@ -124,7 +121,7 @@ export const RedirectUrlList = ({
         <div
           className={[
             'flex items-center border-overlay bg-studio text-foreground',
-            'justify-center gap-2 rounded-b border px-6 py-8 text-sm',
+            'justify-center gap-2 rounded border px-6 py-8 text-sm',
           ].join(' ')}
         >
           <EmptyListState

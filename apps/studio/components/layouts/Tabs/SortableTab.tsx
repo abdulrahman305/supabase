@@ -2,13 +2,12 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
+import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 
 import { EntityTypeIcon } from 'components/ui/EntityTypeIcon'
-import { useQuerySchemaState } from 'hooks/misc/useSchemaQueryState'
 import { useTabsStateSnapshot, type Tab } from 'state/tabs'
 import { cn, TabsTrigger_Shadcn_ } from 'ui'
-import { useEditorType } from '../editors/EditorsLayout.hooks'
 
 /**
  * Individual draggable tab component that handles:
@@ -29,9 +28,9 @@ export const SortableTab = ({
   openTabs: Tab[]
   onClose: (id: string) => void
 }) => {
-  const editor = useEditorType()
+  const router = useRouter()
+  const currentSchema = (router.query.schema as string) || 'public'
   const tabs = useTabsStateSnapshot()
-  const { selectedSchema: currentSchema } = useQuerySchemaState()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: tab.id,
   })
@@ -46,8 +45,16 @@ export const SortableTab = ({
   const shouldShowSchema = useMemo(() => {
     // For both table and schema tabs, show schema if:
     // Any tab has a different schema than the current schema parameter
-    return openTabs.some((t) => editor === 'table' && t.metadata?.schema !== currentSchema)
-  }, [openTabs, currentSchema, editor])
+    if (tab.type === 'r') {
+      const anyTabHasDifferentSchema = openTabs
+        .filter((t) => t.type === 'r')
+        .some((t) => t.metadata?.schema !== currentSchema)
+
+      return anyTabHasDifferentSchema
+    }
+
+    return false
+  }, [openTabs, currentSchema, tab.type])
 
   // Create a motion version of TabsTrigger while preserving all functionality
   // const MotionTabsTrigger = motion(TabsTrigger_Shadcn_)
@@ -64,13 +71,6 @@ export const SortableTab = ({
     >
       <TabsTrigger_Shadcn_
         value={tab.id}
-        onAuxClick={(e) => {
-          // Middle click closes tab
-          if (e.button === 1) {
-            e.preventDefault()
-            onClose(tab.id)
-          }
-        }}
         onDoubleClick={() => tabs.makeTabPermanent(tab.id)}
         className={cn(
           'flex items-center gap-2 pl-3 pr-2.5 text-xs',

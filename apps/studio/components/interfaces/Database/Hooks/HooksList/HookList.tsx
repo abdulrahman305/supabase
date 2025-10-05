@@ -1,15 +1,14 @@
-import { PostgresTrigger } from '@supabase/postgres-meta'
 import { PermissionAction } from '@supabase/shared-types/out/constants'
 import { includes, noop } from 'lodash'
 import { Edit3, MoreVertical, Trash } from 'lucide-react'
 import Image from 'next/legacy/image'
 
 import { useParams } from 'common'
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import Table from 'components/to-be-cleaned/Table'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import { useDatabaseHooksQuery } from 'data/database-triggers/database-triggers-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { BASE_PATH } from 'lib/constants'
 import {
   Badge,
@@ -24,18 +23,13 @@ import {
 export interface HookListProps {
   schema: string
   filterString: string
-  editHook: (hook: PostgresTrigger) => void
-  deleteHook: (hook: PostgresTrigger) => void
+  editHook: (hook: any) => void
+  deleteHook: (hook: any) => void
 }
 
-export const HookList = ({
-  schema,
-  filterString,
-  editHook = noop,
-  deleteHook = noop,
-}: HookListProps) => {
+const HookList = ({ schema, filterString, editHook = noop, deleteHook = noop }: HookListProps) => {
   const { ref } = useParams()
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
   const { data: hooks } = useDatabaseHooksQuery({
     projectRef: project?.ref,
     connectionString: project?.connectionString,
@@ -45,19 +39,16 @@ export const HookList = ({
   const restUrlTld = restUrl ? new URL(restUrl).hostname.split('.').pop() : 'co'
 
   const filteredHooks = (hooks ?? []).filter(
-    (x) =>
+    (x: any) =>
       includes(x.name.toLowerCase(), filterString.toLowerCase()) &&
       x.schema === schema &&
       x.function_args.length >= 2
   )
-  const { can: canUpdateWebhook } = useAsyncCheckPermissions(
-    PermissionAction.TENANT_SQL_ADMIN_WRITE,
-    'triggers'
-  )
+  const canUpdateWebhook = useCheckPermissions(PermissionAction.TENANT_SQL_ADMIN_WRITE, 'triggers')
 
   return (
     <>
-      {filteredHooks.map((x) => {
+      {filteredHooks.map((x: any) => {
         const isEdgeFunction = (url: string) =>
           url.includes(`https://${ref}.functions.supabase.${restUrlTld}/`) ||
           url.includes(`https://${ref}.supabase.${restUrlTld}/functions/`)
@@ -143,3 +134,5 @@ export const HookList = ({
     </>
   )
 }
+
+export default HookList

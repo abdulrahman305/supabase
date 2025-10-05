@@ -14,25 +14,27 @@ import { useEdgeFunctionBodyQuery } from 'data/edge-functions/edge-function-body
 import { useEdgeFunctionQuery } from 'data/edge-functions/edge-function-query'
 import { useEdgeFunctionDeployMutation } from 'data/edge-functions/edge-functions-deploy-mutation'
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
-import { BASE_PATH } from 'lib/constants'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
+import { useOrgOptedIntoAi } from 'hooks/misc/useOrgOptedIntoAi'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
+import { BASE_PATH, IS_PLATFORM } from 'lib/constants'
 import { LogoLoader } from 'ui'
 
 const CodePage = () => {
   const { ref, functionSlug } = useParams()
-  const { data: project } = useSelectedProjectQuery()
-  const { data: org } = useSelectedOrganizationQuery()
-
+  const project = useSelectedProject()
+  const isOptedInToAI = useOrgOptedIntoAi()
+  const includeSchemaMetadata = isOptedInToAI || !IS_PLATFORM
   const { mutate: sendEvent } = useSendEventMutation()
+  const org = useSelectedOrganization()
   const [showDeployWarning, setShowDeployWarning] = useState(false)
 
-  const { can: canDeployFunction } = useAsyncCheckPermissions(PermissionAction.FUNCTIONS_WRITE, '*')
+  const canDeployFunction = useCheckPermissions(PermissionAction.FUNCTIONS_WRITE, '*')
 
   const { data: selectedFunction } = useEdgeFunctionQuery({ projectRef: ref, slug: functionSlug })
   const {
-    data: functionBody,
+    data: functionFiles,
     isLoading: isLoadingFiles,
     isError: isErrorLoadingFiles,
     isSuccess: isSuccessLoadingFiles,
@@ -120,29 +122,15 @@ const CodePage = () => {
     }
   }
 
-  function getBasePath(
-    entrypoint: string | undefined,
-    fileNames: string[],
-    version: number
-  ): string {
+  function getBasePath(entrypoint: string | undefined): string {
     if (!entrypoint) {
       return '/'
     }
 
-    let qualifiedEntrypoint = entrypoint
-
-    if (version >= 2) {
-      const candidate = fileNames.find((name) => entrypoint.endsWith(name))
-      if (candidate) {
-        qualifiedEntrypoint = `file://${candidate}`
-      } else {
-        qualifiedEntrypoint = entrypoint
-      }
-    }
     try {
-      return dirname(new URL(qualifiedEntrypoint).pathname)
+      return dirname(new URL(entrypoint).pathname)
     } catch (e) {
-      console.error('Failed to parse entrypoint', qualifiedEntrypoint)
+      console.error('Failed to parse entrypoint', entrypoint)
       return '/'
     }
   }
@@ -166,13 +154,9 @@ const CodePage = () => {
 
   useEffect(() => {
     // Set files from API response when available
-    if (selectedFunction?.entrypoint_path && functionBody) {
-      const base_path = getBasePath(
-        selectedFunction?.entrypoint_path,
-        functionBody.files.map((file) => file.name),
-        functionBody.version
-      )
-      const filesWithRelPath = functionBody.files
+    if (selectedFunction?.entrypoint_path && functionFiles) {
+      const base_path = getBasePath(selectedFunction?.entrypoint_path)
+      const filesWithRelPath = functionFiles
         // ignore empty files
         .filter((file: { name: string; content: string }) => !!file.content.length)
         // set file paths relative to entrypoint
@@ -207,7 +191,7 @@ const CodePage = () => {
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [functionBody])
+  }, [functionFiles])
 
   return (
     <div className="flex flex-col h-full">
@@ -235,11 +219,11 @@ const CodePage = () => {
           <FileExplorerAndEditor
             files={files}
             onFilesChange={setFiles}
-            aiEndpoint={`${BASE_PATH}/api/ai/code/complete`}
+            aiEndpoint={`${BASE_PATH}/api/ai/edge-function/complete`}
             aiMetadata={{
               projectRef: project?.ref,
               connectionString: project?.connectionString,
-              orgSlug: org?.slug,
+              includeSchemaMetadata,
             }}
           />
           <div className="flex items-center bg-background-muted justify-end p-4 border-t bg-surface-100 shrink-0">
@@ -276,7 +260,6 @@ const CodePage = () => {
         visible={showDeployWarning}
         onCancel={() => setShowDeployWarning(false)}
         onConfirm={handleDeployConfirm}
-        isDeploying={isDeploying}
       />
     </div>
   )

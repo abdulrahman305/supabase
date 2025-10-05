@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { cloneElement, forwardRef, isValidElement } from 'react'
 import { SIZE_VARIANTS, SIZE_VARIANTS_DEFAULT } from '../../lib/constants'
 import { cn } from '../../lib/utils/cn'
+import { IconContext } from '../Icon/IconContext'
 
 export type ButtonVariantProps = VariantProps<typeof buttonVariants>
 const buttonVariants = cva(
@@ -177,7 +178,7 @@ const IconContainerVariants = cva('', {
       link: 'text-brand-600',
       text: 'text-foreground-lighter',
       danger: 'text-destructive-600',
-      warning: 'text-warning',
+      warning: 'text-warning-600',
     },
   },
 })
@@ -195,7 +196,7 @@ const loadingVariants = cva('', {
       link: 'text-brand-600',
       text: 'text-foreground-muted',
       danger: 'text-destructive-600',
-      warning: 'text-warning',
+      warning: 'text-warning-600',
     },
     loading: {
       default: '',
@@ -254,11 +255,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         disabled={disabled}
         className={cn(buttonVariants({ type, size, disabled, block, rounded }), className)}
-        onClick={(e) => {
-          // [Joshen] Prevents redirecting if Button is used with a link-based child element
-          if (disabled) return e.preventDefault()
-          else props?.onClick?.(e)
-        }}
       >
         {asChild ? (
           isValidElement(children) ? (

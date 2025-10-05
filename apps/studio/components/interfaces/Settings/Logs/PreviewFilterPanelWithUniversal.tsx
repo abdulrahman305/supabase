@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useParams } from 'common'
+// import CSVButton from 'components/ui/CSVButton'
 import DatabaseSelector from 'components/ui/DatabaseSelector'
 import { useLoadBalancersQuery } from 'data/read-replicas/load-balancers-query'
 import { IS_PLATFORM } from 'lib/constants'
@@ -20,8 +21,9 @@ import { DatePickerValue } from './Logs.DatePickers'
 import { FILTER_OPTIONS, LOG_ROUTES_WITH_REPLICA_SUPPORT, LogsTableName } from './Logs.constants'
 import type { Filters, LogSearchCallback, LogTemplate } from './Logs.types'
 
-function isBooleanMap(v: unknown): v is Record<string, boolean> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v)
+interface CustomDateRangePickerProps {
+  value?: { from: Date; to?: Date }
+  onChange: (range: { from: Date; to?: Date } | undefined) => void
 }
 
 function CustomDateRangePicker({ onChange, onCancel }: CustomOptionProps) {
@@ -281,12 +283,7 @@ const PreviewFilterPanelWithUniversal = ({
           return
         }
 
-        if (typeof condition.value === 'string') {
-          const current = newFilters[propertyName]
-          const next = isBooleanMap(current) ? { ...current } : {}
-          next[condition.value] = true
-          newFilters[propertyName] = next
-        }
+        ;(newFilters[propertyName] as Record<string, boolean>)[condition.value] = true
       }
     })
 

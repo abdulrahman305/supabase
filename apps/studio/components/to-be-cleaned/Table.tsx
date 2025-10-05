@@ -11,9 +11,6 @@ interface TableProps {
   style?: React.StyleHTMLAttributes<HTMLTableElement>
 }
 
-/**
- * @deprecated Use `Table` from `ui` instead
- */
 function Table({
   body,
   head,
@@ -48,9 +45,6 @@ interface ThProps {
   style?: React.CSSProperties
 }
 
-/**
- * @deprecated Use `TableHeader` from `ui` instead
- */
 const Th = ({ children, className, style }: PropsWithChildren<ThProps>) => {
   const classes = ['p-3 px-4 text-left']
   if (className) classes.push(className)
@@ -68,9 +62,6 @@ interface TrProps {
   onClick?: () => void
 }
 
-/**
- * @deprecated Use `TableRow` from `ui` instead
- */
 const Tr = ({ children, className, onClick, style, hoverable }: PropsWithChildren<TrProps>) => {
   let classes = [className]
   if (onClick || hoverable) classes.push('tr--link')
@@ -88,9 +79,6 @@ interface TdProps extends React.HTMLProps<HTMLTableCellElement> {
   align?: 'left' | 'center' | 'right' | 'justify' | 'char' | undefined
 }
 
-/**
- * @deprecated Use `TableCell` from `ui` instead
- */
 const Td = ({ children, colSpan, className, style, ...rest }: PropsWithChildren<TdProps>) => {
   return (
     <td className={className} colSpan={colSpan} style={style} {...rest}>

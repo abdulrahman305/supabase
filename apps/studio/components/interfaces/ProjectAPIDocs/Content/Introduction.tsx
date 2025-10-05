@@ -1,8 +1,8 @@
 import { useParams } from 'common'
-import { Button, Input, copyToClipboard } from 'ui'
+import { Button, Input } from 'ui'
 
-import { getKeys, useAPIKeysQuery } from 'data/api-keys/api-keys-query'
 import { useProjectSettingsV2Query } from 'data/config/project-settings-v2-query'
+import { copyToClipboard } from 'lib/helpers'
 import { Copy } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ContentSnippet from '../ContentSnippet'
@@ -11,7 +11,6 @@ import type { ContentProps } from './Content.types'
 
 const Introduction = ({ showKeys, language, apikey, endpoint }: ContentProps) => {
   const { ref } = useParams()
-  const { data: apiKeys } = useAPIKeysQuery({ projectRef: ref })
   const { data } = useProjectSettingsV2Query({ projectRef: ref })
 
   const [copied, setCopied] = useState<'anon' | 'service'>()
@@ -20,9 +19,10 @@ const Introduction = ({ showKeys, language, apikey, endpoint }: ContentProps) =>
     if (copied !== undefined) setTimeout(() => setCopied(undefined), 2000)
   }, [copied])
 
-  const { anonKey, serviceKey } = getKeys(apiKeys)
-  const anonApiKey = anonKey?.api_key
-  const serviceApiKey = serviceKey?.api_key ?? 'SUPABASE_CLIENT_SERVICE_KEY'
+  const anonApiKey = (data?.service_api_keys ?? []).find((key) => key.tags === 'anon')?.api_key
+  const serviceApiKey =
+    (data?.service_api_keys ?? []).find((key) => key.tags === 'service_role')?.api_key ??
+    'SUPABASE_CLIENT_SERVICE_KEY'
 
   return (
     <>

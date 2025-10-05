@@ -58,7 +58,7 @@ hideToc: true
       Open `lib/main.dart` and edit the main function to initialize Supabase using your project URL and public API (anon) key:
 
       <ProjectConfigVariables variable="url" />
-      <ProjectConfigVariables variable="publishableKey" />
+      <ProjectConfigVariables variable="anonKey" />
 
     </StepHikeCompact.Details>
 
@@ -72,7 +72,7 @@ hideToc: true
 
         await Supabase.initialize(
           url: 'YOUR_SUPABASE_URL',
-          anonKey: 'YOUR_SUPABASE_PUBLISHABLE_KEY',
+          anonKey: 'YOUR_SUPABASE_ANON_KEY',
         );
         runApp(MyApp());
       }

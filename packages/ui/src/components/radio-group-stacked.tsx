@@ -85,7 +85,7 @@ const RadioGroupStackedItem = React.forwardRef<
               '-mt-[0.15rem]',
               'text-sm transition-colors text-left',
               'text-light',
-              'enabled:group-hover:text-foreground group-data-[state=checked]:text-foreground'
+              'group-hover:text-foreground group-data-[state=checked]:text-foreground'
             )}
           >
             {label}

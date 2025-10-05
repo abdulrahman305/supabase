@@ -1,20 +1,22 @@
 import { Check } from 'lucide-react'
 
 import { useSendEventMutation } from 'data/telemetry/send-event-mutation'
-import { useSelectedOrganizationQuery } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
 import { PricingInformation } from 'shared-data'
+import { pickFeatures } from 'shared-data/plans'
 import { Button, cn } from 'ui'
 
 export interface EnterpriseCardProps {
   plan: PricingInformation
   isCurrentPlan: boolean
+  billingPartner: 'fly' | 'aws' | 'vercel_marketplace' | undefined
 }
 
-export const EnterpriseCard = ({ plan, isCurrentPlan }: EnterpriseCardProps) => {
-  const { data: selectedOrganization } = useSelectedOrganizationQuery()
+export const EnterpriseCard = ({ plan, isCurrentPlan, billingPartner }: EnterpriseCardProps) => {
+  const selectedOrganization = useSelectedOrganization()
   const orgSlug = selectedOrganization?.slug
 
-  const features = plan.features
+  const features = pickFeatures(plan, billingPartner)
   const currentPlan = selectedOrganization?.plan.name
 
   const { mutate: sendEvent } = useSendEventMutation()

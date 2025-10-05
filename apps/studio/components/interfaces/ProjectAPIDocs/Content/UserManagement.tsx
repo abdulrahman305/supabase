@@ -1,12 +1,8 @@
-import { useIsFeatureEnabled } from 'hooks/misc/useIsFeatureEnabled'
 import ContentSnippet from '../ContentSnippet'
 import { DOCS_CONTENT } from '../ProjectAPIDocs.constants'
 import type { ContentProps } from './Content.types'
 
 const UserManagement = ({ language, apikey, endpoint }: ContentProps) => {
-  const { authenticationSignInProviders } = useIsFeatureEnabled([
-    'authentication:sign_in_providers',
-  ])
   return (
     <>
       <ContentSnippet selectedLanguage={language} snippet={DOCS_CONTENT.userManagement} />
@@ -46,14 +42,12 @@ const UserManagement = ({ language, apikey, endpoint }: ContentProps) => {
         endpoint={endpoint}
         snippet={DOCS_CONTENT.smsVerify}
       />
-      {authenticationSignInProviders && (
-        <ContentSnippet
-          selectedLanguage={language}
-          apikey={apikey}
-          endpoint={endpoint}
-          snippet={DOCS_CONTENT.oauthLogin}
-        />
-      )}
+      <ContentSnippet
+        selectedLanguage={language}
+        apikey={apikey}
+        endpoint={endpoint}
+        snippet={DOCS_CONTENT.oauthLogin}
+      />
       <ContentSnippet
         selectedLanguage={language}
         apikey={apikey}

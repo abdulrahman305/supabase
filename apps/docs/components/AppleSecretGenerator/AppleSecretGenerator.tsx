@@ -133,7 +133,7 @@ const AppleSecretGenerator = () => {
         <input
           type="file"
           onChange={(e) => {
-            setFile({ file: e.target.files?.[0] || null })
+            setFile({ file: e.target.files[0] })
           }}
         />
       </div>
@@ -156,7 +156,7 @@ const AppleSecretGenerator = () => {
               keyID,
               teamID,
               serviceID,
-              file.file!
+              file.file
             )
             setKeyID(kid)
             setSecretKey(jwt)

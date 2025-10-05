@@ -1,9 +1,8 @@
-import { LOAD_TAB_FROM_CACHE_PARAM } from 'components/grid/SupabaseGrid.utils'
+import { useConstant } from 'common'
 import { ENTITY_TYPE } from 'data/entity-types/entity-type-constants'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
 import { partition } from 'lodash'
 import { NextRouter } from 'next/router'
-import { createContext, PropsWithChildren, ReactNode, useContext, useEffect, useState } from 'react'
+import { createContext, PropsWithChildren, ReactNode, useContext, useEffect } from 'react'
 import { proxy, subscribe, useSnapshot } from 'valtio'
 
 export const editorEntityTypes = {
@@ -78,7 +77,6 @@ const DEFAULT_TABS_STATE = {
   openTabs: [] as string[],
   tabsMap: {} as { [key: string]: Tab },
   previewTabId: undefined as string | undefined,
-  recentItems: [],
 }
 const TABS_STORAGE_KEY = 'supabase_studio_tabs'
 const getTabsStorageKey = (ref: string) => `${TABS_STORAGE_KEY}_${ref}`
@@ -287,7 +285,7 @@ function createTabsState(projectRef: string) {
         case 'f':
         case 'p':
           router.push(
-            `/project/${router.query.ref}/editor/${tab.metadata?.tableId}?schema=${tab.metadata?.schema}&${LOAD_TAB_FROM_CACHE_PARAM}=true`
+            `/project/${router.query.ref}/editor/${tab.metadata?.tableId}?schema=${tab.metadata?.schema}`
           )
           break
       }
@@ -348,29 +346,12 @@ function createTabsState(projectRef: string) {
               router.push(`/project/${router.query.ref}/editor`)
               break
             default:
-              router.push(`/project/${router.query.ref}/${editor === 'table' ? 'editor' : 'sql'}`)
+              router.push(`/project/${router.query.ref}/${editor}`)
           }
         }
       }
 
       onClose?.(id)
-    },
-    handleTabCloseAll: ({
-      editor,
-      router,
-      onClearDashboardHistory,
-    }: {
-      editor: 'sql' | 'table'
-      router: NextRouter
-      onClearDashboardHistory: () => void
-    }) => {
-      const tabsToClose =
-        editor === 'table'
-          ? store.openTabs.filter((x) => !x.startsWith('sql'))
-          : store.openTabs.filter((x) => x.startsWith('sql'))
-      store.removeTabs(tabsToClose)
-      onClearDashboardHistory()
-      router.push(`/project/${router.query.ref}/${editor === 'table' ? 'editor' : 'sql'}`)
     },
     handleTabDragEnd: (oldIndex: number, newIndex: number, tabId: string, router: any) => {
       // Make permanent if needed
@@ -399,21 +380,17 @@ export type TabsState = ReturnType<typeof createTabsState>
 
 export const TabsStateContext = createContext<TabsState>(createTabsState(''))
 
-export const TabsStateContextProvider = ({ children }: PropsWithChildren) => {
-  const { data: project } = useSelectedProjectQuery()
-  const [state, setState] = useState(createTabsState(project?.ref ?? ''))
+export const TabsStateContextProvider = ({
+  projectRef,
+  children,
+}: PropsWithChildren<{ projectRef?: string }>) => {
+  const state = useConstant(() => createTabsState(projectRef ?? ''))
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !!project?.ref) {
-      setState(createTabsState(project?.ref ?? ''))
-    }
-  }, [project?.ref])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && project?.ref) {
+    if (typeof window !== 'undefined' && projectRef) {
       return subscribe(state, () => {
         localStorage.setItem(
-          getTabsStorageKey(project?.ref),
+          getTabsStorageKey(projectRef),
           JSON.stringify({
             activeTab: state.activeTab,
             openTabs: state.openTabs,
@@ -422,14 +399,15 @@ export const TabsStateContextProvider = ({ children }: PropsWithChildren) => {
           })
         )
         localStorage.setItem(
-          getRecentItemsStorageKey(project?.ref),
+          getRecentItemsStorageKey(projectRef),
           JSON.stringify({
             items: state.recentItems,
           })
         )
       })
     }
-  }, [project?.ref, state])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return <TabsStateContext.Provider value={state}>{children}</TabsStateContext.Provider>
 }

@@ -8,7 +8,7 @@ import { realtimeKeys } from './keys'
 
 export type RealtimeConfigurationUpdateVariables = {
   ref: string
-} & components['schemas']['UpdateRealtimeConfigBody']
+} & components['schemas']['UpdateRealtimeConfigBodyDto']
 
 export async function updateRealtimeConfiguration({
   ref,

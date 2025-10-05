@@ -22,8 +22,6 @@ export interface Provider {
       descriptionOptional?: string
       units?: string
       isSecret?: boolean
-      isPaid?: boolean
-      link?: string
     }
   }
   validationSchema: any // todo: use Yup type

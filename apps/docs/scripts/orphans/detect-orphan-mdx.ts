@@ -2,25 +2,24 @@ import { readdir } from 'node:fs/promises'
 import { extname, join } from 'node:path'
 import {
   GLOBAL_MENU_ITEMS,
-  ai,
-  api,
-  auth,
-  cli,
-  database,
-  functions,
   gettingstarted,
+  cli,
+  auth,
+  database,
+  api,
   graphql,
-  platform,
+  functions,
   realtime,
+  storage,
+  ai,
+  platform,
   resources,
   self_hosting,
-  storage,
-} from '../../components/Navigation/NavigationMenu/NavigationMenu.constants.js'
+} from '../../components/Navigation/NavigationMenu/NavigationMenu.constants'
 
 const DOCS_ROOT_DIR = join(__dirname, '..', '..')
 const DEFAULT_DOCS_CONTENT_DIR = join(DOCS_ROOT_DIR, 'content')
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars
 const DOCS_CONTENT_DIR = process.env.DOCS_CONTENT_DIR || DEFAULT_DOCS_CONTENT_DIR
 
 const IGNORE_LIST = [
@@ -48,8 +47,7 @@ type RefItem = {
 
 const recGetUrl = (items: readonly RefItem[], acc: string[] = []) =>
   items.reduce((acc, item) => {
-    const url = item.href || item.url
-    if (url) acc.push(url)
+    if (item.href || item.url) acc.push(item.href || item.url)
     if (item.items) acc.push(...recGetUrl(item.items, acc))
     return acc
   }, acc)

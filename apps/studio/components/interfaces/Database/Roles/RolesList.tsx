@@ -3,34 +3,31 @@ import { partition, sortBy } from 'lodash'
 import { Plus, Search, X } from 'lucide-react'
 import { useState } from 'react'
 
+import { useProjectContext } from 'components/layouts/ProjectLayout/ProjectContext'
 import { ButtonTooltip } from 'components/ui/ButtonTooltip'
 import NoSearchResults from 'components/ui/NoSearchResults'
 import SparkBar from 'components/ui/SparkBar'
 import { useDatabaseRolesQuery } from 'data/database-roles/database-roles-query'
 import { useMaxConnectionsQuery } from 'data/database/max-connections-query'
-import { useAsyncCheckPermissions } from 'hooks/misc/useCheckPermissions'
-import { useSelectedProjectQuery } from 'hooks/misc/useSelectedProject'
+import { useCheckPermissions } from 'hooks/misc/useCheckPermissions'
 import { Badge, Button, Input, Tooltip, TooltipContent, TooltipTrigger } from 'ui'
-import { CreateRolePanel } from './CreateRolePanel'
-import { DeleteRoleModal } from './DeleteRoleModal'
-import { RoleRow } from './RoleRow'
-import { RoleRowSkeleton } from './RoleRowSkeleton'
+import CreateRolePanel from './CreateRolePanel'
+import DeleteRoleModal from './DeleteRoleModal'
+import RoleRow from './RoleRow'
+import RoleRowSkeleton from './RoleRowSkeleton'
 import { SUPABASE_ROLES } from './Roles.constants'
 
 type SUPABASE_ROLE = (typeof SUPABASE_ROLES)[number]
 
 const RolesList = () => {
-  const { data: project } = useSelectedProjectQuery()
+  const { project } = useProjectContext()
 
   const [filterString, setFilterString] = useState('')
   const [filterType, setFilterType] = useState<'all' | 'active'>('all')
   const [isCreatingRole, setIsCreatingRole] = useState(false)
   const [selectedRoleToDelete, setSelectedRoleToDelete] = useState<any>()
 
-  const { can: canUpdateRoles } = useAsyncCheckPermissions(
-    PermissionAction.TENANT_SQL_ADMIN_WRITE,
-    'roles'
-  )
+  const canUpdateRoles = useCheckPermissions(PermissionAction.TENANT_SQL_ADMIN_WRITE, 'roles')
 
   const { data: maxConnData } = useMaxConnectionsQuery({
     projectRef: project?.ref,
